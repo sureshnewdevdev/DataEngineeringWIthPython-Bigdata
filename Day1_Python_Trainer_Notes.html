@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Day 1 - Python Foundation for Data Engineering</title>
+<style>
+:root{
+  --primary:#0f3d5e;
+  --secondary:#0b7285;
+  --accent:#f59f00;
+  --bg:#f5f7fb;
+  --card:#ffffff;
+  --text:#17202a;
+  --muted:#5d6d7e;
+  --success:#2f9e44;
+  --danger:#c92a2a;
+  --code:#102a43;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;}
+header{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;padding:42px 28px;text-align:center;position:relative;overflow:hidden;}
+header h1{margin:0;font-size:36px;letter-spacing:.3px;}
+header p{margin:10px auto 0;max-width:920px;font-size:17px;opacity:.95;}
+.badge{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:6px 12px;border-radius:999px;margin:6px;font-size:13px;}
+nav{position:sticky;top:0;background:#fff;border-bottom:1px solid #e6e8ee;z-index:20;padding:10px 18px;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+nav a{color:var(--primary);font-weight:600;text-decoration:none;margin:0 10px;white-space:nowrap;font-size:14px;}
+.container{max-width:1180px;margin:0 auto;padding:24px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;}
+.card,.section{background:var(--card);border-radius:16px;padding:22px;margin:18px 0;box-shadow:0 8px 24px rgba(15,61,94,.08);border:1px solid #e9edf3;transition:.25s ease;}
+.section:hover,.card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(15,61,94,.14);border-color:#b9dce5;}
+h2{color:var(--primary);margin-top:0;border-left:6px solid var(--accent);padding-left:12px;}
+h3{color:#0b7285;margin-top:24px;}
+h4{margin-bottom:8px;color:#243b53;}
+table{width:100%;border-collapse:collapse;margin:14px 0;background:#fff;border-radius:10px;overflow:hidden;}
+th{background:#0f3d5e;color:#fff;text-align:left;padding:10px;font-size:14px;}
+td{border:1px solid #e6e8ee;padding:10px;vertical-align:top;font-size:14px;}
+tr:nth-child(even) td{background:#f8fafc;}
+pre{background:var(--code);color:#e6f4ff;padding:16px;border-radius:12px;overflow:auto;font-size:14px;line-height:1.5;}
+code{font-family:Consolas,Monaco,monospace;}
+.inline-code{background:#e7f5ff;color:#0b7285;padding:2px 6px;border-radius:6px;font-family:Consolas,monospace;}
+.callout{border-left:5px solid var(--secondary);background:#e3fafc;padding:14px 16px;border-radius:10px;margin:14px 0;}
+.warning{border-left:5px solid var(--accent);background:#fff4e6;padding:14px 16px;border-radius:10px;margin:14px 0;}
+.success{border-left:5px solid var(--success);background:#ebfbee;padding:14px 16px;border-radius:10px;margin:14px 0;}
+.danger{border-left:5px solid var(--danger);background:#fff5f5;padding:14px 16px;border-radius:10px;margin:14px 0;}
+.diagram{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0;}
+.node{background:#edf2ff;border:2px solid #748ffc;color:#243b53;border-radius:14px;padding:12px 16px;font-weight:700;min-width:135px;text-align:center;}
+.arrow{font-size:28px;color:#0b7285;font-weight:bold;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:800px){.two-col{grid-template-columns:1fr;} header h1{font-size:28px;} nav{overflow-x:auto;white-space:nowrap;}}
+.task-list li{margin-bottom:8px;}
+.mcq{background:#f8fafc;border:1px solid #e6e8ee;border-radius:12px;padding:14px;margin:12px 0;}
+.mcq label{display:block;margin:7px 0;cursor:pointer;}
+button{background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border:none;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;box-shadow:0 6px 14px rgba(15,61,94,.18);}
+button:hover{filter:brightness(1.05);}
+#scoreBox{font-size:18px;font-weight:800;margin-top:16px;padding:14px;border-radius:12px;display:none;}
+.sparkle{position:fixed;pointer-events:none;width:8px;height:8px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);animation:sparkle .7s linear forwards;z-index:9999;}
+@keyframes sparkle{0%{opacity:1;transform:scale(1) translateY(0);}100%{opacity:0;transform:scale(0) translateY(-18px);}}
+.footer{text-align:center;color:var(--muted);padding:28px;}
+.small{font-size:13px;color:var(--muted);}
+.kpi{font-size:30px;font-weight:800;color:var(--primary);}
+hr{border:0;border-top:1px solid #e6e8ee;margin:22px 0;}
+</style>
+</head>
+<body>
+<header>
+  <h1>Day 1 Notes - Python Foundation for Data Engineering</h1>
+  <p>Corporate classroom training notes for Day 1 of <strong>Data Engineering with Python and Spark</strong>. These notes are designed for freshers and beginner learners who need strong Python fundamentals before Hadoop, Spark, Databricks, and streaming topics.</p>
+  <div>
+    <span class="badge">Duration: 8 Hours</span>
+    <span class="badge">Session 1: Python Basics</span>
+    <span class="badge">Session 2: Functions, Exceptions & Logging</span>
+    <span class="badge">Includes MCQ Score</span>
+  </div>
+</header>
+<nav>
+  <a href="#agenda">Agenda</a>
+  <a href="#intro">Python Intro</a>
+  <a href="#variables">Variables</a>
+  <a href="#formatting">Formatting</a>
+  <a href="#collections">Collections</a>
+  <a href="#conditions">Conditions</a>
+  <a href="#loops">Loops</a>
+  <a href="#functions">Functions</a>
+  <a href="#exceptions">Exceptions</a>
+  <a href="#logging">Logging</a>
+  <a href="#labs">Labs</a>
+  <a href="#mcq">MCQ</a>
+  <a href="#interview">Interview Q&A</a>
+</nav>
+
+<div class="container">
+<section class="section" id="agenda">
+<h2>1. Day 1 Training Agenda</h2>
+<div class="grid">
+  <div class="card"><div class="kpi">4 hrs</div><h3>Session 1</h3><p>Python basics, variables, input/output formatting, list, tuple, set, dictionary, conditions, loops, range, break and continue.</p></div>
+  <div class="card"><div class="kpi">4 hrs</div><h3>Session 2</h3><p>Functions, lambda, map, reduce, exception handling using try/except/else/finally, and logging levels.</p></div>
+</div>
+<table>
+<tr><th>Time</th><th>Topic</th><th>Trainer Activity</th><th>Learner Outcome</th></tr>
+<tr><td>09:30 - 10:00</td><td>Course bridge</td><td>Explain why Python is needed for Data Engineering</td><td>Understand Python's role in ETL and Spark</td></tr>
+<tr><td>10:00 - 11:15</td><td>Variables and formatting</td><td>Live code student report example</td><td>Create readable Python programs</td></tr>
+<tr><td>11:15 - 12:30</td><td>Collections</td><td>Explain list, tuple, set, dictionary with real data</td><td>Select correct collection type</td></tr>
+<tr><td>12:30 - 01:30</td><td>Conditions and loops</td><td>Build marks processing example</td><td>Write decision and repetition logic</td></tr>
+<tr><td>02:30 - 03:30</td><td>Functions</td><td>Convert repeated logic into functions</td><td>Write reusable code</td></tr>
+<tr><td>03:30 - 04:30</td><td>Lambda, map, reduce</td><td>Show transformation style coding</td><td>Understand data transformation thinking</td></tr>
+<tr><td>04:30 - 05:30</td><td>Exceptions and logging</td><td>Demonstrate safe processing and log file generation</td><td>Build reliable beginner programs</td></tr>
+<tr><td>05:30 - 06:00</td><td>Assessment</td><td>MCQ, recap, assignment explanation</td><td>Validate Day 1 understanding</td></tr>
+</table>
+<div class="callout"><strong>Trainer positioning:</strong> Day 1 is not only Python syntax. It is the foundation for reading CSV/JSON files, cleaning data, transforming records, handling pipeline errors, and logging production issues.</div>
+</section>
+
+<section class="section" id="intro">
+<h2>2. What is Python?</h2>
+<p>Python is a simple, readable, high-level programming language. In Data Engineering, Python is used to automate tasks, read files, transform data, call APIs, interact with databases, and write PySpark jobs.</p>
+<div class="diagram">
+  <div class="node">Raw Data</div><div class="arrow">→</div>
+  <div class="node">Python Logic</div><div class="arrow">→</div>
+  <div class="node">Clean Data</div><div class="arrow">→</div>
+  <div class="node">Spark / Analytics</div>
+</div>
+<h3>Simple Explanation</h3>
+<p>Think of Python as a worker who can read data, apply rules, handle mistakes, and prepare output for the next system.</p>
+<h3>Real-time Data Engineering Example</h3>
+<p>An e-commerce company receives order files every day. Python can read the order file, validate missing values, calculate order amount, log errors, and pass the clean data to Spark for large-scale processing.</p>
+<pre><code>order_quantity = 3
+unit_price = 800
+total_amount = order_quantity * unit_price
+print(f"Total order amount: ₹{total_amount}")</code></pre>
+</section>
+
+<section class="section" id="variables">
+<h2>3. Identifiers and Variables</h2>
+<p>A variable is a named memory location used to store a value. An identifier is the name given to variables, functions, classes, or objects.</p>
+<div class="two-col">
+<div>
+<h3>Good Variable Names</h3>
+<pre><code>student_name = "Anu"
+order_amount = 2400
+is_valid_record = True</code></pre>
+</div>
+<div>
+<h3>Avoid Poor Names</h3>
+<pre><code>x = "Anu"
+a1 = 2400
+flag = True</code></pre>
+</div>
+</div>
+<h3>Rules for Identifiers</h3>
+<ul>
+<li>Can contain letters, numbers, and underscore.</li>
+<li>Cannot start with a number.</li>
+<li>Cannot use Python keywords like <span class="inline-code">if</span>, <span class="inline-code">for</span>, <span class="inline-code">class</span>.</li>
+<li>Python is case-sensitive: <span class="inline-code">name</span> and <span class="inline-code">Name</span> are different.</li>
+</ul>
+<h3>Data Engineering Context</h3>
+<pre><code>source_file_name = "orders_2026_07_01.csv"
+record_count = 5000
+failed_records = 12
+pipeline_status = "Completed"</code></pre>
+<div class="warning"><strong>Common beginner mistake:</strong> Do not use spaces in variable names. Use <span class="inline-code">student_name</span>, not <span class="inline-code">student name</span>.</div>
+</section>
+
+<section class="section" id="formatting">
+<h2>4. Input and Output Formatting</h2>
+<p>Formatting helps us display output clearly. In real projects, logs, reports, and console outputs must be readable.</p>
+<h3>Using input()</h3>
+<pre><code>name = input("Enter student name: ")
+marks = float(input("Enter marks: "))
+print(name, marks)</code></pre>
+<h3>Using f-strings</h3>
+<pre><code>student_name = "Anu"
+marks = 86.5678
+print(f"Student: {student_name}")
+print(f"Marks: {marks:.2f}")</code></pre>
+<h3>Output</h3>
+<pre><code>Student: Anu
+Marks: 86.57</code></pre>
+<div class="callout"><strong>Trainer note:</strong> Emphasize f-strings. They are clean, modern, and frequently used in logging and report generation.</div>
+</section>
+
+<section class="section" id="collections">
+<h2>5. Python Collections</h2>
+<p>Collections are used to store multiple values. In Data Engineering, we often process multiple records, columns, file names, and configuration values.</p>
+<table>
+<tr><th>Collection</th><th>Ordered?</th><th>Mutable?</th><th>Allows Duplicate?</th><th>Use Case</th></tr>
+<tr><td>List</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Store records, marks, file names</td></tr>
+<tr><td>Tuple</td><td>Yes</td><td>No</td><td>Yes</td><td>Fixed record or coordinates</td></tr>
+<tr><td>Set</td><td>No</td><td>Yes</td><td>No</td><td>Unique values like course names</td></tr>
+<tr><td>Dictionary</td><td>Yes</td><td>Yes</td><td>Keys are unique</td><td>Key-value data like JSON records</td></tr>
+</table>
+<h3>List Example</h3>
+<pre><code>marks = [72, 85, 91, 66]
+marks.append(88)
+print(max(marks))
+print(sum(marks) / len(marks))</code></pre>
+<h3>Tuple Example</h3>
+<pre><code>student_record = (101, "Anu", "Python")
+print(student_record[1])</code></pre>
+<h3>Set Example</h3>
+<pre><code>courses = {"Python", "SQL", "Python", "Spark"}
+print(courses)  # duplicate Python is removed</code></pre>
+<h3>Dictionary Example</h3>
+<pre><code>student = {
+    "id": 101,
+    "name": "Anu",
+    "course": "Python",
+    "marks": 86.5
+}
+print(student["name"])</code></pre>
+<div class="success"><strong>Real-time connection:</strong> JSON data looks very similar to a Python dictionary. This is why dictionaries are important before learning APIs and Spark JSON processing.</div>
+</section>
+
+<section class="section" id="conditions">
+<h2>6. Conditional Statements</h2>
+<p>Conditional statements help Python make decisions. In data pipelines, conditions are used to validate records, filter rows, and handle business rules.</p>
+<h3>if / elif / else</h3>
+<pre><code>marks = 86
+
+if marks >= 90:
+    grade = "A"
+elif marks >= 75:
+    grade = "B"
+elif marks >= 50:
+    grade = "C"
+else:
+    grade = "Fail"
+
+print(f"Grade: {grade}")</code></pre>
+<h3>Nested if</h3>
+<pre><code>is_file_available = True
+record_count = 500
+
+if is_file_available:
+    if record_count > 0:
+        print("Process the file")
+    else:
+        print("File is empty")
+else:
+    print("File missing")</code></pre>
+<div class="warning"><strong>Best practice:</strong> Avoid too many nested if blocks. For production code, keep logic readable and split complex conditions into functions.</div>
+</section>
+
+<section class="section" id="loops">
+<h2>7. Loops: for, while, range, break, continue</h2>
+<p>Loops are used to repeat a task. In Data Engineering, we use loops to process files, records, rows, or API pages.</p>
+<h3>for Loop</h3>
+<pre><code>marks = [72, 85, 91, 66]
+for mark in marks:
+    print(mark)</code></pre>
+<h3>range()</h3>
+<pre><code>for number in range(1, 6):
+    print(number)</code></pre>
+<h3>while Loop</h3>
+<pre><code>count = 1
+while count <= 5:
+    print(count)
+    count += 1</code></pre>
+<h3>Simulated do-while in Python</h3>
+<p>Python does not have a direct do-while loop, but we can simulate it.</p>
+<pre><code>while True:
+    user_input = input("Enter yes to continue: ")
+    if user_input.lower() != "yes":
+        break</code></pre>
+<h3>break and continue</h3>
+<pre><code>marks = [45, 66, 82, 95, 70]
+
+for mark in marks:
+    if mark < 50:
+        continue  # skip failed marks
+    if mark > 90:
+        print("Top score found", mark)
+        break
+    print("Passed mark", mark)</code></pre>
+<div class="callout"><strong>Trainer example:</strong> Use loops to process many records from a file. Each record can be validated using conditions.</div>
+</section>
+
+<section class="section" id="functions">
+<h2>8. Functions, Lambda, map, filter, reduce</h2>
+<p>A function is a reusable block of code. Functions help us avoid repeating the same logic again and again.</p>
+<h3>Normal Function</h3>
+<pre><code>def calculate_grade(mark):
+    if mark >= 90:
+        return "A"
+    elif mark >= 75:
+        return "B"
+    elif mark >= 50:
+        return "C"
+    else:
+        return "Fail"
+
+print(calculate_grade(86))</code></pre>
+<h3>Why Functions Matter in Data Engineering</h3>
+<ul>
+<li>Validation function: check whether record is valid.</li>
+<li>Transformation function: clean customer name or calculate total amount.</li>
+<li>Utility function: read config, write log, connect to database.</li>
+</ul>
+<h3>Lambda Function</h3>
+<p>A lambda function is a small one-line anonymous function.</p>
+<pre><code>add_bonus = lambda mark: mark + 5
+print(add_bonus(80))</code></pre>
+<h3>map()</h3>
+<p><span class="inline-code">map()</span> applies a function to every item in a collection.</p>
+<pre><code>marks = [80, 90, 40]
+bonus_marks = list(map(lambda x: x + 5, marks))
+print(bonus_marks)</code></pre>
+<h3>filter()</h3>
+<p><span class="inline-code">filter()</span> selects only matching items.</p>
+<pre><code>marks = [80, 90, 40]
+passed = list(filter(lambda x: x >= 50, marks))
+print(passed)</code></pre>
+<h3>reduce()</h3>
+<p><span class="inline-code">reduce()</span> combines items into one result.</p>
+<pre><code>from functools import reduce
+marks = [80, 90, 40]
+total = reduce(lambda x, y: x + y, marks)
+print(total)</code></pre>
+<div class="success"><strong>Bridge to Spark:</strong> The idea of applying transformations to data is important. Later, Spark transformations will follow a similar thinking pattern.</div>
+</section>
+
+<section class="section" id="exceptions">
+<h2>9. Exception Handling</h2>
+<p>Exception handling is used to handle errors gracefully without crashing the program. In data pipelines, exceptions happen because of missing files, invalid data, network failures, or wrong formats.</p>
+<div class="diagram">
+  <div class="node">Try Risky Code</div><div class="arrow">→</div>
+  <div class="node">Catch Error</div><div class="arrow">→</div>
+  <div class="node">Log / Recover</div><div class="arrow">→</div>
+  <div class="node">Continue Safely</div>
+</div>
+<h3>try / except / else / finally</h3>
+<pre><code>try:
+    result = 10 / 2
+except ZeroDivisionError:
+    print("Cannot divide by zero")
+else:
+    print("Division successful", result)
+finally:
+    print("This block always runs")</code></pre>
+<h3>Practical Example</h3>
+<pre><code>def safe_divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        print("Error: denominator cannot be zero")
+        return None
+    except TypeError:
+        print("Error: input should be number")
+        return None
+    finally:
+        print("Division operation completed")</code></pre>
+<table>
+<tr><th>Block</th><th>Purpose</th></tr>
+<tr><td>try</td><td>Code that may fail</td></tr>
+<tr><td>except</td><td>Code to handle error</td></tr>
+<tr><td>else</td><td>Runs only when no exception occurs</td></tr>
+<tr><td>finally</td><td>Always runs, usually for cleanup</td></tr>
+</table>
+<div class="danger"><strong>Production reminder:</strong> Never hide errors silently. Handle them, log them, and decide whether to continue or stop the pipeline.</div>
+</section>
+
+<section class="section" id="logging">
+<h2>10. Logging</h2>
+<p>Logging records what happened in a program. In real projects, print statements are not enough. Logs help support teams debug failures and audit pipeline behavior.</p>
+<table>
+<tr><th>Level</th><th>Meaning</th><th>Example</th></tr>
+<tr><td>DEBUG</td><td>Detailed developer information</td><td>Variable values, step-by-step internal details</td></tr>
+<tr><td>INFO</td><td>Normal successful event</td><td>File processing started or completed</td></tr>
+<tr><td>ERROR</td><td>Handled failure</td><td>Invalid record or missing column</td></tr>
+<tr><td>CRITICAL</td><td>Major failure</td><td>Database unavailable or source folder missing</td></tr>
+</table>
+<h3>Logging Example</h3>
+<pre><code>import logging
+
+logging.basicConfig(
+    filename="app.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+logging.info("Pipeline started")
+logging.error("Invalid record found")
+logging.critical("Source file missing")</code></pre>
+<h3>Real-time Data Engineering Scenario</h3>
+<pre><code>import logging
+
+file_name = "orders.csv"
+record_count = 5000
+failed_records = 12
+
+logging.info(f"Started processing file: {file_name}")
+logging.info(f"Total records: {record_count}")
+logging.error(f"Failed records: {failed_records}")</code></pre>
+<div class="callout"><strong>Trainer explanation:</strong> Logging is a professional habit. It makes beginner programs look like production-ready programs.</div>
+</section>
+
+<section class="section" id="labs">
+<h2>11. Hands-on Labs</h2>
+<ol class="task-list">
+<li><strong>Student Grade Calculator:</strong> Get student name and marks, then print formatted grade report.</li>
+<li><strong>Collections Practice:</strong> Use list, tuple, set, and dictionary to store student and course data.</li>
+<li><strong>Loop Processing:</strong> Process a list of marks. Skip failed marks and stop when top score is found.</li>
+<li><strong>Reusable Function:</strong> Create <span class="inline-code">calculate_grade(mark)</span> and call it for multiple students.</li>
+<li><strong>Lambda Practice:</strong> Add 5 bonus marks using <span class="inline-code">map()</span>.</li>
+<li><strong>Exception Handling:</strong> Create <span class="inline-code">safe_divide(a,b)</span> with try/except/else/finally.</li>
+<li><strong>Logging Practice:</strong> Write program status and errors to <span class="inline-code">app.log</span>.</li>
+<li><strong>Mini Assignment:</strong> Read student marks from CSV, calculate grade, print passed students, and log failed records.</li>
+</ol>
+<h3>Starter Project Structure</h3>
+<pre><code>day1_python_study_materials/
+├── code_examples/
+│   ├── day1_basics_demo.py
+│   └── day1_functions_exceptions_logging_demo.py
+├── datasets/
+│   ├── student_scores.csv
+│   ├── orders.json
+│   └── notes.txt
+├── Day1_Lab_Guide.md
+├── Day1_Quick_Reference.md
+└── Day1_Python_Trainer_Notes.html</code></pre>
+</section>
+
+<section class="section" id="mcq">
+<h2>12. Day 1 MCQ Assessment</h2>
+<p>Choose one answer for each question and click <strong>Submit Assessment</strong>. The score is calculated instantly.</p>
+<form id="quizForm">
+<div class="mcq"><strong>1. Which keyword is used to define a function in Python?</strong>
+<label><input type="radio" name="q1" value="a"> function</label>
+<label><input type="radio" name="q1" value="b"> def</label>
+<label><input type="radio" name="q1" value="c"> fun</label>
+<label><input type="radio" name="q1" value="d"> method</label>
+</div>
+<div class="mcq"><strong>2. Which collection does not allow duplicate values?</strong>
+<label><input type="radio" name="q2" value="a"> List</label>
+<label><input type="radio" name="q2" value="b"> Tuple</label>
+<label><input type="radio" name="q2" value="c"> Set</label>
+<label><input type="radio" name="q2" value="d"> Dictionary values</label>
+</div>
+<div class="mcq"><strong>3. Which formatting style is most commonly recommended for readable Python output?</strong>
+<label><input type="radio" name="q3" value="a"> f-string</label>
+<label><input type="radio" name="q3" value="b"> goto</label>
+<label><input type="radio" name="q3" value="c"> switch</label>
+<label><input type="radio" name="q3" value="d"> namespace</label>
+</div>
+<div class="mcq"><strong>4. What is the output type of input() in Python?</strong>
+<label><input type="radio" name="q4" value="a"> int</label>
+<label><input type="radio" name="q4" value="b"> float</label>
+<label><input type="radio" name="q4" value="c"> str</label>
+<label><input type="radio" name="q4" value="d"> bool</label>
+</div>
+<div class="mcq"><strong>5. Which block always executes in exception handling?</strong>
+<label><input type="radio" name="q5" value="a"> try</label>
+<label><input type="radio" name="q5" value="b"> except</label>
+<label><input type="radio" name="q5" value="c"> else</label>
+<label><input type="radio" name="q5" value="d"> finally</label>
+</div>
+<div class="mcq"><strong>6. Which loop is generally used when iterating over a known collection?</strong>
+<label><input type="radio" name="q6" value="a"> for loop</label>
+<label><input type="radio" name="q6" value="b"> while loop only</label>
+<label><input type="radio" name="q6" value="c"> exception loop</label>
+<label><input type="radio" name="q6" value="d"> import loop</label>
+</div>
+<div class="mcq"><strong>7. Which statement skips the current iteration and moves to the next one?</strong>
+<label><input type="radio" name="q7" value="a"> break</label>
+<label><input type="radio" name="q7" value="b"> continue</label>
+<label><input type="radio" name="q7" value="c"> passout</label>
+<label><input type="radio" name="q7" value="d"> stop</label>
+</div>
+<div class="mcq"><strong>8. Which logging level represents a major failure?</strong>
+<label><input type="radio" name="q8" value="a"> DEBUG</label>
+<label><input type="radio" name="q8" value="b"> INFO</label>
+<label><input type="radio" name="q8" value="c"> ERROR</label>
+<label><input type="radio" name="q8" value="d"> CRITICAL</label>
+</div>
+<div class="mcq"><strong>9. Which function applies logic to each item in a collection?</strong>
+<label><input type="radio" name="q9" value="a"> map()</label>
+<label><input type="radio" name="q9" value="b"> id()</label>
+<label><input type="radio" name="q9" value="c"> type()</label>
+<label><input type="radio" name="q9" value="d"> print()</label>
+</div>
+<div class="mcq"><strong>10. Which collection is best for key-value data?</strong>
+<label><input type="radio" name="q10" value="a"> List</label>
+<label><input type="radio" name="q10" value="b"> Tuple</label>
+<label><input type="radio" name="q10" value="c"> Set</label>
+<label><input type="radio" name="q10" value="d"> Dictionary</label>
+</div>
+<div class="mcq"><strong>11. Which statement stops a loop immediately?</strong>
+<label><input type="radio" name="q11" value="a"> continue</label>
+<label><input type="radio" name="q11" value="b"> break</label>
+<label><input type="radio" name="q11" value="c"> skip</label>
+<label><input type="radio" name="q11" value="d"> finally</label>
+</div>
+<div class="mcq"><strong>12. Which module provides reduce()?</strong>
+<label><input type="radio" name="q12" value="a"> functools</label>
+<label><input type="radio" name="q12" value="b"> logging</label>
+<label><input type="radio" name="q12" value="c"> json</label>
+<label><input type="radio" name="q12" value="d"> csv</label>
+</div>
+<div class="mcq"><strong>13. What is a tuple?</strong>
+<label><input type="radio" name="q13" value="a"> Mutable unordered collection</label>
+<label><input type="radio" name="q13" value="b"> Immutable ordered collection</label>
+<label><input type="radio" name="q13" value="c"> Only key-value collection</label>
+<label><input type="radio" name="q13" value="d"> Logging level</label>
+</div>
+<div class="mcq"><strong>14. Which method adds an item to a list?</strong>
+<label><input type="radio" name="q14" value="a"> append()</label>
+<label><input type="radio" name="q14" value="b"> push()</label>
+<label><input type="radio" name="q14" value="c"> addKey()</label>
+<label><input type="radio" name="q14" value="d"> log()</label>
+</div>
+<div class="mcq"><strong>15. Why is logging preferred over only using print in professional projects?</strong>
+<label><input type="radio" name="q15" value="a"> Logging supports levels, files, and timestamps</label>
+<label><input type="radio" name="q15" value="b"> Logging makes Python slower only</label>
+<label><input type="radio" name="q15" value="c"> Logging removes all errors automatically</label>
+<label><input type="radio" name="q15" value="d"> Logging is only used for UI design</label>
+</div>
+<div class="mcq"><strong>16. What does filter() do?</strong>
+<label><input type="radio" name="q16" value="a"> Selects items that match a condition</label>
+<label><input type="radio" name="q16" value="b"> Sorts all items</label>
+<label><input type="radio" name="q16" value="c"> Reads files only</label>
+<label><input type="radio" name="q16" value="d"> Creates variables</label>
+</div>
+<div class="mcq"><strong>17. Which exception occurs when dividing by zero?</strong>
+<label><input type="radio" name="q17" value="a"> FileNotFoundError</label>
+<label><input type="radio" name="q17" value="b"> ZeroDivisionError</label>
+<label><input type="radio" name="q17" value="c"> ValueError only</label>
+<label><input type="radio" name="q17" value="d"> NameError only</label>
+</div>
+<div class="mcq"><strong>18. Which keyword is used to import a module?</strong>
+<label><input type="radio" name="q18" value="a"> using</label>
+<label><input type="radio" name="q18" value="b"> include</label>
+<label><input type="radio" name="q18" value="c"> import</label>
+<label><input type="radio" name="q18" value="d"> package</label>
+</div>
+<div class="mcq"><strong>19. Which is a valid variable name?</strong>
+<label><input type="radio" name="q19" value="a"> 1student</label>
+<label><input type="radio" name="q19" value="b"> student name</label>
+<label><input type="radio" name="q19" value="c"> student_name</label>
+<label><input type="radio" name="q19" value="d"> for</label>
+</div>
+<div class="mcq"><strong>20. Why are exceptions important in data pipelines?</strong>
+<label><input type="radio" name="q20" value="a"> They help handle failures like missing files or invalid data safely</label>
+<label><input type="radio" name="q20" value="b"> They make all data correct automatically</label>
+<label><input type="radio" name="q20" value="c"> They replace functions</label>
+<label><input type="radio" name="q20" value="d"> They are used only for styling</label>
+</div>
+<button type="button" onclick="submitQuiz()">Submit Assessment</button>
+<div id="scoreBox"></div>
+</form>
+</section>
+
+<section class="section" id="interview">
+<h2>13. Day 1 Interview Questions and Answers</h2>
+<h3>1. What is Python?</h3>
+<p>Python is a high-level, interpreted programming language known for simple syntax and readability. It is widely used in automation, data engineering, web development, data science, and scripting.</p>
+<h3>2. What is the difference between list and tuple?</h3>
+<p>A list is mutable, meaning we can add, update, and remove values. A tuple is immutable, meaning it cannot be changed after creation.</p>
+<h3>3. What is the difference between set and dictionary?</h3>
+<p>A set stores unique values. A dictionary stores key-value pairs where keys are unique.</p>
+<h3>4. What is the use of if-elif-else?</h3>
+<p>It is used to execute different blocks of code based on different conditions.</p>
+<h3>5. What is the use of range()?</h3>
+<p><span class="inline-code">range()</span> generates a sequence of numbers. It is commonly used with for loops.</p>
+<h3>6. What is the difference between break and continue?</h3>
+<p><span class="inline-code">break</span> stops the loop completely. <span class="inline-code">continue</span> skips the current iteration and moves to the next one.</p>
+<h3>7. Why do we use functions?</h3>
+<p>Functions make code reusable, readable, and easier to maintain.</p>
+<h3>8. What is lambda?</h3>
+<p>A lambda is a small anonymous function used for short operations, commonly with map, filter, or sorting logic.</p>
+<h3>9. Why is exception handling needed?</h3>
+<p>It prevents the application from crashing and helps handle expected failures gracefully.</p>
+<h3>10. Why is logging important?</h3>
+<p>Logging records application events, errors, and status messages. It helps debugging, monitoring, auditing, and production support.</p>
+<h3>11. What are logging levels?</h3>
+<p>Common levels are DEBUG, INFO, WARNING, ERROR, and CRITICAL. They classify the seriousness of a message.</p>
+<h3>12. How does Python help in Data Engineering?</h3>
+<p>Python helps read files, clean data, transform records, handle errors, connect to databases, call APIs, and write PySpark jobs.</p>
+</section>
+
+<section class="section">
+<h2>14. Day 1 Recap</h2>
+<ul>
+<li>Python variables store values using meaningful names.</li>
+<li>f-strings make output readable.</li>
+<li>Lists, tuples, sets, and dictionaries store different types of grouped data.</li>
+<li>Conditions help implement business rules.</li>
+<li>Loops help process multiple records.</li>
+<li>Functions make code reusable.</li>
+<li>Lambda, map, filter, and reduce introduce transformation-style thinking.</li>
+<li>Exception handling and logging are essential for production-quality code.</li>
+</ul>
+<div class="success"><strong>End goal:</strong> After Day 1, learners should be able to write simple but clean Python programs that can process records, apply rules, handle errors, and log application behavior.</div>
+</section>
+</div>
+
+<div class="footer">Prepared as Day 1 study material for Data Engineering with Python and Spark.</div>
+<script>
+const answers = {
+ q1:'b', q2:'c', q3:'a', q4:'c', q5:'d', q6:'a', q7:'b', q8:'d', q9:'a', q10:'d',
+ q11:'b', q12:'a', q13:'b', q14:'a', q15:'a', q16:'a', q17:'b', q18:'c', q19:'c', q20:'a'
+};
+function submitQuiz(){
+  let score = 0;
+  let total = Object.keys(answers).length;
+  for(const q in answers){
+    const selected = document.querySelector(`input[name="${q}"]:checked`);
+    const box = document.querySelector(`input[name="${q}"]`).closest('.mcq');
+    box.style.borderColor = '#e6e8ee';
+    box.style.background = '#f8fafc';
+    if(selected && selected.value === answers[q]){
+      score++;
+      box.style.borderColor = '#2f9e44';
+      box.style.background = '#ebfbee';
+    } else {
+      box.style.borderColor = '#c92a2a';
+      box.style.background = '#fff5f5';
+    }
+  }
+  const percent = Math.round((score/total)*100);
+  const scoreBox = document.getElementById('scoreBox');
+  scoreBox.style.display = 'block';
+  scoreBox.style.background = percent >= 70 ? '#ebfbee' : '#fff4e6';
+  scoreBox.style.color = percent >= 70 ? '#2f9e44' : '#d9480f';
+  scoreBox.innerHTML = `Your Score: ${score}/${total} (${percent}%). ${percent >= 70 ? 'Good job! You are ready for Day 2 basics.' : 'Revise the highlighted questions and try again.'}`;
+}
+let lastSpark = 0;
+document.addEventListener('mousemove', function(e){
+  const now = Date.now();
+  if(now - lastSpark < 45) return;
+  lastSpark = now;
+  const s = document.createElement('span');
+  s.className = 'sparkle';
+  s.style.left = e.clientX + 'px';
+  s.style.top = e.clientY + 'px';
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 700);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hadoop & Big Data Fundamentals Tutorial</title>
+  <style>
+    :root{
+      --bg:#f6f8fb; --card:#ffffff; --ink:#172033; --muted:#5c6b82; --brand:#0d6efd; --brand2:#673ab7; --soft:#e9f2ff; --line:#d8e2f0; --good:#118a4a; --warn:#b36b00; --bad:#c62828; --shadow:0 10px 30px rgba(19,32,54,.10); --radius:18px;
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+    header{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#09203f,#0d6efd 55%,#673ab7);color:#fff;padding:18px 28px;box-shadow:var(--shadow)}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1320px;margin:auto}.brand{display:flex;align-items:center;gap:14px}.logo{width:48px;height:48px;border-radius:14px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:28px;border:1px solid rgba(255,255,255,.28)}
+    h1{margin:0;font-size:clamp(22px,3vw,36px);line-height:1.12}.subtitle{margin:4px 0 0;color:#e6efff;font-size:14px}.actions{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;background:#fff;color:#0d4fbb;box-shadow:0 4px 15px rgba(0,0,0,.14)}.btn.alt{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.35)}
+    .layout{display:grid;grid-template-columns:290px 1fr;gap:22px;max-width:1320px;margin:22px auto;padding:0 20px}.sidebar{position:sticky;top:102px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;max-height:calc(100vh - 125px);overflow:auto}.sidebar h3{margin:0 0 12px;font-size:16px}.sidebar a{display:block;text-decoration:none;color:var(--ink);padding:8px 10px;border-radius:10px;font-size:14px}.sidebar a:hover,.sidebar a.active{background:var(--soft);color:#0756c6}.progress-wrap{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}.bar{height:10px;background:#e9edf5;border-radius:999px;overflow:hidden}.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:.3s}.small{font-size:12px;color:var(--muted)}
+    main{min-width:0}.hero{background:linear-gradient(135deg,#fff,#edf5ff);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;margin-bottom:22px}.hero-grid{display:grid;grid-template-columns:1.3fr .7fr;gap:20px}.pill{display:inline-flex;align-items:center;gap:8px;background:#edf5ff;color:#0a58ca;border:1px solid #cce1ff;border-radius:999px;padding:6px 12px;font-size:13px;font-weight:700;margin:4px 6px 4px 0}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:24px;margin-bottom:22px;transition:transform .2s,border-color .2s}.card:hover{transform:translateY(-2px);border-color:#b6cdf4}.card h2{margin-top:0;color:#0b3c7a;font-size:clamp(22px,2.4vw,30px)}.card h3{color:#21466f;margin-top:22px}.note{background:#fff9e6;border-left:5px solid #ffc107;padding:14px 16px;border-radius:12px;margin:16px 0}.trainer{background:#effaf3;border-left:5px solid var(--good);padding:14px 16px;border-radius:12px;margin:16px 0}.warning{background:#fff2f2;border-left:5px solid var(--bad);padding:14px 16px;border-radius:12px;margin:16px 0}.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.mini-card{background:#fbfdff;border:1px solid var(--line);border-radius:14px;padding:16px}.mini-card h4{margin:0 0 8px;color:#0a58ca}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden}th,td{padding:12px 14px;border:1px solid var(--line);vertical-align:top}th{background:#eef5ff;color:#123b66;text-align:left}code,kbd{background:#eef3fa;border:1px solid #d7e0ee;padding:2px 6px;border-radius:6px}.code{background:#0f172a;color:#dbeafe;border-radius:16px;padding:18px;overflow:auto;font-family:Consolas,Monaco,monospace;font-size:14px}.code .c{color:#93c5fd}.diagram{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;margin:16px 0;overflow:auto}.diagram svg{max-width:100%;height:auto}.flow-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}.node{padding:12px 16px;border-radius:14px;background:#eef5ff;border:1px solid #bfdbfe;font-weight:700;text-align:center;min-width:120px}.arrow{font-size:26px;color:#0d6efd}.checklist label{display:flex;gap:10px;align-items:flex-start;background:#fbfdff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:8px 0}.quiz-q{background:#fbfdff;border:1px solid var(--line);border-radius:14px;padding:16px;margin:14px 0}.quiz-q p{font-weight:700;margin-top:0}.quiz-q label{display:block;margin:8px 0}.result{font-weight:800;border-radius:14px;padding:14px 16px;margin-top:16px;display:none}.result.good{background:#e9f8ef;color:#0d6b3d}.result.mid{background:#fff5df;color:#875100}.result.low{background:#ffecec;color:#a51717}.tag{display:inline-block;border:1px solid var(--line);background:#f7faff;border-radius:999px;padding:4px 10px;margin:3px;font-size:12px;color:#32506d}.faq details{border:1px solid var(--line);border-radius:12px;background:#fbfdff;margin:10px 0;padding:12px}.faq summary{cursor:pointer;font-weight:800;color:#21466f}.floating-note{position:fixed;right:20px;bottom:20px;width:min(360px,calc(100vw - 40px));background:#fff;border:1px solid var(--line);box-shadow:var(--shadow);border-radius:18px;padding:16px;z-index:50;display:none}.floating-note textarea{width:100%;min-height:130px;border:1px solid var(--line);border-radius:12px;padding:10px;font-family:inherit}.spark{position:fixed;pointer-events:none;width:8px;height:8px;border-radius:50%;background:#0d6efd;box-shadow:0 0 16px #0d6efd;animation:fade .7s forwards;z-index:9999}@keyframes fade{to{opacity:0;transform:translateY(-18px) scale(.2)}}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;background:#111827;color:#fff;padding:10px 14px;border-radius:999px;display:none;z-index:70}.print-note{display:none}
+    @media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:auto;max-height:none}.hero-grid,.grid-2,.grid-3{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.actions{width:100%}}
+    @media print{header,.sidebar,.actions,.floating-note,.toast{display:none!important}.layout{display:block;max-width:none;margin:0;padding:0}.card,.hero{box-shadow:none;break-inside:avoid}.print-note{display:block}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">🐘</div>
+        <div>
+          <h1>Hadoop & Big Data Fundamentals</h1>
+          <p class="subtitle">Classroom-style technical tutorial: Hadoop, Big Data evolution, data types, 5Vs, batch vs streaming, and Hadoop 1.x architecture</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn" onclick="window.print()">Print / Save PDF</button>
+        <button class="btn alt" onclick="resetProgress()">Reset Progress</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <h3>📚 Tutorial Index</h3>
+      <a href="#s1">1. Learning Roadmap</a>
+      <a href="#s2">2. Evolution of Big Data</a>
+      <a href="#s3">3. What is Hadoop?</a>
+      <a href="#s4">4. Why Hadoop Was Needed</a>
+      <a href="#s5">5. Types of Data</a>
+      <a href="#s6">6. Characteristics of Big Data</a>
+      <a href="#s7">7. Hadoop Ecosystem</a>
+      <a href="#s8">8. Hadoop 1.x Architecture</a>
+      <a href="#s9">9. HDFS Architecture</a>
+      <a href="#s10">10. MapReduce Architecture</a>
+      <a href="#s11">11. Batch vs Streaming Data</a>
+      <a href="#s12">12. Interview Q&A + Best Practices</a>
+      <a href="#s13">13. Quiz, Timed Exam & Tracker</a>
+      <div class="progress-wrap">
+        <div class="small">Preparation Progress</div>
+        <div class="bar"><span id="progressBar"></span></div>
+        <p class="small"><span id="progressText">0%</span> completed</p>
+        <p class="small">Tip: Double-click any section to add your own note.</p>
+      </div>
+    </aside>
+
+    <main>
+      <section class="hero">
+        <div class="hero-grid">
+          <div>
+            <h2>Beginner to Interview-Ready Tutorial</h2>
+            <p>This tutorial explains Hadoop and Big Data from the ground level. It is designed for classroom training, fresher interviews, and quick revision before technical discussions.</p>
+            <span class="pill">🐘 Hadoop Basics</span><span class="pill">📈 Big Data Evolution</span><span class="pill">🧱 Hadoop 1.x</span><span class="pill">🔁 Batch vs Streaming</span><span class="pill">📝 MCQ + Exam</span>
+          </div>
+          <div class="mini-card">
+            <h4>How to use this page</h4>
+            <ul>
+              <li>Read sections in order.</li>
+              <li>Mark completed topics in the tracker.</li>
+              <li>Use diagrams for architecture explanation.</li>
+              <li>Attempt practice MCQs and final timed exam.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="s1" ondblclick="openNote('s1')">
+        <h2>1. Learning Roadmap</h2>
+        <p>Before learning Hadoop architecture, you must understand why Big Data arrived, what kind of data companies handle, and why traditional databases were not enough for massive-scale processing.</p>
+        <div class="flow-row">
+          <div class="node">Business Data Growth</div><div class="arrow">→</div><div class="node">Big Data Problem</div><div class="arrow">→</div><div class="node">Hadoop Storage</div><div class="arrow">→</div><div class="node">MapReduce Processing</div><div class="arrow">→</div><div class="node">Analytics Output</div>
+        </div>
+        <h3>Learning Outcomes</h3>
+        <div class="grid-2">
+          <div class="mini-card"><h4>You will understand</h4><p>What Hadoop is, how Big Data evolved, and how Hadoop 1.x stores and processes data using HDFS and MapReduce.</p></div>
+          <div class="mini-card"><h4>You will be able to explain</h4><p>NameNode, DataNode, Secondary NameNode, JobTracker, TaskTracker, block storage, replication, batch processing, and streaming data.</p></div>
+        </div>
+        <div class="trainer"><strong>Trainer note:</strong> Start by comparing Hadoop with a large warehouse. HDFS is the storage area. MapReduce is the worker team that processes items in parallel.</div>
+      </section>
+
+      <section class="card" id="s2" ondblclick="openNote('s2')">
+        <h2>2. Evolution of Big Data</h2>
+        <p>Big Data evolved because organizations started generating more data than traditional systems could store, process, and analyze efficiently.</p>
+        <div class="diagram">
+          <svg width="1050" height="280" viewBox="0 0 1050 280" role="img" aria-label="Evolution of Big Data timeline">
+            <defs><marker id="arr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker></defs>
+            <line x1="60" y1="140" x2="990" y2="140" stroke="#0d6efd" stroke-width="4" marker-end="url(#arr)"/>
+            <g font-family="Segoe UI" font-size="14">
+              <circle cx="100" cy="140" r="18" fill="#e9f2ff" stroke="#0d6efd" stroke-width="3"/><text x="65" y="95" font-weight="700">1960s-80s</text><text x="45" y="180">Files & mainframes</text>
+              <circle cx="290" cy="140" r="18" fill="#e9f2ff" stroke="#0d6efd" stroke-width="3"/><text x="252" y="95" font-weight="700">1990s</text><text x="220" y="180">RDBMS & Data Warehouses</text>
+              <circle cx="500" cy="140" r="18" fill="#e9f2ff" stroke="#0d6efd" stroke-width="3"/><text x="458" y="95" font-weight="700">2000s</text><text x="430" y="180">Web, logs, search engines</text>
+              <circle cx="720" cy="140" r="18" fill="#e9f2ff" stroke="#0d6efd" stroke-width="3"/><text x="675" y="95" font-weight="700">2010s</text><text x="635" y="180">Hadoop, NoSQL, cloud</text>
+              <circle cx="930" cy="140" r="18" fill="#e9f2ff" stroke="#0d6efd" stroke-width="3"/><text x="885" y="95" font-weight="700">Today</text><text x="835" y="180">Streaming, lakehouse, AI</text>
+            </g>
+          </svg>
+        </div>
+        <h3>Simple Story</h3>
+        <p>Initially, companies stored data in files and databases. Later, websites, mobile apps, sensors, social media, digital payments, and clickstreams started producing huge volumes of data every second. The data was too large, too fast, and too varied for only traditional relational systems.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Stage</th><th>Data Source</th><th>Main Challenge</th><th>Technology Response</th></tr></thead>
+            <tbody>
+              <tr><td>Traditional data</td><td>Banking records, ERP, CRM</td><td>Structured storage and reporting</td><td>RDBMS and data warehouses</td></tr>
+              <tr><td>Internet data</td><td>Web logs, search, social media</td><td>Huge volume and semi-structured data</td><td>Distributed systems and Hadoop</td></tr>
+              <tr><td>Real-time data</td><td>IoT, payments, tracking, fraud alerts</td><td>Fast processing and instant insight</td><td>Kafka, Spark Streaming, Flink</td></tr>
+              <tr><td>AI data era</td><td>Documents, images, audio, logs, vectors</td><td>Multi-format analytics and ML</td><td>Data lakes, lakehouse, cloud AI platforms</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="s3" ondblclick="openNote('s3')">
+        <h2>3. What is Hadoop?</h2>
+        <p><strong>Hadoop</strong> is an open-source framework used to store and process very large datasets across a cluster of low-cost commodity machines.</p>
+        <div class="note"><strong>Simple definition:</strong> Hadoop allows big files to be split into blocks, stored across many machines, and processed in parallel.</div>
+        <h3>Technical Definition</h3>
+        <p>Apache Hadoop is a distributed storage and batch processing framework. In Hadoop 1.x, its two core components are <strong>HDFS</strong> for distributed storage and <strong>MapReduce</strong> for distributed batch processing.</p>
+        <div class="grid-2">
+          <div class="mini-card"><h4>HDFS</h4><p>Hadoop Distributed File System. Stores large files by splitting them into blocks and distributing those blocks across DataNodes.</p></div>
+          <div class="mini-card"><h4>MapReduce</h4><p>Processing model that divides work into map tasks and reduce tasks. It processes data close to where the data is stored.</p></div>
+        </div>
+        <h3>Real-time Example</h3>
+        <p>An e-commerce company may generate terabytes of clickstream logs daily. Hadoop can store those logs in HDFS and use MapReduce jobs to calculate popular products, user behavior, and failed checkout patterns.</p>
+        <div class="code"><span class="c"># Example HDFS commands</span>
+hdfs dfs -mkdir /retail
+hdfs dfs -put orders.csv /retail/orders.csv
+hdfs dfs -ls /retail
+hdfs dfs -cat /retail/orders.csv | head</div>
+      </section>
+
+      <section class="card" id="s4" ondblclick="openNote('s4')">
+        <h2>4. Why Hadoop Was Needed</h2>
+        <p>Traditional databases are excellent for structured transactions, but they were not designed to cheaply store and process petabytes of mixed-format data across hundreds or thousands of machines.</p>
+        <div class="diagram">
+          <svg width="920" height="330" viewBox="0 0 920 330" role="img" aria-label="Traditional database versus Hadoop">
+            <rect x="30" y="40" width="370" height="240" rx="18" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+            <rect x="520" y="40" width="370" height="240" rx="18" fill="#eff6ff" stroke="#0d6efd" stroke-width="2"/>
+            <text x="85" y="80" font-size="22" font-weight="700" fill="#92400e">Traditional System</text>
+            <text x="620" y="80" font-size="22" font-weight="700" fill="#0756c6">Hadoop Cluster</text>
+            <text x="75" y="130" font-size="16">Single powerful server</text>
+            <text x="75" y="165" font-size="16">Structured data preferred</text>
+            <text x="75" y="200" font-size="16">Scale-up is costly</text>
+            <text x="75" y="235" font-size="16">Failure can affect service</text>
+            <text x="565" y="130" font-size="16">Many low-cost machines</text>
+            <text x="565" y="165" font-size="16">Structured + semi + unstructured</text>
+            <text x="565" y="200" font-size="16">Scale-out horizontally</text>
+            <text x="565" y="235" font-size="16">Replication gives fault tolerance</text>
+            <path d="M420 160 L500 160" stroke="#0d6efd" stroke-width="4" marker-end="url(#arr2)"/>
+            <defs><marker id="arr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker></defs>
+          </svg>
+        </div>
+        <h3>Key Problems Hadoop Solved</h3>
+        <ul>
+          <li><strong>Storage problem:</strong> How to store huge files across many machines?</li>
+          <li><strong>Processing problem:</strong> How to process big data without moving all data to one server?</li>
+          <li><strong>Fault tolerance problem:</strong> How to continue working when a machine fails?</li>
+          <li><strong>Cost problem:</strong> How to use commodity hardware instead of only expensive servers?</li>
+        </ul>
+      </section>
+
+      <section class="card" id="s5" ondblclick="openNote('s5')">
+        <h2>5. Types of Data</h2>
+        <p>Big Data includes multiple types of data. Hadoop became popular because it could handle many formats without forcing all data into relational tables first.</p>
+        <div class="diagram">
+          <svg width="980" height="360" viewBox="0 0 980 360" role="img" aria-label="Types of data diagram">
+            <rect x="390" y="25" width="200" height="60" rx="18" fill="#0d6efd"/><text x="435" y="62" fill="white" font-size="22" font-weight="700">Data Types</text>
+            <line x1="490" y1="85" x2="180" y2="150" stroke="#94a3b8" stroke-width="3"/>
+            <line x1="490" y1="85" x2="490" y2="150" stroke="#94a3b8" stroke-width="3"/>
+            <line x1="490" y1="85" x2="800" y2="150" stroke="#94a3b8" stroke-width="3"/>
+            <rect x="65" y="150" width="230" height="150" rx="18" fill="#eff6ff" stroke="#0d6efd"/>
+            <rect x="375" y="150" width="230" height="150" rx="18" fill="#f5f3ff" stroke="#673ab7"/>
+            <rect x="685" y="150" width="230" height="150" rx="18" fill="#ecfdf5" stroke="#118a4a"/>
+            <text x="108" y="190" font-size="20" font-weight="700" fill="#0756c6">Structured</text><text x="95" y="225" font-size="15">Tables, rows, columns</text><text x="95" y="253" font-size="15">SQL databases</text>
+            <text x="414" y="190" font-size="20" font-weight="700" fill="#553c9a">Semi-structured</text><text x="405" y="225" font-size="15">JSON, XML, logs</text><text x="405" y="253" font-size="15">Flexible schema</text>
+            <text x="724" y="190" font-size="20" font-weight="700" fill="#0f766e">Unstructured</text><text x="715" y="225" font-size="15">Images, videos, PDF</text><text x="715" y="253" font-size="15">No fixed schema</text>
+          </svg>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Type</th><th>Meaning</th><th>Examples</th><th>Typical Tools</th></tr></thead>
+            <tbody>
+              <tr><td>Structured Data</td><td>Data arranged in fixed rows and columns.</td><td>Employee table, bank transaction table, sales table.</td><td>SQL Server, Oracle, MySQL, PostgreSQL.</td></tr>
+              <tr><td>Semi-structured Data</td><td>Data has tags or keys, but not strict table format.</td><td>JSON, XML, application logs, API responses.</td><td>Hadoop, Spark, NoSQL, document databases.</td></tr>
+              <tr><td>Unstructured Data</td><td>Data does not have a predefined schema.</td><td>Images, audio, video, PDFs, emails, social posts.</td><td>HDFS, object storage, data lakes, AI/ML tools.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="code"><span class="c">// Semi-structured JSON example</span>
+{
+  "orderId": 101,
+  "customer": "Gopi",
+  "items": ["Laptop", "Mouse"],
+  "payment": { "mode": "UPI", "status": "Success" }
+}</div>
+      </section>
+
+      <section class="card" id="s6" ondblclick="openNote('s6')">
+        <h2>6. Characteristics of Big Data</h2>
+        <p>Big Data is commonly explained using the Vs. The most common are Volume, Velocity, Variety, Veracity, and Value.</p>
+        <div class="diagram">
+          <svg width="900" height="500" viewBox="0 0 900 500" role="img" aria-label="5Vs of Big Data">
+            <circle cx="450" cy="250" r="80" fill="#0d6efd"/><text x="395" y="245" fill="white" font-size="24" font-weight="700">Big Data</text><text x="417" y="275" fill="white" font-size="16">5Vs</text>
+            <g font-family="Segoe UI" font-size="16">
+              <circle cx="450" cy="70" r="62" fill="#eff6ff" stroke="#0d6efd" stroke-width="2"/><text x="414" y="66" font-weight="700">Volume</text><text x="395" y="92">Huge size</text>
+              <circle cx="720" cy="170" r="62" fill="#f5f3ff" stroke="#673ab7" stroke-width="2"/><text x="685" y="166" font-weight="700">Velocity</text><text x="683" y="192">High speed</text>
+              <circle cx="620" cy="420" r="62" fill="#ecfdf5" stroke="#118a4a" stroke-width="2"/><text x="585" y="416" font-weight="700">Variety</text><text x="570" y="442">Many forms</text>
+              <circle cx="280" cy="420" r="62" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/><text x="245" y="416" font-weight="700">Veracity</text><text x="235" y="442">Data quality</text>
+              <circle cx="180" cy="170" r="62" fill="#fef2f2" stroke="#ef4444" stroke-width="2"/><text x="154" y="166" font-weight="700">Value</text><text x="140" y="192">Business use</text>
+              <line x1="450" y1="170" x2="450" y2="132" stroke="#94a3b8" stroke-width="3"/>
+              <line x1="530" y1="220" x2="662" y2="185" stroke="#94a3b8" stroke-width="3"/>
+              <line x1="505" y1="313" x2="585" y2="372" stroke="#94a3b8" stroke-width="3"/>
+              <line x1="395" y1="313" x2="315" y2="372" stroke="#94a3b8" stroke-width="3"/>
+              <line x1="370" y1="220" x2="238" y2="185" stroke="#94a3b8" stroke-width="3"/>
+            </g>
+          </svg>
+        </div>
+        <div class="grid-3">
+          <div class="mini-card"><h4>Volume</h4><p>Massive amount of data, such as TBs or PBs of logs, transactions, or videos.</p></div>
+          <div class="mini-card"><h4>Velocity</h4><p>Speed at which data is produced and must be processed, such as real-time payments.</p></div>
+          <div class="mini-card"><h4>Variety</h4><p>Different formats like tables, JSON, images, videos, sensor data, and logs.</p></div>
+          <div class="mini-card"><h4>Veracity</h4><p>Trustworthiness and quality of data. Dirty or duplicate data reduces confidence.</p></div>
+          <div class="mini-card"><h4>Value</h4><p>Business benefit produced from data, such as fraud detection or customer insights.</p></div>
+          <div class="mini-card"><h4>Extra Vs</h4><p>Some discussions also include Variability, Visualization, and Validity.</p></div>
+        </div>
+      </section>
+
+      <section class="card" id="s7" ondblclick="openNote('s7')">
+        <h2>7. Hadoop Ecosystem</h2>
+        <p>Hadoop is not only one tool. It became an ecosystem of storage, processing, querying, workflow, and ingestion components.</p>
+        <div class="diagram">
+          <svg width="980" height="450" viewBox="0 0 980 450" role="img" aria-label="Hadoop ecosystem diagram">
+            <rect x="70" y="340" width="840" height="70" rx="18" fill="#0d6efd"/><text x="420" y="383" fill="white" font-size="24" font-weight="700">HDFS Storage Layer</text>
+            <rect x="110" y="230" width="170" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="145" y="272" font-size="18" font-weight="700">MapReduce</text>
+            <rect x="310" y="230" width="170" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="365" y="272" font-size="18" font-weight="700">YARN</text>
+            <rect x="510" y="230" width="170" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="565" y="272" font-size="18" font-weight="700">Spark</text>
+            <rect x="710" y="230" width="170" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="755" y="272" font-size="18" font-weight="700">Tez</text>
+            <rect x="110" y="120" width="170" height="70" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="165" y="162" font-size="18" font-weight="700">Hive</text>
+            <rect x="310" y="120" width="170" height="70" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="363" y="162" font-size="18" font-weight="700">Pig</text>
+            <rect x="510" y="120" width="170" height="70" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="558" y="162" font-size="18" font-weight="700">HBase</text>
+            <rect x="710" y="120" width="170" height="70" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="742" y="162" font-size="18" font-weight="700">Sqoop/Flume</text>
+            <rect x="230" y="25" width="230" height="60" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="282" y="62" font-size="18" font-weight="700">Oozie Workflow</text>
+            <rect x="520" y="25" width="230" height="60" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="575" y="62" font-size="18" font-weight="700">ZooKeeper</text>
+          </svg>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Component</th><th>Purpose</th><th>Simple Explanation</th></tr></thead>
+            <tbody>
+              <tr><td>HDFS</td><td>Storage</td><td>Stores big files across machines.</td></tr>
+              <tr><td>MapReduce</td><td>Batch processing</td><td>Processes large data in parallel using map and reduce tasks.</td></tr>
+              <tr><td>Hive</td><td>SQL on Hadoop</td><td>Allows users to write SQL-like queries on HDFS data.</td></tr>
+              <tr><td>Pig</td><td>Data flow scripting</td><td>Used for writing data transformation scripts.</td></tr>
+              <tr><td>HBase</td><td>NoSQL database</td><td>Column-family database on top of HDFS.</td></tr>
+              <tr><td>Sqoop</td><td>Data transfer</td><td>Transfers data between RDBMS and Hadoop.</td></tr>
+              <tr><td>Flume</td><td>Log ingestion</td><td>Collects and moves log data into Hadoop.</td></tr>
+              <tr><td>Oozie</td><td>Workflow scheduler</td><td>Schedules Hadoop jobs and workflows.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="warning"><strong>Important:</strong> Hadoop 1.x mainly used MapReduce for both resource management and processing. Hadoop 2.x introduced YARN to separate resource management from processing.</div>
+      </section>
+
+      <section class="card" id="s8" ondblclick="openNote('s8')">
+        <h2>8. Hadoop 1.x Architecture</h2>
+        <p>Hadoop 1.x architecture has two major parts: <strong>HDFS</strong> for storage and <strong>MapReduce v1</strong> for processing. It follows master-slave architecture.</p>
+        <div class="diagram">
+          <svg width="1080" height="620" viewBox="0 0 1080 620" role="img" aria-label="Hadoop 1.x architecture">
+            <rect x="40" y="30" width="1000" height="560" rx="22" fill="#fbfdff" stroke="#cbd5e1" stroke-width="2"/>
+            <text x="410" y="68" font-size="28" font-weight="800" fill="#0b3c7a">Hadoop 1.x Architecture</text>
+            <rect x="90" y="110" width="390" height="190" rx="18" fill="#eff6ff" stroke="#0d6efd" stroke-width="2"/>
+            <text x="210" y="145" font-size="24" font-weight="800" fill="#0756c6">HDFS Layer</text>
+            <rect x="125" y="175" width="140" height="65" rx="12" fill="#ffffff" stroke="#0d6efd"/><text x="157" y="213" font-size="17" font-weight="700">NameNode</text>
+            <rect x="305" y="175" width="140" height="65" rx="12" fill="#ffffff" stroke="#0d6efd"/><text x="317" y="205" font-size="16" font-weight="700">Secondary</text><text x="336" y="226" font-size="16" font-weight="700">NameNode</text>
+            <text x="130" y="270" font-size="14">Metadata, namespace, block locations</text>
+            <rect x="600" y="110" width="390" height="190" rx="18" fill="#f5f3ff" stroke="#673ab7" stroke-width="2"/>
+            <text x="705" y="145" font-size="24" font-weight="800" fill="#553c9a">MapReduce v1 Layer</text>
+            <rect x="635" y="175" width="140" height="65" rx="12" fill="#ffffff" stroke="#673ab7"/><text x="664" y="213" font-size="17" font-weight="700">JobTracker</text>
+            <rect x="815" y="175" width="140" height="65" rx="12" fill="#ffffff" stroke="#673ab7"/><text x="842" y="213" font-size="17" font-weight="700">TaskTracker</text>
+            <text x="635" y="270" font-size="14">Job scheduling, task assignment, monitoring</text>
+            <rect x="100" y="365" width="250" height="150" rx="18" fill="#ecfdf5" stroke="#118a4a" stroke-width="2"/>
+            <text x="150" y="400" font-size="20" font-weight="800" fill="#0f766e">DataNode 1</text><rect x="130" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="145" y="448" font-size="14">B1</text><rect x="205" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="220" y="448" font-size="14">B2</text><text x="130" y="488" font-size="14">TaskTracker runs here</text>
+            <rect x="415" y="365" width="250" height="150" rx="18" fill="#ecfdf5" stroke="#118a4a" stroke-width="2"/>
+            <text x="465" y="400" font-size="20" font-weight="800" fill="#0f766e">DataNode 2</text><rect x="445" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="460" y="448" font-size="14">B1</text><rect x="520" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="535" y="448" font-size="14">B3</text><text x="445" y="488" font-size="14">TaskTracker runs here</text>
+            <rect x="730" y="365" width="250" height="150" rx="18" fill="#ecfdf5" stroke="#118a4a" stroke-width="2"/>
+            <text x="780" y="400" font-size="20" font-weight="800" fill="#0f766e">DataNode 3</text><rect x="760" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="775" y="448" font-size="14">B2</text><rect x="835" y="425" width="60" height="35" rx="8" fill="#fff" stroke="#118a4a"/><text x="850" y="448" font-size="14">B3</text><text x="760" y="488" font-size="14">TaskTracker runs here</text>
+            <path d="M285 300 L225 365" stroke="#0d6efd" stroke-width="3" marker-end="url(#arrow3)"/><path d="M285 300 L540 365" stroke="#0d6efd" stroke-width="3" marker-end="url(#arrow3)"/><path d="M285 300 L855 365" stroke="#0d6efd" stroke-width="3" marker-end="url(#arrow3)"/>
+            <path d="M795 300 L225 365" stroke="#673ab7" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#arrow4)"/><path d="M795 300 L540 365" stroke="#673ab7" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#arrow4)"/><path d="M795 300 L855 365" stroke="#673ab7" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#arrow4)"/>
+            <defs><marker id="arrow3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker><marker id="arrow4" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#673ab7"/></marker></defs>
+          </svg>
+        </div>
+        <h3>Main Components</h3>
+        <div class="grid-2">
+          <div class="mini-card"><h4>NameNode</h4><p>Master of HDFS. Stores metadata such as file names, permissions, block IDs, and block locations. It does not store actual file data.</p></div>
+          <div class="mini-card"><h4>DataNode</h4><p>Slave node of HDFS. Stores actual data blocks and sends heartbeat and block reports to the NameNode.</p></div>
+          <div class="mini-card"><h4>Secondary NameNode</h4><p>Helps with checkpointing by merging fsimage and edit logs. It is not a hot standby for NameNode.</p></div>
+          <div class="mini-card"><h4>JobTracker</h4><p>Master of MapReduce v1. Accepts jobs, splits them into tasks, schedules tasks on TaskTrackers, and monitors progress.</p></div>
+          <div class="mini-card"><h4>TaskTracker</h4><p>Slave process that runs map and reduce tasks on worker nodes and reports status to JobTracker.</p></div>
+          <div class="mini-card"><h4>Client</h4><p>Submits data read/write requests to HDFS and submits MapReduce jobs to JobTracker.</p></div>
+        </div>
+      </section>
+
+      <section class="card" id="s9" ondblclick="openNote('s9')">
+        <h2>9. HDFS Architecture</h2>
+        <p>HDFS stores a large file by dividing it into blocks. Each block is replicated across different DataNodes to provide fault tolerance.</p>
+        <div class="flow-row">
+          <div class="node">Large File</div><div class="arrow">→</div><div class="node">Blocks</div><div class="arrow">→</div><div class="node">Replicas</div><div class="arrow">→</div><div class="node">DataNodes</div><div class="arrow">→</div><div class="node">Fault Tolerance</div>
+        </div>
+        <h3>How Write Works in HDFS</h3>
+        <ol>
+          <li>Client asks NameNode for permission to write a file.</li>
+          <li>NameNode checks metadata and returns target DataNodes.</li>
+          <li>Client splits the file into blocks.</li>
+          <li>Blocks are written to DataNodes using a replication pipeline.</li>
+          <li>DataNodes send acknowledgements.</li>
+          <li>NameNode updates metadata.</li>
+        </ol>
+        <div class="diagram">
+          <svg width="920" height="360" viewBox="0 0 920 360" role="img" aria-label="HDFS block replication diagram">
+            <rect x="40" y="40" width="150" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="85" y="83" font-size="18" font-weight="700">Client</text>
+            <rect x="385" y="40" width="170" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="425" y="83" font-size="18" font-weight="700">NameNode</text>
+            <path d="M190 75 L385 75" stroke="#0d6efd" stroke-width="3" marker-end="url(#hdfsArr)"/><text x="230" y="62" font-size="13">metadata request</text>
+            <path d="M385 95 L190 95" stroke="#0d6efd" stroke-width="3" marker-end="url(#hdfsArr)"/><text x="238" y="120" font-size="13">target nodes</text>
+            <rect x="80" y="230" width="180" height="80" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="122" y="275" font-size="18" font-weight="700">DataNode 1</text>
+            <rect x="370" y="230" width="180" height="80" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="412" y="275" font-size="18" font-weight="700">DataNode 2</text>
+            <rect x="660" y="230" width="180" height="80" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="702" y="275" font-size="18" font-weight="700">DataNode 3</text>
+            <path d="M115 110 L160 230" stroke="#118a4a" stroke-width="3" marker-end="url(#hdfsArr2)"/><text x="120" y="170" font-size="13">Block A</text>
+            <path d="M260 270 L370 270" stroke="#118a4a" stroke-width="3" marker-end="url(#hdfsArr2)"/><text x="290" y="255" font-size="13">Replica</text>
+            <path d="M550 270 L660 270" stroke="#118a4a" stroke-width="3" marker-end="url(#hdfsArr2)"/><text x="580" y="255" font-size="13">Replica</text>
+            <defs><marker id="hdfsArr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker><marker id="hdfsArr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#118a4a"/></marker></defs>
+          </svg>
+        </div>
+        <h3>Important HDFS Terms</h3>
+        <ul>
+          <li><strong>Block:</strong> A large file is divided into fixed-size chunks called blocks.</li>
+          <li><strong>Replication factor:</strong> Number of copies of each block. Common default in classic Hadoop setups is 3.</li>
+          <li><strong>Heartbeat:</strong> DataNode sends regular signals to NameNode to say it is alive.</li>
+          <li><strong>Block report:</strong> DataNode reports which blocks it stores.</li>
+          <li><strong>Rack awareness:</strong> Hadoop tries to place replicas across racks to reduce failure risk.</li>
+        </ul>
+      </section>
+
+      <section class="card" id="s10" ondblclick="openNote('s10')">
+        <h2>10. MapReduce Architecture</h2>
+        <p>MapReduce is a batch processing model. It divides a large job into smaller tasks and runs them across multiple machines.</p>
+        <div class="diagram">
+          <svg width="980" height="420" viewBox="0 0 980 420" role="img" aria-label="MapReduce flow diagram">
+            <rect x="50" y="60" width="130" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="75" y="102" font-size="18" font-weight="700">Input Data</text>
+            <rect x="250" y="40" width="130" height="60" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="288" y="77" font-size="17" font-weight="700">Mapper 1</text>
+            <rect x="250" y="130" width="130" height="60" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="288" y="167" font-size="17" font-weight="700">Mapper 2</text>
+            <rect x="250" y="220" width="130" height="60" rx="14" fill="#f5f3ff" stroke="#673ab7"/><text x="288" y="257" font-size="17" font-weight="700">Mapper 3</text>
+            <rect x="460" y="120" width="150" height="80" rx="14" fill="#fff7ed" stroke="#f59e0b"/><text x="488" y="154" font-size="18" font-weight="700">Shuffle &</text><text x="502" y="180" font-size="18" font-weight="700">Sort</text>
+            <rect x="690" y="70" width="130" height="60" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="724" y="107" font-size="17" font-weight="700">Reducer 1</text>
+            <rect x="690" y="190" width="130" height="60" rx="14" fill="#ecfdf5" stroke="#118a4a"/><text x="724" y="227" font-size="17" font-weight="700">Reducer 2</text>
+            <rect x="850" y="130" width="100" height="70" rx="14" fill="#eff6ff" stroke="#0d6efd"/><text x="875" y="172" font-size="18" font-weight="700">Output</text>
+            <path d="M180 95 L250 70" stroke="#0d6efd" stroke-width="3" marker-end="url(#mrArr)"/><path d="M180 95 L250 160" stroke="#0d6efd" stroke-width="3" marker-end="url(#mrArr)"/><path d="M180 95 L250 250" stroke="#0d6efd" stroke-width="3" marker-end="url(#mrArr)"/>
+            <path d="M380 70 L460 140" stroke="#673ab7" stroke-width="3" marker-end="url(#mrArr2)"/><path d="M380 160 L460 160" stroke="#673ab7" stroke-width="3" marker-end="url(#mrArr2)"/><path d="M380 250 L460 180" stroke="#673ab7" stroke-width="3" marker-end="url(#mrArr2)"/>
+            <path d="M610 150 L690 100" stroke="#118a4a" stroke-width="3" marker-end="url(#mrArr3)"/><path d="M610 170 L690 220" stroke="#118a4a" stroke-width="3" marker-end="url(#mrArr3)"/>
+            <path d="M820 100 L850 145" stroke="#0d6efd" stroke-width="3" marker-end="url(#mrArr)"/><path d="M820 220 L850 185" stroke="#0d6efd" stroke-width="3" marker-end="url(#mrArr)"/>
+            <defs><marker id="mrArr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker><marker id="mrArr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#673ab7"/></marker><marker id="mrArr3" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#118a4a"/></marker></defs>
+          </svg>
+        </div>
+        <h3>MapReduce Word Count Example</h3>
+        <p>Suppose we want to count words from millions of log lines.</p>
+        <div class="code"><span class="c">Input</span>
+hello hadoop
+hello big data
+
+<span class="c">Mapper Output</span>
+(hello, 1), (hadoop, 1), (hello, 1), (big, 1), (data, 1)
+
+<span class="c">Shuffle and Sort</span>
+hello -> [1, 1]
+hadoop -> [1]
+big -> [1]
+data -> [1]
+
+<span class="c">Reducer Output</span>
+hello -> 2
+hadoop -> 1
+big -> 1
+data -> 1</div>
+        <h3>Hadoop 1.x MapReduce Components</h3>
+        <ul>
+          <li><strong>JobTracker:</strong> One master process. Receives job request, creates tasks, schedules tasks, and monitors them.</li>
+          <li><strong>TaskTracker:</strong> Runs on worker nodes. Executes map/reduce task slots.</li>
+          <li><strong>Data locality:</strong> Hadoop tries to run processing near the data blocks to reduce network transfer.</li>
+        </ul>
+        <div class="warning"><strong>Limitation of Hadoop 1.x:</strong> JobTracker handled both resource management and job scheduling. This became a scalability bottleneck, which led to YARN in Hadoop 2.x.</div>
+      </section>
+
+      <section class="card" id="s11" ondblclick="openNote('s11')">
+        <h2>11. Batch vs Streaming Data</h2>
+        <p>Batch processing handles data in groups at scheduled intervals. Streaming processing handles data continuously as it arrives.</p>
+        <div class="diagram">
+          <svg width="1000" height="420" viewBox="0 0 1000 420" role="img" aria-label="Batch versus streaming diagram">
+            <rect x="50" y="50" width="400" height="310" rx="20" fill="#eff6ff" stroke="#0d6efd" stroke-width="2"/>
+            <text x="165" y="90" font-size="24" font-weight="800" fill="#0756c6">Batch Data</text>
+            <rect x="95" y="125" width="90" height="50" rx="12" fill="#fff" stroke="#0d6efd"/><text x="112" y="156" font-size="14">Data 1</text>
+            <rect x="205" y="125" width="90" height="50" rx="12" fill="#fff" stroke="#0d6efd"/><text x="222" y="156" font-size="14">Data 2</text>
+            <rect x="315" y="125" width="90" height="50" rx="12" fill="#fff" stroke="#0d6efd"/><text x="332" y="156" font-size="14">Data 3</text>
+            <path d="M250 185 L250 235" stroke="#0d6efd" stroke-width="3" marker-end="url(#bsArr)"/><rect x="145" y="235" width="210" height="55" rx="14" fill="#fff" stroke="#0d6efd"/><text x="175" y="269" font-size="16" font-weight="700">Process at schedule</text>
+            <text x="100" y="325" font-size="15">Example: Nightly sales report</text>
+            <rect x="550" y="50" width="400" height="310" rx="20" fill="#ecfdf5" stroke="#118a4a" stroke-width="2"/>
+            <text x="655" y="90" font-size="24" font-weight="800" fill="#0f766e">Streaming Data</text>
+            <circle cx="625" cy="150" r="20" fill="#fff" stroke="#118a4a"/><circle cx="690" cy="150" r="20" fill="#fff" stroke="#118a4a"/><circle cx="755" cy="150" r="20" fill="#fff" stroke="#118a4a"/><circle cx="820" cy="150" r="20" fill="#fff" stroke="#118a4a"/>
+            <path d="M645 150 L670 150" stroke="#118a4a" stroke-width="3" marker-end="url(#bsArr2)"/><path d="M710 150 L735 150" stroke="#118a4a" stroke-width="3" marker-end="url(#bsArr2)"/><path d="M775 150 L800 150" stroke="#118a4a" stroke-width="3" marker-end="url(#bsArr2)"/>
+            <path d="M725 185 L725 235" stroke="#118a4a" stroke-width="3" marker-end="url(#bsArr2)"/><rect x="620" y="235" width="210" height="55" rx="14" fill="#fff" stroke="#118a4a"/><text x="655" y="269" font-size="16" font-weight="700">Process instantly</text>
+            <text x="600" y="325" font-size="15">Example: Fraud alert or live cab tracking</text>
+            <defs><marker id="bsArr" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#0d6efd"/></marker><marker id="bsArr2" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#118a4a"/></marker></defs>
+          </svg>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Point</th><th>Batch Data</th><th>Streaming Data</th></tr></thead>
+            <tbody>
+              <tr><td>Processing style</td><td>Data collected first, processed later.</td><td>Data processed continuously as it arrives.</td></tr>
+              <tr><td>Latency</td><td>Minutes, hours, or days.</td><td>Milliseconds to seconds.</td></tr>
+              <tr><td>Example</td><td>Monthly billing, daily sales report.</td><td>Live fraud detection, stock prices, cab tracking.</td></tr>
+              <tr><td>Classic Hadoop fit</td><td>Very suitable because Hadoop MapReduce is batch-oriented.</td><td>Not suitable in Hadoop 1.x alone; needs tools like Kafka, Spark Streaming, or Flink.</td></tr>
+              <tr><td>Cost</td><td>Usually simpler and cheaper.</td><td>More complex because systems must run continuously.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card" id="s12" ondblclick="openNote('s12')">
+        <h2>12. Interview Q&A + Best Practices</h2>
+        <h3>Best Practices for Learning Hadoop</h3>
+        <ul>
+          <li>Always explain Hadoop as two core ideas first: distributed storage and distributed processing.</li>
+          <li>Clearly say Hadoop 1.x uses HDFS and MapReduce v1.</li>
+          <li>Do not say Secondary NameNode is a backup NameNode. It is mainly used for checkpointing.</li>
+          <li>Use examples: log analysis, clickstream analysis, telecom call data, and retail sales analysis.</li>
+          <li>For architecture questions, draw master and slave nodes before explaining.</li>
+        </ul>
+        <h3>15+ Interview Questions and Answers</h3>
+        <div class="faq">
+          <details open><summary>1. What is Hadoop?</summary><p>Hadoop is an open-source distributed framework used to store and process huge datasets across multiple machines using HDFS and MapReduce.</p></details>
+          <details><summary>2. What are the two main components of Hadoop 1.x?</summary><p>HDFS for distributed storage and MapReduce v1 for distributed batch processing.</p></details>
+          <details><summary>3. What is HDFS?</summary><p>HDFS stands for Hadoop Distributed File System. It stores large files by splitting them into blocks and distributing them across DataNodes.</p></details>
+          <details><summary>4. What is NameNode?</summary><p>NameNode is the master of HDFS. It stores metadata such as file names, directories, block IDs, and block locations.</p></details>
+          <details><summary>5. Does NameNode store actual data?</summary><p>No. NameNode stores metadata. Actual file blocks are stored in DataNodes.</p></details>
+          <details><summary>6. What is DataNode?</summary><p>DataNode is a worker node in HDFS that stores actual data blocks and sends heartbeat signals to NameNode.</p></details>
+          <details><summary>7. What is Secondary NameNode?</summary><p>Secondary NameNode performs checkpointing by merging fsimage and edit logs. It is not a real-time backup NameNode.</p></details>
+          <details><summary>8. What is block in HDFS?</summary><p>A block is a fixed-size chunk of a large file stored in HDFS.</p></details>
+          <details><summary>9. Why does HDFS use replication?</summary><p>Replication provides fault tolerance. If one DataNode fails, another replica can be used.</p></details>
+          <details><summary>10. What is MapReduce?</summary><p>MapReduce is a distributed batch processing model with two main phases: map and reduce.</p></details>
+          <details><summary>11. What is JobTracker?</summary><p>JobTracker is the master process in Hadoop 1.x MapReduce. It accepts jobs, schedules tasks, and monitors execution.</p></details>
+          <details><summary>12. What is TaskTracker?</summary><p>TaskTracker is the worker process that runs map and reduce tasks assigned by JobTracker.</p></details>
+          <details><summary>13. What is data locality?</summary><p>Data locality means moving computation close to the data instead of moving large data over the network.</p></details>
+          <details><summary>14. What is the difference between batch and streaming?</summary><p>Batch processes collected data at intervals. Streaming processes data continuously as it arrives.</p></details>
+          <details><summary>15. Is Hadoop 1.x suitable for real-time streaming?</summary><p>No. Hadoop 1.x MapReduce is mainly batch-oriented. Streaming requires tools like Kafka, Spark Streaming, or Flink.</p></details>
+          <details><summary>16. What is the limitation of Hadoop 1.x?</summary><p>JobTracker is a single point of bottleneck for resource management and job scheduling. Hadoop 2.x solved this using YARN.</p></details>
+          <details><summary>17. What are the types of data in Big Data?</summary><p>Structured, semi-structured, and unstructured data.</p></details>
+          <details><summary>18. What are the 5Vs of Big Data?</summary><p>Volume, Velocity, Variety, Veracity, and Value.</p></details>
+        </div>
+      </section>
+
+      <section class="card" id="s13" ondblclick="openNote('s13')">
+        <h2>13. Quiz, Timed Exam & Preparation Tracker</h2>
+        <h3>Preparation Checklist</h3>
+        <div class="checklist" id="checklist">
+          <label><input type="checkbox" data-track="1"> I can define Hadoop in simple and technical terms.</label>
+          <label><input type="checkbox" data-track="2"> I can explain Big Data evolution using a timeline.</label>
+          <label><input type="checkbox" data-track="3"> I can differentiate structured, semi-structured, and unstructured data.</label>
+          <label><input type="checkbox" data-track="4"> I can explain the 5Vs of Big Data with examples.</label>
+          <label><input type="checkbox" data-track="5"> I can draw Hadoop 1.x architecture.</label>
+          <label><input type="checkbox" data-track="6"> I can explain NameNode, DataNode, and Secondary NameNode.</label>
+          <label><input type="checkbox" data-track="7"> I can explain JobTracker and TaskTracker.</label>
+          <label><input type="checkbox" data-track="8"> I can compare batch and streaming data.</label>
+        </div>
+
+        <h3>Practice MCQ Quiz</h3>
+        <form id="practiceQuiz">
+          <div class="quiz-q"><p>1. Hadoop is mainly used for:</p><label><input type="radio" name="p1" value="a"> Small UI design</label><label><input type="radio" name="p1" value="b"> Distributed storage and processing of big data</label><label><input type="radio" name="p1" value="c"> Antivirus scanning</label></div>
+          <div class="quiz-q"><p>2. Which component stores actual data blocks?</p><label><input type="radio" name="p2" value="a"> NameNode</label><label><input type="radio" name="p2" value="b"> DataNode</label><label><input type="radio" name="p2" value="c"> JobTracker</label></div>
+          <div class="quiz-q"><p>3. Secondary NameNode is mainly used for:</p><label><input type="radio" name="p3" value="a"> Checkpointing</label><label><input type="radio" name="p3" value="b"> Real-time backup</label><label><input type="radio" name="p3" value="c"> Running reducers only</label></div>
+          <div class="quiz-q"><p>4. MapReduce is best described as:</p><label><input type="radio" name="p4" value="a"> Batch processing model</label><label><input type="radio" name="p4" value="b"> Mobile app framework</label><label><input type="radio" name="p4" value="c"> Image editing tool</label></div>
+          <div class="quiz-q"><p>5. JSON data is commonly considered:</p><label><input type="radio" name="p5" value="a"> Structured</label><label><input type="radio" name="p5" value="b"> Semi-structured</label><label><input type="radio" name="p5" value="c"> Pure binary data only</label></div>
+          <button type="button" class="btn" onclick="gradePractice()">Submit Practice Quiz</button>
+          <div id="practiceResult" class="result"></div>
+        </form>
+
+        <h3>Formal Timed Exam</h3>
+        <p class="small">Timer: <strong id="timer">10:00</strong>. Click Start Exam to begin.</p>
+        <button class="btn" onclick="startExam()" type="button">Start Exam</button>
+        <form id="examQuiz" style="display:none;margin-top:16px">
+          <div class="quiz-q"><p>1. Which Hadoop 1.x component schedules MapReduce tasks?</p><label><input type="radio" name="e1" value="a"> JobTracker</label><label><input type="radio" name="e1" value="b"> NameNode</label><label><input type="radio" name="e1" value="c"> DataNode</label><label><input type="radio" name="e1" value="d"> Secondary NameNode</label></div>
+          <div class="quiz-q"><p>2. Which Big Data characteristic refers to speed of data generation?</p><label><input type="radio" name="e2" value="a"> Volume</label><label><input type="radio" name="e2" value="b"> Velocity</label><label><input type="radio" name="e2" value="c"> Variety</label><label><input type="radio" name="e2" value="d"> Veracity</label></div>
+          <div class="quiz-q"><p>3. Which statement is correct?</p><label><input type="radio" name="e3" value="a"> HDFS stores only small files efficiently</label><label><input type="radio" name="e3" value="b"> NameNode stores actual file content</label><label><input type="radio" name="e3" value="c"> HDFS splits files into blocks</label><label><input type="radio" name="e3" value="d"> TaskTracker stores metadata</label></div>
+          <div class="quiz-q"><p>4. Which data type has fixed rows and columns?</p><label><input type="radio" name="e4" value="a"> Structured</label><label><input type="radio" name="e4" value="b"> Unstructured</label><label><input type="radio" name="e4" value="c"> Video-only data</label><label><input type="radio" name="e4" value="d"> Sensor-only data</label></div>
+          <div class="quiz-q"><p>5. Hadoop 1.x MapReduce limitation is mainly because:</p><label><input type="radio" name="e5" value="a"> It has no files</label><label><input type="radio" name="e5" value="b"> JobTracker handles too many responsibilities</label><label><input type="radio" name="e5" value="c"> DataNode cannot store blocks</label><label><input type="radio" name="e5" value="d"> It supports only images</label></div>
+          <div class="quiz-q"><p>6. Which processing style is best for nightly reports?</p><label><input type="radio" name="e6" value="a"> Batch</label><label><input type="radio" name="e6" value="b"> Live stream only</label><label><input type="radio" name="e6" value="c"> Manual copy</label><label><input type="radio" name="e6" value="d"> None</label></div>
+          <div class="quiz-q"><p>7. Which tool is commonly used for SQL-like querying on Hadoop?</p><label><input type="radio" name="e7" value="a"> Hive</label><label><input type="radio" name="e7" value="b"> Photoshop</label><label><input type="radio" name="e7" value="c"> Excel only</label><label><input type="radio" name="e7" value="d"> Git</label></div>
+          <div class="quiz-q"><p>8. Which of the following is unstructured data?</p><label><input type="radio" name="e8" value="a"> SQL table</label><label><input type="radio" name="e8" value="b"> Employee ID column</label><label><input type="radio" name="e8" value="c"> Video file</label><label><input type="radio" name="e8" value="d"> Primary key</label></div>
+          <div class="quiz-q"><p>9. What is data locality?</p><label><input type="radio" name="e9" value="a"> Moving data to one central server</label><label><input type="radio" name="e9" value="b"> Processing near the data location</label><label><input type="radio" name="e9" value="c"> Deleting replicas</label><label><input type="radio" name="e9" value="d"> Running only reducers</label></div>
+          <div class="quiz-q"><p>10. Which component sends heartbeat to NameNode?</p><label><input type="radio" name="e10" value="a"> DataNode</label><label><input type="radio" name="e10" value="b"> Client browser</label><label><input type="radio" name="e10" value="c"> Reducer only</label><label><input type="radio" name="e10" value="d"> Hive table</label></div>
+          <button type="button" class="btn" onclick="gradeExam()">Submit Final Exam</button>
+          <div id="examResult" class="result"></div>
+        </form>
+        <div class="print-note"><p><strong>Note:</strong> Interactive quizzes work in the browser version of this HTML file.</p></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="floating-note" id="noteBox">
+    <h3 style="margin-top:0">📝 My Note</h3>
+    <p class="small" id="noteTitle">Section note</p>
+    <textarea id="noteText" placeholder="Write your personal note here..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
+      <button class="btn alt" style="background:#eef5ff;color:#0d4fbb" onclick="closeNote()">Close</button>
+      <button class="btn" onclick="saveNote()">Save Note</button>
+    </div>
+  </div>
+  <div class="toast" id="toast">Saved</div>
+
+  <script>
+    const store = {
+      get(k, fallback){ try { return JSON.parse(localStorage.getItem(k)) ?? fallback; } catch(e){ return fallback; } },
+      set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){ window.__fallbackStore = window.__fallbackStore || {}; window.__fallbackStore[k]=v; } }
+    };
+    let currentNoteSection = null;
+    function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',1600); }
+    function openNote(id){ currentNoteSection=id; document.getElementById('noteTitle').textContent='Note for '+id.toUpperCase(); const notes=store.get('hadoopTutNotes',{}); document.getElementById('noteText').value=notes[id]||''; document.getElementById('noteBox').style.display='block'; }
+    function closeNote(){ document.getElementById('noteBox').style.display='none'; }
+    function saveNote(){ const notes=store.get('hadoopTutNotes',{}); notes[currentNoteSection]=document.getElementById('noteText').value; store.set('hadoopTutNotes',notes); showToast('Note saved'); closeNote(); }
+    function updateProgress(){ const boxes=[...document.querySelectorAll('[data-track]')]; const done=boxes.filter(b=>b.checked).length; const pct=boxes.length?Math.round(done/boxes.length*100):0; document.getElementById('progressBar').style.width=pct+'%'; document.getElementById('progressText').textContent=pct+'%'; const values={}; boxes.forEach(b=>values[b.dataset.track]=b.checked); store.set('hadoopTutProgress',values); }
+    function loadProgress(){ const values=store.get('hadoopTutProgress',{}); document.querySelectorAll('[data-track]').forEach(b=>{ b.checked=!!values[b.dataset.track]; b.addEventListener('change', updateProgress); }); updateProgress(); }
+    function resetProgress(){ if(confirm('Reset checklist, quiz results, and notes?')){ localStorage.removeItem('hadoopTutProgress'); localStorage.removeItem('hadoopTutNotes'); location.reload(); } }
+    function setResult(el, score, total){ const pct=Math.round(score/total*100); el.style.display='block'; el.className='result '+(pct>=80?'good':pct>=50?'mid':'low'); let mood=pct>=80?'Excellent! You are interview-ready. 🎉':pct>=50?'Good start. Revise architecture diagrams once more. 🙂':'Revise basics and retry. Focus on HDFS and MapReduce. 💪'; el.innerHTML=`Score: ${score}/${total} (${pct}%). ${mood}`; }
+    function gradePractice(){ const ans={p1:'b',p2:'b',p3:'a',p4:'a',p5:'b'}; let score=0; Object.keys(ans).forEach(k=>{ const v=document.querySelector(`input[name="${k}"]:checked`); if(v&&v.value===ans[k]) score++; }); setResult(document.getElementById('practiceResult'),score,5); }
+    let seconds=600, timerHandle=null, started=false;
+    function startExam(){ if(started) return; started=true; document.getElementById('examQuiz').style.display='block'; timerHandle=setInterval(()=>{ seconds--; const m=String(Math.floor(seconds/60)).padStart(2,'0'); const s=String(seconds%60).padStart(2,'0'); document.getElementById('timer').textContent=`${m}:${s}`; if(seconds<=0){ clearInterval(timerHandle); gradeExam(); showToast('Time is over. Exam submitted.'); } },1000); }
+    function gradeExam(){ const ans={e1:'a',e2:'b',e3:'c',e4:'a',e5:'b',e6:'a',e7:'a',e8:'c',e9:'b',e10:'a'}; let score=0; Object.keys(ans).forEach(k=>{ const v=document.querySelector(`input[name="${k}"]:checked`); if(v&&v.value===ans[k]) score++; }); setResult(document.getElementById('examResult'),score,10); if(timerHandle) clearInterval(timerHandle); }
+    document.addEventListener('mousemove', e=>{ if(Math.random()>0.78){ const sp=document.createElement('span'); sp.className='spark'; sp.style.left=e.clientX+'px'; sp.style.top=e.clientY+'px'; document.body.appendChild(sp); setTimeout(()=>sp.remove(),700); } });
+    const sections=[...document.querySelectorAll('section.card')]; const nav=[...document.querySelectorAll('.sidebar a')]; const io=new IntersectionObserver(entries=>{ entries.forEach(entry=>{ if(entry.isIntersecting){ nav.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+entry.target.id)); } }); },{rootMargin:'-40% 0px -55% 0px',threshold:0}); sections.forEach(s=>io.observe(s));
+    loadProgress();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Python Pandas Tutorial - Classroom Training Notes</title>
+<style>
+:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#64748b;
+  --primary:#2563eb;
+  --primary-dark:#1d4ed8;
+  --accent:#10b981;
+  --warn:#f59e0b;
+  --danger:#ef4444;
+  --line:#e5e7eb;
+  --code:#0f172a;
+  --codeText:#e5e7eb;
+  --soft:#eff6ff;
+  --shadow:0 10px 25px rgba(15,23,42,.08);
+}
+[data-theme="dark"]{
+  --bg:#0b1220;
+  --card:#111827;
+  --text:#e5e7eb;
+  --muted:#94a3b8;
+  --primary:#60a5fa;
+  --primary-dark:#3b82f6;
+  --accent:#34d399;
+  --warn:#fbbf24;
+  --danger:#f87171;
+  --line:#253244;
+  --code:#020617;
+  --codeText:#e2e8f0;
+  --soft:#0f1b2f;
+  --shadow:0 10px 25px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.6;
+}
+.header{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:linear-gradient(135deg,var(--primary),#7c3aed);
+  color:white;
+  padding:18px 22px;
+  box-shadow:var(--shadow);
+}
+.header-inner{display:flex;align-items:center;justify-content:space-between;gap:16px;max-width:1240px;margin:auto}
+.brand h1{font-size:24px;margin:0 0 4px 0;letter-spacing:.2px}
+.brand p{margin:0;opacity:.92;font-size:14px}
+.header-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{
+  border:0;
+  border-radius:12px;
+  padding:10px 14px;
+  cursor:pointer;
+  background:var(--primary);
+  color:white;
+  font-weight:700;
+  transition:.2s;
+  box-shadow:0 5px 14px rgba(37,99,235,.25);
+}
+.header .btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35)}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.btn.secondary{background:var(--accent)}
+.btn.warning{background:var(--warn);color:#111827}
+.btn.danger{background:var(--danger)}
+.layout{display:grid;grid-template-columns:300px 1fr;gap:22px;max-width:1240px;margin:22px auto;padding:0 18px}
+.sidebar{
+  position:sticky;
+  top:92px;
+  height:calc(100vh - 112px);
+  overflow:auto;
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+.progress-box{background:var(--soft);border:1px solid var(--line);padding:12px;border-radius:16px;margin-bottom:14px}
+.progress-title{font-weight:800;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}
+.progress-track{height:12px;background:rgba(148,163,184,.22);border-radius:99px;overflow:hidden}
+.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--primary));transition:.3s}
+.nav a{
+  display:block;
+  text-decoration:none;
+  color:var(--text);
+  padding:9px 10px;
+  border-radius:10px;
+  font-size:14px;
+  border:1px solid transparent;
+}
+.nav a:hover,.nav a.active{background:var(--soft);border-color:var(--line);color:var(--primary);font-weight:700}
+.main{min-width:0}
+.hero{
+  background:linear-gradient(135deg,rgba(37,99,235,.12),rgba(16,185,129,.12));
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:24px;
+  box-shadow:var(--shadow);
+  margin-bottom:18px;
+}
+.hero h2{font-size:34px;margin:0 0 10px 0;line-height:1.15}
+.hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;text-align:center}
+.stat strong{font-size:22px;color:var(--primary);display:block}
+.section{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:22px;
+  margin:18px 0;
+  box-shadow:var(--shadow);
+  transition:.25s;
+}
+.section:hover{border-color:rgba(37,99,235,.45);box-shadow:0 16px 30px rgba(37,99,235,.09)}
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:16px}
+.section h2{margin:0;color:var(--primary);font-size:25px}
+.section small{color:var(--muted)}
+.done-wrap{white-space:nowrap;font-weight:700;color:var(--muted);font-size:14px}
+.done-wrap input{width:18px;height:18px;vertical-align:middle;accent-color:var(--accent)}
+h3{margin:18px 0 8px;color:var(--text)}
+.tag{display:inline-block;background:var(--soft);color:var(--primary);border:1px solid var(--line);border-radius:999px;padding:4px 9px;font-size:12px;font-weight:800;margin:2px}
+.callout{border-left:5px solid var(--primary);background:var(--soft);padding:14px 16px;border-radius:12px;margin:14px 0}
+.callout.warn{border-left-color:var(--warn)}
+.callout.good{border-left-color:var(--accent)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:15px}
+.card h4{margin:0 0 8px;color:var(--primary)}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;margin:14px 0}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:12px;text-align:left;vertical-align:top}
+th{background:var(--soft);color:var(--primary);font-weight:800}
+tr:last-child td{border-bottom:0}
+pre{background:var(--code);color:var(--codeText);padding:16px;border-radius:16px;overflow:auto;position:relative;border:1px solid rgba(148,163,184,.2)}
+code{font-family:Consolas,Monaco,'Courier New',monospace;font-size:14px}
+.copy-btn{position:absolute;right:10px;top:10px;background:#334155;color:white;border:0;border-radius:8px;padding:6px 9px;cursor:pointer;font-size:12px}
+.diagram{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:14px;margin:16px 0;overflow:auto}
+.diagram svg{max-width:100%;height:auto;display:block;margin:auto}
+.practice-question,.exam-question{border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:var(--bg)}
+.practice-question h4,.exam-question h4{margin:0 0 10px;color:var(--text)}
+.option{display:block;margin:8px 0;padding:9px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}
+.option:hover{border-color:var(--primary)}
+.result-box{font-size:18px;font-weight:800;margin:14px 0;padding:14px;border-radius:14px;background:var(--soft);border:1px solid var(--line)}
+.footer{max-width:1240px;margin:28px auto;padding:20px;color:var(--muted);text-align:center}
+.note-panel{
+  position:fixed;right:22px;bottom:22px;width:340px;max-width:calc(100vw - 44px);background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);z-index:30;display:none;overflow:hidden
+}
+.note-panel header{background:var(--primary);color:white;padding:12px 14px;font-weight:800;display:flex;justify-content:space-between;align-items:center}
+.note-panel textarea{width:100%;height:180px;border:0;padding:14px;background:var(--card);color:var(--text);outline:none;resize:vertical}
+.note-panel .note-actions{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);justify-content:flex-end}
+.sparkle{position:fixed;width:6px;height:6px;background:var(--accent);pointer-events:none;border-radius:50%;z-index:9999;animation:sparkle .7s ease-out forwards}
+@keyframes sparkle{from{opacity:1;transform:scale(1) translateY(0)}to{opacity:0;transform:scale(0) translateY(-18px)}}
+.badge-row{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+@media(max-width:920px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:0;height:auto}.hero-grid,.grid-3,.grid-2{grid-template-columns:1fr}.header-inner{align-items:flex-start;flex-direction:column}.section-header{flex-direction:column}.done-wrap{white-space:normal}}
+@media print{.header,.sidebar,.note-panel,.btn,.copy-btn{display:none!important}.layout{display:block;max-width:none}.section,.hero{box-shadow:none;break-inside:avoid}body{background:white;color:black}}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <h1>Python Pandas - Complete Classroom Tutorial</h1>
+      <p>Corporate trainer style notes with diagrams, coding examples, quizzes, exam, progress tracking and personal notes.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn" onclick="toggleTheme()">Toggle Theme</button>
+      <button class="btn" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn danger" onclick="resetProgress()">Reset Progress</button>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <div class="progress-box">
+      <div class="progress-title"><span>Learning Progress</span><span id="progressText">0%</span></div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+      <small>Tick each section when completed. Progress is stored in your browser.</small>
+    </div>
+    <div class="callout good"><strong>Tip:</strong> Double-click any section to add your own notes.</div>
+    <nav class="nav" id="navList"></nav>
+  </aside>
+
+  <main class="main">
+    <section class="hero">
+      <h2>Learn Pandas for Data Analysis, Cleaning, Reporting and Automation</h2>
+      <p>Pandas is one of the most important Python libraries for working with structured data such as CSV files, Excel sheets, SQL results, logs, reports and analytics datasets. This tutorial is designed for beginners, trainers and interview preparation.</p>
+      <div class="hero-grid">
+        <div class="stat"><strong>13</strong>Structured Sections</div>
+        <div class="stat"><strong>25+</strong>Code Examples</div>
+        <div class="stat"><strong>20</strong>Exam Questions</div>
+        <div class="stat"><strong>20</strong>Interview Q&A</div>
+      </div>
+    </section>
+
+    <!-- SECTION 1 -->
+    <section class="section" id="section-1" data-title="1. Learning Objectives and Roadmap">
+      <div class="section-header">
+        <div><h2>1. Learning Objectives and Roadmap</h2><small>Understand what you will learn and how Pandas fits into real-world data work.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-1"> Completed</label>
+      </div>
+      <h3>Learning Outcomes</h3>
+      <p>By the end of this tutorial, you will be able to load data, inspect data, clean missing values, filter records, transform columns, perform group-based aggregations, merge datasets, export reports and answer common Pandas interview questions.</p>
+      <div class="grid-3">
+        <div class="card"><h4>Beginner Goal</h4><p>Read CSV/Excel data and understand Series, DataFrame, rows, columns and indexes.</p></div>
+        <div class="card"><h4>Developer Goal</h4><p>Write clean, repeatable data transformation scripts using Pandas methods and pipelines.</p></div>
+        <div class="card"><h4>Trainer Goal</h4><p>Explain Pandas using diagrams, real-time examples, hands-on tasks and assessment questions.</p></div>
+      </div>
+      <h3>Roadmap Diagram</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 900 220" role="img" aria-label="Pandas learning roadmap">
+          <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker></defs>
+          <rect x="20" y="70" width="130" height="70" rx="16" fill="#eff6ff" stroke="#2563eb"/>
+          <text x="85" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2937">Files</text>
+          <text x="85" y="122" text-anchor="middle" font-size="13" fill="#475569">CSV / Excel / SQL</text>
+          <line x1="150" y1="105" x2="215" y2="105" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="215" y="70" width="130" height="70" rx="16" fill="#ecfdf5" stroke="#10b981"/>
+          <text x="280" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2937">DataFrame</text>
+          <text x="280" y="122" text-anchor="middle" font-size="13" fill="#475569">Rows + Columns</text>
+          <line x1="345" y1="105" x2="410" y2="105" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="410" y="70" width="130" height="70" rx="16" fill="#fff7ed" stroke="#f59e0b"/>
+          <text x="475" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2937">Clean</text>
+          <text x="475" y="122" text-anchor="middle" font-size="13" fill="#475569">Missing / Types</text>
+          <line x1="540" y1="105" x2="605" y2="105" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="605" y="70" width="130" height="70" rx="16" fill="#f5f3ff" stroke="#7c3aed"/>
+          <text x="670" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2937">Analyze</text>
+          <text x="670" y="122" text-anchor="middle" font-size="13" fill="#475569">Group / Join</text>
+          <line x1="735" y1="105" x2="800" y2="105" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow)"/>
+          <rect x="800" y="70" width="80" height="70" rx="16" fill="#fef2f2" stroke="#ef4444"/>
+          <text x="840" y="100" text-anchor="middle" font-size="16" font-weight="700" fill="#1f2937">Report</text>
+          <text x="840" y="122" text-anchor="middle" font-size="13" fill="#475569">Output</text>
+        </svg>
+      </div>
+      <div class="callout"><strong>Classroom explanation:</strong> Pandas is the bridge between raw data and useful business insight. It allows Python to work like a programmable Excel, SQL table processor and analytics tool.</div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="section" id="section-2" data-title="2. What is Pandas?">
+      <div class="section-header">
+        <div><h2>2. What is Pandas?</h2><small>Definition, purpose and real-time use cases.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-2"> Completed</label>
+      </div>
+      <p><strong>Pandas</strong> is an open-source Python library used for data analysis and data manipulation. It helps you work with tabular and labeled data using two important structures: <strong>Series</strong> and <strong>DataFrame</strong>.</p>
+      <div class="badge-row">
+        <span class="tag">Data Cleaning</span><span class="tag">Data Analysis</span><span class="tag">CSV</span><span class="tag">Excel</span><span class="tag">SQL</span><span class="tag">Reports</span><span class="tag">ETL</span>
+      </div>
+      <h3>Simple Example</h3>
+      <p>Imagine you have an Excel file with employee salary details. With Pandas, you can read the file, remove duplicate records, calculate department-wise average salary and export the final report automatically.</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+data = {
+    "employee": ["Anu", "Ravi", "Meena"],
+    "department": ["IT", "HR", "IT"],
+    "salary": [60000, 45000, 70000]
+}
+
+df = pd.DataFrame(data)
+print(df)
+print(df.groupby("department")["salary"].mean())</code></pre>
+      <h3>Where Pandas is Used</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Area</th><th>How Pandas Helps</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Data Engineering</td><td>Small to medium ETL transformations</td><td>Clean raw CSV before loading to database</td></tr>
+            <tr><td>Data Science</td><td>Exploratory Data Analysis</td><td>Find missing values, outliers and distributions</td></tr>
+            <tr><td>Business Reporting</td><td>Automated report generation</td><td>Monthly sales summary by region</td></tr>
+            <tr><td>Automation</td><td>Excel/CSV processing without manual work</td><td>Merge multiple vendor files</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn"><strong>Important:</strong> Pandas is excellent for structured/tabular data. For very large distributed data, tools like PySpark, Dask or database engines may be more suitable.</div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="section" id="section-3" data-title="3. Environment Setup and First Program">
+      <div class="section-header">
+        <div><h2>3. Environment Setup and First Program</h2><small>Install Pandas and run your first script.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-3"> Completed</label>
+      </div>
+      <h3>Installation Commands</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># Create virtual environment
+python -m venv .venv
+
+# Activate on Windows
+.venv\Scripts\activate
+
+# Activate on macOS/Linux
+source .venv/bin/activate
+
+# Install pandas
+pip install pandas
+
+# Optional Excel support
+pip install openpyxl</code></pre>
+      <h3>First Pandas Program</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+students = pd.DataFrame({
+    "name": ["Asha", "Kumar", "Sneha"],
+    "marks": [88, 76, 92]
+})
+
+print(students)
+print("Average marks:", students["marks"].mean())</code></pre>
+      <h3>Output Understanding</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Concept</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>pd</code></td><td>Common alias used for importing pandas.</td></tr>
+            <tr><td><code>DataFrame</code></td><td>A two-dimensional table with rows and columns.</td></tr>
+            <tr><td><code>students["marks"]</code></td><td>Selects one column as a Series.</td></tr>
+            <tr><td><code>mean()</code></td><td>Calculates average value.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout good"><strong>Trainer tip:</strong> Start Pandas with dictionary-to-DataFrame examples before moving to CSV files. It helps learners understand the structure first.</div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="section" id="section-4" data-title="4. Series and DataFrame">
+      <div class="section-header">
+        <div><h2>4. Series and DataFrame</h2><small>The two core Pandas data structures.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-4"> Completed</label>
+      </div>
+      <h3>Series</h3>
+      <p>A <strong>Series</strong> is a one-dimensional labeled array. Think of it like a single column in Excel with row labels/index.</p>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+marks = pd.Series([80, 90, 75], index=["Asha", "Ravi", "Meena"])
+print(marks)
+print(marks["Ravi"])</code></pre>
+      <h3>DataFrame</h3>
+      <p>A <strong>DataFrame</strong> is a two-dimensional table. It contains multiple columns, and each column is internally a Series.</p>
+      <div class="diagram">
+        <svg viewBox="0 0 900 320" role="img" aria-label="Series and DataFrame diagram">
+          <rect x="40" y="50" width="250" height="220" rx="18" fill="#eff6ff" stroke="#2563eb"/>
+          <text x="165" y="85" text-anchor="middle" font-size="22" font-weight="800" fill="#1f2937">Series</text>
+          <rect x="85" y="115" width="160" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="165" y="138" text-anchor="middle" font-size="14">Asha: 80</text>
+          <rect x="85" y="150" width="160" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="165" y="173" text-anchor="middle" font-size="14">Ravi: 90</text>
+          <rect x="85" y="185" width="160" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="165" y="208" text-anchor="middle" font-size="14">Meena: 75</text>
+          <text x="165" y="248" text-anchor="middle" font-size="13" fill="#475569">One column + index</text>
+          <rect x="380" y="50" width="470" height="220" rx="18" fill="#ecfdf5" stroke="#10b981"/>
+          <text x="615" y="85" text-anchor="middle" font-size="22" font-weight="800" fill="#1f2937">DataFrame</text>
+          <rect x="430" y="115" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="490" y="138" text-anchor="middle" font-size="14">name</text>
+          <rect x="550" y="115" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="610" y="138" text-anchor="middle" font-size="14">marks</text>
+          <rect x="670" y="115" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="730" y="138" text-anchor="middle" font-size="14">city</text>
+          <rect x="430" y="150" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="490" y="173" text-anchor="middle" font-size="14">Asha</text>
+          <rect x="550" y="150" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="610" y="173" text-anchor="middle" font-size="14">80</text>
+          <rect x="670" y="150" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="730" y="173" text-anchor="middle" font-size="14">Chennai</text>
+          <rect x="430" y="185" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="490" y="208" text-anchor="middle" font-size="14">Ravi</text>
+          <rect x="550" y="185" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="610" y="208" text-anchor="middle" font-size="14">90</text>
+          <rect x="670" y="185" width="120" height="35" fill="#ffffff" stroke="#94a3b8"/><text x="730" y="208" text-anchor="middle" font-size="14">Bengaluru</text>
+          <text x="615" y="248" text-anchor="middle" font-size="13" fill="#475569">Multiple Series together</text>
+        </svg>
+      </div>
+      <h3>Series vs DataFrame</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Feature</th><th>Series</th><th>DataFrame</th></tr></thead>
+          <tbody>
+            <tr><td>Dimension</td><td>1D</td><td>2D</td></tr>
+            <tr><td>Similar To</td><td>Single column</td><td>Full table</td></tr>
+            <tr><td>Access</td><td><code>s[index]</code></td><td><code>df[column]</code>, <code>df.loc[]</code></td></tr>
+            <tr><td>Example</td><td>Marks column</td><td>Student table</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section class="section" id="section-5" data-title="5. Creating DataFrames">
+      <div class="section-header">
+        <div><h2>5. Creating DataFrames</h2><small>Create data from lists, dictionaries and records.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-5"> Completed</label>
+      </div>
+      <h3>From Dictionary</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+employees = pd.DataFrame({
+    "id": [101, 102, 103],
+    "name": ["Anu", "Ravi", "Meena"],
+    "department": ["IT", "HR", "Finance"]
+})
+print(employees)</code></pre>
+      <h3>From List of Dictionaries</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>orders = [
+    {"order_id": 1, "customer": "Asha", "amount": 1200},
+    {"order_id": 2, "customer": "Ravi", "amount": 800},
+    {"order_id": 3, "customer": "Meena", "amount": 1500}
+]
+
+df_orders = pd.DataFrame(orders)
+print(df_orders)</code></pre>
+      <h3>From List of Lists</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>data = [
+    [1, "Laptop", 55000],
+    [2, "Mouse", 700],
+    [3, "Keyboard", 1500]
+]
+
+products = pd.DataFrame(data, columns=["id", "product", "price"])
+print(products)</code></pre>
+      <div class="callout"><strong>Best classroom analogy:</strong> A dictionary is like giving column names first. A list of dictionaries is like entering records one by one.</div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section class="section" id="section-6" data-title="6. Reading and Writing Data">
+      <div class="section-header">
+        <div><h2>6. Reading and Writing Data</h2><small>CSV, Excel, JSON and SQL style data movement.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-6"> Completed</label>
+      </div>
+      <h3>Read CSV</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+df = pd.read_csv("sales.csv")
+print(df.head())</code></pre>
+      <h3>Write CSV</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>df.to_csv("clean_sales.csv", index=False)</code></pre>
+      <h3>Read Excel</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># pip install openpyxl
+sales_excel = pd.read_excel("sales.xlsx", sheet_name="Jan")</code></pre>
+      <h3>Common Read/Write Functions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Format</th><th>Read</th><th>Write</th></tr></thead>
+          <tbody>
+            <tr><td>CSV</td><td><code>pd.read_csv()</code></td><td><code>df.to_csv()</code></td></tr>
+            <tr><td>Excel</td><td><code>pd.read_excel()</code></td><td><code>df.to_excel()</code></td></tr>
+            <tr><td>JSON</td><td><code>pd.read_json()</code></td><td><code>df.to_json()</code></td></tr>
+            <tr><td>SQL</td><td><code>pd.read_sql()</code></td><td><code>df.to_sql()</code></td></tr>
+            <tr><td>Parquet</td><td><code>pd.read_parquet()</code></td><td><code>df.to_parquet()</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warn"><strong>Production note:</strong> Use <code>index=False</code> while exporting CSV/Excel when you do not want Pandas to add the row index as an extra column.</div>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section class="section" id="section-7" data-title="7. Inspecting, Selecting and Filtering Data">
+      <div class="section-header">
+        <div><h2>7. Inspecting, Selecting and Filtering Data</h2><small>Understand your data before cleaning or analysis.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-7"> Completed</label>
+      </div>
+      <h3>Sample Dataset</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+sales = pd.DataFrame({
+    "order_id": [1, 2, 3, 4, 5],
+    "region": ["South", "North", "South", "West", "North"],
+    "product": ["Laptop", "Mouse", "Keyboard", "Laptop", "Mouse"],
+    "amount": [55000, 700, 1500, 52000, 850]
+})</code></pre>
+      <h3>Inspection Methods</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>print(sales.head())       # first 5 rows
+print(sales.tail())       # last 5 rows
+print(sales.shape)        # rows and columns count
+print(sales.info())       # columns, types, non-null count
+print(sales.describe())   # statistical summary</code></pre>
+      <h3>Column Selection</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>print(sales["amount"])
+print(sales[["region", "amount"]])</code></pre>
+      <h3>Filtering Rows</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># Orders greater than 1000
+high_value = sales[sales["amount"] > 1000]
+print(high_value)
+
+# South region orders only
+south_orders = sales[sales["region"] == "South"]
+print(south_orders)
+
+# Multiple conditions
+south_high = sales[(sales["region"] == "South") & (sales["amount"] > 1000)]
+print(south_high)</code></pre>
+      <h3><code>loc</code> vs <code>iloc</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Meaning</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td><code>loc</code></td><td>Label-based selection</td><td><code>df.loc[0, "amount"]</code></td></tr>
+            <tr><td><code>iloc</code></td><td>Position-based selection</td><td><code>df.iloc[0, 3]</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 8 -->
+    <section class="section" id="section-8" data-title="8. Cleaning Data">
+      <div class="section-header">
+        <div><h2>8. Cleaning Data</h2><small>Handle missing values, duplicates, data types and text problems.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-8"> Completed</label>
+      </div>
+      <p>Real-world data is rarely perfect. It may contain missing values, duplicate rows, wrong data types, extra spaces, inconsistent capitalization or invalid numbers.</p>
+      <h3>Sample Dirty Data</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+customers = pd.DataFrame({
+    "name": [" Asha ", "RAVI", "Meena", "Asha"],
+    "age": [25, None, 30, 25],
+    "city": ["chennai", "BENGALURU", None, "chennai"]
+})</code></pre>
+      <h3>Find Missing Values</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>print(customers.isna())
+print(customers.isna().sum())</code></pre>
+      <h3>Fill or Remove Missing Values</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code># Fill missing age with average age
+customers["age"] = customers["age"].fillna(customers["age"].mean())
+
+# Fill missing city with Unknown
+customers["city"] = customers["city"].fillna("Unknown")
+
+# Remove rows with missing values
+# customers = customers.dropna()</code></pre>
+      <h3>Remove Duplicates and Clean Text</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>customers = customers.drop_duplicates()
+customers["name"] = customers["name"].str.strip().str.title()
+customers["city"] = customers["city"].str.strip().str.title()
+print(customers)</code></pre>
+      <h3>Cleaning Checklist</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Data Quality Checks</h4><ul><li>Missing values</li><li>Duplicate rows</li><li>Wrong data types</li><li>Invalid ranges</li><li>Inconsistent categories</li></ul></div>
+        <div class="card"><h4>Common Methods</h4><ul><li><code>isna()</code></li><li><code>fillna()</code></li><li><code>dropna()</code></li><li><code>drop_duplicates()</code></li><li><code>astype()</code></li></ul></div>
+      </div>
+    </section>
+
+    <!-- SECTION 9 -->
+    <section class="section" id="section-9" data-title="9. Transforming Data">
+      <div class="section-header">
+        <div><h2>9. Transforming Data</h2><small>Create new columns, rename columns, apply logic and sort data.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-9"> Completed</label>
+      </div>
+      <h3>Create New Columns</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>sales["tax"] = sales["amount"] * 0.18
+sales["final_amount"] = sales["amount"] + sales["tax"]
+print(sales)</code></pre>
+      <h3>Conditional Column</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>sales["order_type"] = sales["amount"].apply(lambda x: "High" if x >= 10000 else "Low")
+print(sales[["amount", "order_type"]])</code></pre>
+      <h3>Rename Columns</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>sales = sales.rename(columns={"amount": "order_amount"})</code></pre>
+      <h3>Sort Data</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>sorted_sales = sales.sort_values(by="order_amount", ascending=False)
+print(sorted_sales)</code></pre>
+      <h3><code>apply()</code> vs Vectorized Operation</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Approach</th><th>Meaning</th><th>Performance</th></tr></thead>
+          <tbody>
+            <tr><td>Vectorized</td><td>Column-wise operation directly on Series</td><td>Usually faster</td></tr>
+            <tr><td><code>apply()</code></td><td>Runs custom function row-wise or column-wise</td><td>Flexible but can be slower</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout good"><strong>Best practice:</strong> Prefer vectorized operations when possible. Use <code>apply()</code> for custom logic that cannot be expressed directly.</div>
+    </section>
+
+    <!-- SECTION 10 -->
+    <section class="section" id="section-10" data-title="10. GroupBy, Aggregation and Pivot Tables">
+      <div class="section-header">
+        <div><h2>10. GroupBy, Aggregation and Pivot Tables</h2><small>Summarize data like SQL GROUP BY or Excel PivotTable.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-10"> Completed</label>
+      </div>
+      <h3>GroupBy Concept</h3>
+      <p><code>groupby()</code> follows the <strong>Split → Apply → Combine</strong> pattern.</p>
+      <div class="diagram">
+        <svg viewBox="0 0 900 240" role="img" aria-label="GroupBy split apply combine diagram">
+          <defs><marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#10b981"/></marker></defs>
+          <rect x="30" y="70" width="170" height="90" rx="18" fill="#eff6ff" stroke="#2563eb"/>
+          <text x="115" y="105" text-anchor="middle" font-size="20" font-weight="800">Split</text>
+          <text x="115" y="132" text-anchor="middle" font-size="13">Group by region</text>
+          <line x1="200" y1="115" x2="300" y2="115" stroke="#10b981" stroke-width="4" marker-end="url(#arrow2)"/>
+          <rect x="300" y="70" width="170" height="90" rx="18" fill="#ecfdf5" stroke="#10b981"/>
+          <text x="385" y="105" text-anchor="middle" font-size="20" font-weight="800">Apply</text>
+          <text x="385" y="132" text-anchor="middle" font-size="13">Sum / mean / count</text>
+          <line x1="470" y1="115" x2="570" y2="115" stroke="#10b981" stroke-width="4" marker-end="url(#arrow2)"/>
+          <rect x="570" y="70" width="270" height="90" rx="18" fill="#fff7ed" stroke="#f59e0b"/>
+          <text x="705" y="105" text-anchor="middle" font-size="20" font-weight="800">Combine</text>
+          <text x="705" y="132" text-anchor="middle" font-size="13">Summary table/report</text>
+        </svg>
+      </div>
+      <h3>GroupBy Example</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>region_sales = sales.groupby("region")["amount"].sum()
+print(region_sales)</code></pre>
+      <h3>Multiple Aggregations</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>summary = sales.groupby("region").agg(
+    total_sales=("amount", "sum"),
+    average_sales=("amount", "mean"),
+    order_count=("order_id", "count")
+)
+print(summary)</code></pre>
+      <h3>Pivot Table</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>pivot = pd.pivot_table(
+    sales,
+    values="amount",
+    index="region",
+    columns="product",
+    aggfunc="sum",
+    fill_value=0
+)
+print(pivot)</code></pre>
+      <div class="callout"><strong>Interview point:</strong> <code>groupby()</code> is programmatic and flexible; <code>pivot_table()</code> is useful for matrix-like summary reports.</div>
+    </section>
+
+    <!-- SECTION 11 -->
+    <section class="section" id="section-11" data-title="11. Merging, Joining and Concatenating">
+      <div class="section-header">
+        <div><h2>11. Merging, Joining and Concatenating</h2><small>Combine datasets like SQL joins and file appends.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-11"> Completed</label>
+      </div>
+      <h3>Merge Example</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>customers = pd.DataFrame({
+    "customer_id": [1, 2, 3],
+    "customer_name": ["Asha", "Ravi", "Meena"]
+})
+
+orders = pd.DataFrame({
+    "order_id": [101, 102, 103],
+    "customer_id": [1, 2, 1],
+    "amount": [1200, 900, 1500]
+})
+
+result = pd.merge(orders, customers, on="customer_id", how="inner")
+print(result)</code></pre>
+      <h3>Join Types Diagram</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 900 260" role="img" aria-label="Join types diagram">
+          <text x="450" y="30" text-anchor="middle" font-size="22" font-weight="800" fill="#2563eb">Pandas Merge Join Types</text>
+          <g transform="translate(60,60)">
+            <circle cx="70" cy="70" r="55" fill="#60a5fa" opacity=".55"/><circle cx="130" cy="70" r="55" fill="#34d399" opacity=".55"/>
+            <text x="100" y="155" text-anchor="middle" font-size="16" font-weight="700">inner</text><text x="100" y="180" text-anchor="middle" font-size="12">matching rows</text>
+          </g>
+          <g transform="translate(260,60)">
+            <circle cx="70" cy="70" r="55" fill="#60a5fa" opacity=".75"/><circle cx="130" cy="70" r="55" fill="#34d399" opacity=".25"/>
+            <text x="100" y="155" text-anchor="middle" font-size="16" font-weight="700">left</text><text x="100" y="180" text-anchor="middle" font-size="12">all left rows</text>
+          </g>
+          <g transform="translate(460,60)">
+            <circle cx="70" cy="70" r="55" fill="#60a5fa" opacity=".25"/><circle cx="130" cy="70" r="55" fill="#34d399" opacity=".75"/>
+            <text x="100" y="155" text-anchor="middle" font-size="16" font-weight="700">right</text><text x="100" y="180" text-anchor="middle" font-size="12">all right rows</text>
+          </g>
+          <g transform="translate(660,60)">
+            <circle cx="70" cy="70" r="55" fill="#60a5fa" opacity=".65"/><circle cx="130" cy="70" r="55" fill="#34d399" opacity=".65"/>
+            <text x="100" y="155" text-anchor="middle" font-size="16" font-weight="700">outer</text><text x="100" y="180" text-anchor="middle" font-size="12">all rows</text>
+          </g>
+        </svg>
+      </div>
+      <h3>Concatenate Rows</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>jan = pd.DataFrame({"month": ["Jan", "Jan"], "sales": [1000, 2000]})
+feb = pd.DataFrame({"month": ["Feb", "Feb"], "sales": [1500, 2500]})
+
+combined = pd.concat([jan, feb], ignore_index=True)
+print(combined)</code></pre>
+      <h3>Merge vs Concat</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Operation</th><th>Used For</th><th>SQL/Excel Analogy</th></tr></thead>
+          <tbody>
+            <tr><td><code>merge()</code></td><td>Combining datasets based on keys</td><td>SQL JOIN / VLOOKUP</td></tr>
+            <tr><td><code>concat()</code></td><td>Stacking rows or columns</td><td>Append files</td></tr>
+            <tr><td><code>join()</code></td><td>Index-based combining</td><td>Join by row labels/index</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 12 -->
+    <section class="section" id="section-12" data-title="12. Real-Time Mini Project: Sales Analysis">
+      <div class="section-header">
+        <div><h2>12. Real-Time Mini Project: Sales Analysis</h2><small>End-to-end Pandas workflow for business reporting.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-12"> Completed</label>
+      </div>
+      <h3>Business Scenario</h3>
+      <p>A retail company receives daily sales files from multiple regions. The manager wants a clean monthly report showing region-wise total sales, product-wise sales and high-value orders.</p>
+      <h3>End-to-End Workflow Diagram</h3>
+      <div class="diagram">
+        <svg viewBox="0 0 900 300" role="img" aria-label="Pandas project workflow diagram">
+          <defs><marker id="arrow3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7c3aed"/></marker></defs>
+          <rect x="35" y="80" width="130" height="70" rx="14" fill="#eff6ff" stroke="#2563eb"/><text x="100" y="110" text-anchor="middle" font-weight="800">Raw Files</text><text x="100" y="132" text-anchor="middle" font-size="12">CSV / Excel</text>
+          <line x1="165" y1="115" x2="235" y2="115" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrow3)"/>
+          <rect x="235" y="80" width="130" height="70" rx="14" fill="#ecfdf5" stroke="#10b981"/><text x="300" y="110" text-anchor="middle" font-weight="800">Read</text><text x="300" y="132" text-anchor="middle" font-size="12">pd.read_csv</text>
+          <line x1="365" y1="115" x2="435" y2="115" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrow3)"/>
+          <rect x="435" y="80" width="130" height="70" rx="14" fill="#fff7ed" stroke="#f59e0b"/><text x="500" y="110" text-anchor="middle" font-weight="800">Clean</text><text x="500" y="132" text-anchor="middle" font-size="12">nulls / types</text>
+          <line x1="565" y1="115" x2="635" y2="115" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrow3)"/>
+          <rect x="635" y="80" width="130" height="70" rx="14" fill="#f5f3ff" stroke="#7c3aed"/><text x="700" y="110" text-anchor="middle" font-weight="800">Analyze</text><text x="700" y="132" text-anchor="middle" font-size="12">groupby</text>
+          <line x1="700" y1="150" x2="700" y2="205" stroke="#7c3aed" stroke-width="3" marker-end="url(#arrow3)"/>
+          <rect x="600" y="205" width="200" height="70" rx="14" fill="#fef2f2" stroke="#ef4444"/><text x="700" y="235" text-anchor="middle" font-weight="800">Export Report</text><text x="700" y="257" text-anchor="middle" font-size="12">CSV / Excel</text>
+        </svg>
+      </div>
+      <h3>Complete Project Code</h3>
+      <pre><button class="copy-btn" onclick="copyCode(this)">Copy</button><code>import pandas as pd
+
+# Step 1: Create sample sales data
+sales = pd.DataFrame({
+    "order_id": [1, 2, 3, 4, 5, 6],
+    "order_date": ["2026-07-01", "2026-07-01", "2026-07-02", "2026-07-02", "2026-07-03", "2026-07-03"],
+    "region": ["South", "North", "South", "West", "North", "West"],
+    "product": ["Laptop", "Mouse", "Keyboard", "Laptop", "Mouse", "Monitor"],
+    "quantity": [1, 3, 2, 1, 5, 2],
+    "unit_price": [55000, 700, 1500, 52000, 850, 9000]
+})
+
+# Step 2: Convert date column to datetime
+sales["order_date"] = pd.to_datetime(sales["order_date"])
+
+# Step 3: Create calculated column
+sales["total_amount"] = sales["quantity"] * sales["unit_price"]
+
+# Step 4: Region-wise summary
+region_summary = sales.groupby("region").agg(
+    total_sales=("total_amount", "sum"),
+    total_orders=("order_id", "count"),
+    average_order_value=("total_amount", "mean")
+).reset_index()
+
+# Step 5: Product-wise summary
+product_summary = sales.groupby("product")["total_amount"].sum().reset_index()
+
+# Step 6: High-value orders
+high_value_orders = sales[sales["total_amount"] >= 10000]
+
+# Step 7: Export reports
+region_summary.to_csv("region_summary.csv", index=False)
+product_summary.to_csv("product_summary.csv", index=False)
+high_value_orders.to_csv("high_value_orders.csv", index=False)
+
+print("Region Summary")
+print(region_summary)
+print("\nProduct Summary")
+print(product_summary)
+print("\nHigh Value Orders")
+print(high_value_orders)</code></pre>
+      <h3>Hands-On Exercises</h3>
+      <ol>
+        <li>Add a <code>discount</code> column and calculate net amount.</li>
+        <li>Find the top-selling product by total amount.</li>
+        <li>Export all reports into a single Excel workbook with multiple sheets.</li>
+        <li>Add a city column and create city-wise sales summary.</li>
+      </ol>
+    </section>
+
+    <!-- SECTION 13 -->
+    <section class="section" id="section-13" data-title="13. Best Practices, Interview Q&A, Quiz and Exam">
+      <div class="section-header">
+        <div><h2>13. Best Practices, Interview Q&A, Quiz and Exam</h2><small>Revision, assessment and interview preparation.</small></div>
+        <label class="done-wrap"><input type="checkbox" class="done" data-id="section-13"> Completed</label>
+      </div>
+      <h3>Best Practices</h3>
+      <div class="grid-2">
+        <div class="card"><h4>Code Quality</h4><ul><li>Use meaningful DataFrame names.</li><li>Avoid overwriting raw data too early.</li><li>Write reusable cleaning functions.</li><li>Use comments for transformation logic.</li><li>Use virtual environments for projects.</li></ul></div>
+        <div class="card"><h4>Performance</h4><ul><li>Prefer vectorized operations.</li><li>Read only required columns using <code>usecols</code>.</li><li>Use correct data types to save memory.</li><li>Process large files in chunks.</li><li>Use Parquet for analytics workflows when suitable.</li></ul></div>
+      </div>
+      <h3>20 Interview Questions and Answers</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Question</th><th>Answer</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>What is Pandas?</td><td>Pandas is a Python library used for data manipulation and data analysis, mainly with structured/tabular data.</td></tr>
+            <tr><td>2</td><td>What are the main Pandas data structures?</td><td>Series and DataFrame.</td></tr>
+            <tr><td>3</td><td>What is a Series?</td><td>A one-dimensional labeled array that can store values of any data type.</td></tr>
+            <tr><td>4</td><td>What is a DataFrame?</td><td>A two-dimensional labeled table with rows and columns.</td></tr>
+            <tr><td>5</td><td>How do you read a CSV file?</td><td>Use <code>pd.read_csv("file.csv")</code>.</td></tr>
+            <tr><td>6</td><td>How do you export a DataFrame to CSV?</td><td>Use <code>df.to_csv("file.csv", index=False)</code>.</td></tr>
+            <tr><td>7</td><td>What is the use of <code>head()</code>?</td><td>It returns the first few rows of a DataFrame.</td></tr>
+            <tr><td>8</td><td>What is the use of <code>info()</code>?</td><td>It displays column names, non-null counts and data types.</td></tr>
+            <tr><td>9</td><td>What is the use of <code>describe()</code>?</td><td>It gives statistical summary for numeric columns.</td></tr>
+            <tr><td>10</td><td>How do you find missing values?</td><td>Use <code>df.isna().sum()</code>.</td></tr>
+            <tr><td>11</td><td>How do you fill missing values?</td><td>Use <code>fillna()</code>.</td></tr>
+            <tr><td>12</td><td>How do you remove duplicate rows?</td><td>Use <code>drop_duplicates()</code>.</td></tr>
+            <tr><td>13</td><td>What is <code>loc</code>?</td><td>Label-based row/column selection.</td></tr>
+            <tr><td>14</td><td>What is <code>iloc</code>?</td><td>Position-based row/column selection.</td></tr>
+            <tr><td>15</td><td>What is <code>groupby()</code>?</td><td>It groups data by one or more columns and applies aggregation.</td></tr>
+            <tr><td>16</td><td>What is the difference between <code>merge()</code> and <code>concat()</code>?</td><td><code>merge()</code> combines data based on keys; <code>concat()</code> stacks data along rows or columns.</td></tr>
+            <tr><td>17</td><td>What is vectorization?</td><td>Performing operations on entire columns/arrays instead of row-by-row loops.</td></tr>
+            <tr><td>18</td><td>Why is <code>index=False</code> used during export?</td><td>To avoid writing the DataFrame index as an extra column in the output file.</td></tr>
+            <tr><td>19</td><td>How do you convert a column to datetime?</td><td>Use <code>pd.to_datetime(df["date_column"])</code>.</td></tr>
+            <tr><td>20</td><td>When should you not use Pandas?</td><td>When data is too large for memory or needs distributed processing, use tools such as PySpark, Dask or database engines.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Practice MCQ Quiz</h3>
+      <p>Answer the practice questions and click submit to view score and explanations.</p>
+      <div id="practiceQuiz"></div>
+      <button class="btn secondary" onclick="submitPracticeQuiz()">Submit Practice Quiz</button>
+      <div id="practiceResult" class="result-box" style="display:none"></div>
+
+      <h3>Formal Timed Exam</h3>
+      <div class="callout warn"><strong>Exam Rule:</strong> 20 questions. Timer: 20 minutes. Score and mood feedback will be shown after submission.</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0">
+        <button class="btn" onclick="startExam()">Start Exam</button>
+        <button class="btn secondary" onclick="submitExam()">Submit Exam</button>
+        <strong>Timer: <span id="examTimer">20:00</span></strong>
+      </div>
+      <div id="examArea"></div>
+      <div id="examResult" class="result-box" style="display:none"></div>
+
+      <h3>References</h3>
+      <ul>
+        <li>Pandas official documentation: https://pandas.pydata.org/docs/</li>
+        <li>Pandas 10 minutes guide: https://pandas.pydata.org/docs/user_guide/10min.html</li>
+        <li>Pandas PyPI package page: https://pypi.org/project/pandas/</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<div class="note-panel" id="notePanel">
+  <header><span id="noteTitle">Section Notes</span><button class="btn" style="padding:5px 9px" onclick="closeNotes()">X</button></header>
+  <textarea id="noteText" placeholder="Type your notes here..."></textarea>
+  <div class="note-actions">
+    <button class="btn danger" onclick="clearNote()">Clear</button>
+    <button class="btn secondary" onclick="saveNote()">Save Note</button>
+  </div>
+</div>
+
+<footer class="footer">
+  <p>Python Pandas Tutorial | Designed for classroom training, self-study and interview preparation.</p>
+</footer>
+
+<script>
+const storage = (() => {
+  try {
+    const test = "__pandas_test__";
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return localStorage;
+  } catch (e) {
+    const mem = {};
+    return {
+      getItem: k => mem[k] || null,
+      setItem: (k,v) => mem[k] = String(v),
+      removeItem: k => delete mem[k]
+    };
+  }
+})();
+
+const sections = [...document.querySelectorAll('.section')];
+const navList = document.getElementById('navList');
+sections.forEach((sec, index) => {
+  const a = document.createElement('a');
+  a.href = '#' + sec.id;
+  a.textContent = sec.dataset.title;
+  navList.appendChild(a);
+});
+
+function updateProgress(){
+  const checks = [...document.querySelectorAll('.done')];
+  const done = checks.filter(c => c.checked).length;
+  const percent = Math.round((done / checks.length) * 100);
+  document.getElementById('progressText').textContent = percent + '%';
+  document.getElementById('progressFill').style.width = percent + '%';
+  checks.forEach(c => storage.setItem('pandas_' + c.dataset.id, c.checked ? '1':'0'));
+}
+
+document.querySelectorAll('.done').forEach(c => {
+  c.checked = storage.getItem('pandas_' + c.dataset.id) === '1';
+  c.addEventListener('change', updateProgress);
+});
+updateProgress();
+
+function resetProgress(){
+  if(!confirm('Reset progress and notes?')) return;
+  document.querySelectorAll('.done').forEach(c => { c.checked = false; storage.removeItem('pandas_' + c.dataset.id); });
+  Object.keys(storage).forEach?.(k => { if(k.startsWith('pandas_note_')) storage.removeItem(k); });
+  updateProgress();
+}
+
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  storage.setItem('pandas_theme', next);
+}
+const savedTheme = storage.getItem('pandas_theme');
+if(savedTheme) document.documentElement.setAttribute('data-theme', savedTheme);
+
+function copyCode(btn){
+  const code = btn.nextElementSibling.innerText;
+  navigator.clipboard?.writeText(code).then(() => {
+    const old = btn.textContent;
+    btn.textContent = 'Copied';
+    setTimeout(()=>btn.textContent=old, 900);
+  });
+}
+
+let currentNoteSection = null;
+sections.forEach(sec => {
+  sec.addEventListener('dblclick', () => openNotes(sec.id, sec.dataset.title));
+});
+function openNotes(id,title){
+  currentNoteSection = id;
+  document.getElementById('noteTitle').textContent = 'Notes: ' + title;
+  document.getElementById('noteText').value = storage.getItem('pandas_note_' + id) || '';
+  document.getElementById('notePanel').style.display = 'block';
+}
+function closeNotes(){ document.getElementById('notePanel').style.display = 'none'; }
+function saveNote(){
+  if(currentNoteSection){ storage.setItem('pandas_note_' + currentNoteSection, document.getElementById('noteText').value); }
+  closeNotes();
+}
+function clearNote(){
+  if(currentNoteSection){ storage.removeItem('pandas_note_' + currentNoteSection); document.getElementById('noteText').value=''; }
+}
+
+document.addEventListener('mousemove', e => {
+  if(Math.random() > 0.85){
+    const sp = document.createElement('span');
+    sp.className = 'sparkle';
+    sp.style.left = e.clientX + 'px';
+    sp.style.top = e.clientY + 'px';
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(), 700);
+  }
+});
+
+const practiceQuestions = [
+  {q:'Which alias is commonly used for pandas?', options:['np','pd','plt','pa'], answer:1, exp:'Pandas is commonly imported as pd.'},
+  {q:'Which Pandas structure represents a 2D table?', options:['List','Tuple','Series','DataFrame'], answer:3, exp:'DataFrame is a 2D labeled table.'},
+  {q:'Which function reads a CSV file?', options:['pd.open_csv()','pd.read_csv()','pd.load_csv()','pd.csv_read()'], answer:1, exp:'pd.read_csv() reads CSV files.'},
+  {q:'Which method gives first rows?', options:['first()','top()','head()','start()'], answer:2, exp:'head() returns the first rows.'},
+  {q:'Which method checks missing values?', options:['isna()','missing()','blank()','empty_values()'], answer:0, exp:'isna() detects missing values.'},
+  {q:'Which method removes duplicates?', options:['remove_duplicate()','drop_duplicates()','unique_rows()','clear_duplicates()'], answer:1, exp:'drop_duplicates() removes duplicate rows.'},
+  {q:'loc is mainly used for?', options:['Position based indexing','Label based indexing','File reading','Exporting'], answer:1, exp:'loc is label based.'},
+  {q:'iloc is mainly used for?', options:['Label based indexing','Position based indexing','SQL connection','Chart creation'], answer:1, exp:'iloc is position based.'},
+  {q:'Which method groups records?', options:['groupby()','cluster()','setgroup()','collect()'], answer:0, exp:'groupby() groups rows for aggregation.'},
+  {q:'Which parameter avoids writing index to CSV?', options:['skip_index=True','index=False','no_index=True','drop_index=True'], answer:1, exp:'index=False avoids exporting DataFrame index.'}
+];
+
+function renderPracticeQuiz(){
+  const box = document.getElementById('practiceQuiz');
+  box.innerHTML = practiceQuestions.map((item,i)=>`
+    <div class="practice-question">
+      <h4>${i+1}. ${item.q}</h4>
+      ${item.options.map((op,j)=>`<label class="option"><input type="radio" name="pq${i}" value="${j}"> ${op}</label>`).join('')}
+      <div id="pexp${i}" style="display:none;margin-top:8px;color:var(--muted)"></div>
+    </div>`).join('');
+}
+function submitPracticeQuiz(){
+  let score = 0;
+  practiceQuestions.forEach((item,i)=>{
+    const selected = document.querySelector(`input[name="pq${i}"]:checked`);
+    if(selected && Number(selected.value) === item.answer) score++;
+    const exp = document.getElementById('pexp'+i);
+    exp.style.display = 'block';
+    exp.innerHTML = `${selected && Number(selected.value) === item.answer ? '✅ Correct' : '❌ Incorrect'} - ${item.exp}`;
+  });
+  const result = document.getElementById('practiceResult');
+  result.style.display = 'block';
+  result.textContent = `Practice Score: ${score}/${practiceQuestions.length}`;
+}
+renderPracticeQuiz();
+
+const examQuestions = [
+  {q:'Pandas is mainly used for:', options:['Game development','Data manipulation and analysis','Operating system creation','Network routing'], answer:1},
+  {q:'A Series is:', options:['2D table','1D labeled array','Database server','Python compiler'], answer:1},
+  {q:'A DataFrame is similar to:', options:['A table','A loop','A package manager','A virtual environment'], answer:0},
+  {q:'Which method shows column data types?', options:['info()','head()','sample()','sort()'], answer:0},
+  {q:'Which method gives statistical summary?', options:['describe()','summary_text()','stats_all()','print_stats()'], answer:0},
+  {q:'Which method fills missing values?', options:['fillna()','drop_duplicates()','sort_values()','rename()'], answer:0},
+  {q:'Which method removes rows with missing values?', options:['dropna()','remove_na_only()','clear_blank()','delete_empty()'], answer:0},
+  {q:'Which method sorts rows by a column?', options:['sort_values()','order_by()','arrange_rows()','row_sort()'], answer:0},
+  {q:'Which method renames columns?', options:['rename()','change_col()','alter()','modify()'], answer:0},
+  {q:'Which method combines DataFrames based on matching keys?', options:['merge()','append_file()','head()','describe()'], answer:0},
+  {q:'Which method stacks DataFrames?', options:['concat()','stack_file()','join_rows_only()','collect()'], answer:0},
+  {q:'Which function converts values to datetime?', options:['pd.to_datetime()','pd.date_make()','pd.convert_date_only()','pd.time_format()'], answer:0},
+  {q:'What does groupby usually follow?', options:['Split Apply Combine','Open Close Save','Read Print Exit','Lock Unlock Commit'], answer:0},
+  {q:'Which is usually faster?', options:['Python row loop','Vectorized column operation','Manual Excel copy','Nested if only'], answer:1},
+  {q:'What is the purpose of reset_index()?', options:['Convert index back to column/default index','Delete all rows','Reset Python','Clear memory only'], answer:0},
+  {q:'What does df.shape return?', options:['Rows and columns count','Only column names','Only data types','Only missing values'], answer:0},
+  {q:'How do you select multiple columns?', options:['df[["a","b"]]','df["a","b"]','df.select(a,b)','df.columns(a,b)'], answer:0},
+  {q:'Which is not a common Pandas file format?', options:['CSV','Excel','JSON','MP3'], answer:3},
+  {q:'Why use usecols while reading CSV?', options:['Read only required columns','Encrypt CSV','Delete duplicate columns','Create index automatically'], answer:0},
+  {q:'For huge distributed data, better choice may be:', options:['PySpark','Small list only','print() only','Manual copy paste'], answer:0}
+];
+let examStarted = false;
+let examSeconds = 20 * 60;
+let examInterval = null;
+function renderExam(){
+  const area = document.getElementById('examArea');
+  area.innerHTML = examQuestions.map((item,i)=>`
+    <div class="exam-question">
+      <h4>${i+1}. ${item.q}</h4>
+      ${item.options.map((op,j)=>`<label class="option"><input type="radio" name="eq${i}" value="${j}" ${!examStarted?'disabled':''}> ${op}</label>`).join('')}
+    </div>`).join('');
+}
+function startExam(){
+  examStarted = true;
+  examSeconds = 20 * 60;
+  renderExam();
+  document.getElementById('examResult').style.display = 'none';
+  clearInterval(examInterval);
+  examInterval = setInterval(()=>{
+    examSeconds--;
+    updateTimer();
+    if(examSeconds <= 0){ submitExam(); }
+  }, 1000);
+  updateTimer();
+}
+function updateTimer(){
+  const m = Math.floor(examSeconds / 60).toString().padStart(2,'0');
+  const s = (examSeconds % 60).toString().padStart(2,'0');
+  document.getElementById('examTimer').textContent = `${m}:${s}`;
+}
+function submitExam(){
+  if(!examStarted){ alert('Please start the exam first.'); return; }
+  clearInterval(examInterval);
+  examStarted = false;
+  let score = 0;
+  examQuestions.forEach((item,i)=>{
+    const selected = document.querySelector(`input[name="eq${i}"]:checked`);
+    if(selected && Number(selected.value) === item.answer) score++;
+  });
+  const percent = Math.round((score / examQuestions.length) * 100);
+  let mood = '🙂 Good effort. Revise the weak areas and retake.';
+  if(percent >= 85) mood = '🏆 Excellent! You are interview ready for Pandas basics.';
+  else if(percent >= 70) mood = '😎 Very good! Practice a few more project examples.';
+  else if(percent >= 50) mood = '🙂 Average. Revisit cleaning, filtering, groupby and joins.';
+  else mood = '💪 Do not worry. Restart from Sections 2 to 8 and try again.';
+  const result = document.getElementById('examResult');
+  result.style.display = 'block';
+  result.innerHTML = `Exam Score: ${score}/${examQuestions.length} (${percent}%)<br>${mood}`;
+  renderExam();
+}
+renderExam();
+
+const navLinks = [...document.querySelectorAll('.nav a')];
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if(entry.isIntersecting){
+      navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+    }
+  });
+},{rootMargin:'-35% 0px -55% 0px', threshold:.01});
+sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>
