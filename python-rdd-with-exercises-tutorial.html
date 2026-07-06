@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Python RDD with Exercises - Classroom Tutorial</title>
+<style>
+  :root{
+    --bg:#f5f7fb;--card:#ffffff;--ink:#162033;--muted:#5b6475;--brand:#253b80;--brand2:#f97316;--accent:#10b981;--danger:#ef4444;--warn:#f59e0b;--line:#d9e1f2;--code:#0f172a;--soft:#eef4ff;--soft2:#fff7ed;--shadow:0 14px 34px rgba(22,32,51,.10);--radius:18px;
+  }
+  *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(135deg,#f5f7fb,#eef4ff 45%,#fff7ed);color:var(--ink);line-height:1.65}.app{display:grid;grid-template-columns:300px 1fr;min-height:100vh}.side{position:sticky;top:0;height:100vh;overflow:auto;background:#101b3d;color:#fff;padding:24px 18px;border-right:5px solid var(--brand2)}.brand{display:flex;gap:12px;align-items:center;margin-bottom:18px}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--brand2),#ffd166);display:grid;place-items:center;font-size:24px;font-weight:900;color:#111}.brand h1{font-size:18px;margin:0;line-height:1.2}.brand p{font-size:12px;margin:3px 0 0;color:#cbd5e1}.side .pill{display:inline-block;border:1px solid rgba(255,255,255,.22);padding:4px 10px;border-radius:999px;font-size:12px;color:#dbeafe;margin:4px 4px 12px 0}.toc{display:flex;flex-direction:column;gap:6px;margin-top:12px}.toc a{color:#e5e7eb;text-decoration:none;padding:9px 10px;border-radius:10px;font-size:13px;border:1px solid transparent}.toc a:hover,.toc a.active{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.18);color:#fff}.main{padding:28px;max-width:1240px}.hero{background:linear-gradient(135deg,#1d2f6f,#253b80 60%,#f97316);color:white;border-radius:24px;padding:34px;box-shadow:var(--shadow);position:relative;overflow:hidden}.hero:after{content:"";position:absolute;width:260px;height:260px;border-radius:50%;right:-80px;top:-90px;background:rgba(255,255,255,.13)}.hero h2{font-size:34px;line-height:1.12;margin:0 0 12px}.hero p{max-width:900px;color:#e8eefc}.hero .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}.meta span{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);padding:8px 12px;border-radius:999px;font-size:13px}.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0}.btn{border:0;border-radius:12px;padding:10px 14px;background:var(--brand);color:#fff;cursor:pointer;font-weight:700;box-shadow:0 6px 18px rgba(37,59,128,.22)}.btn.secondary{background:#fff;color:var(--brand);border:1px solid var(--line)}.btn.warn{background:var(--brand2)}.btn.success{background:var(--accent)}.search{padding:11px 14px;border:1px solid var(--line);border-radius:12px;min-width:280px}section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:26px;margin:22px 0;box-shadow:var(--shadow);transition:.25s}section:hover{transform:translateY(-3px);box-shadow:0 22px 50px rgba(22,32,51,.14);border-color:#b6c5ee}.section-title{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px dashed var(--line);padding-bottom:12px;margin-bottom:18px}.section-title h2{margin:0;color:var(--brand);font-size:25px}.tag{font-size:12px;font-weight:800;color:#7c2d12;background:#ffedd5;padding:5px 10px;border-radius:999px;white-space:nowrap}.grid{display:grid;gap:16px}.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}.card{border:1px solid var(--line);border-radius:16px;padding:16px;background:#fff}.card.soft{background:var(--soft)}.card.orange{background:var(--soft2)}.card h3{margin-top:0;color:#1e3a8a}.note{border-left:5px solid var(--brand2);background:#fff7ed;padding:14px 16px;border-radius:12px;margin:14px 0}.success-note{border-left:5px solid var(--accent);background:#ecfdf5;padding:14px 16px;border-radius:12px;margin:14px 0}.danger-note{border-left:5px solid var(--danger);background:#fef2f2;padding:14px 16px;border-radius:12px;margin:14px 0}.diagram{border:2px dashed #aebced;background:#f8fbff;border-radius:18px;padding:18px;margin:16px 0;overflow:auto}.flow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.box{padding:12px 14px;border-radius:14px;background:white;border:1px solid #b6c5ee;font-weight:800;color:#1e3a8a;min-width:120px;text-align:center}.arrow{font-size:24px;color:var(--brand2);font-weight:900}.tree{font-family:Consolas,Monaco,monospace;white-space:pre;line-height:1.4;background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:16px;overflow:auto}pre{position:relative;background:var(--code);color:#e5e7eb;border-radius:16px;padding:18px 16px;overflow:auto;border:1px solid #1e293b}code{font-family:Consolas,Monaco,monospace;font-size:14px}.copy{position:absolute;right:10px;top:10px;background:#334155;color:#fff;border:0;border-radius:8px;padding:5px 9px;cursor:pointer;font-size:12px}table{width:100%;border-collapse:collapse;margin:12px 0;border-radius:14px;overflow:hidden}th,td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}th{background:#dbeafe;color:#132257}tr:nth-child(even) td{background:#f8fafc}.checklist label{display:flex;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--line);border-radius:12px;margin:8px 0;background:#fff}.quiz-question{border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;background:#fff}.quiz-question h4{margin:0 0 8px}.quiz-question label{display:block;margin:7px 0;padding:8px 10px;border-radius:10px;background:#f8fafc;cursor:pointer}.quiz-question label:hover{background:#eef4ff}.result{font-weight:900;font-size:18px;padding:12px;border-radius:12px;display:none}.result.good{background:#ecfdf5;color:#065f46}.result.avg{background:#fffbeb;color:#92400e}.result.bad{background:#fef2f2;color:#991b1b}.flash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.flash .card{min-height:130px}.kbd{display:inline-block;padding:1px 7px;border-radius:6px;border:1px solid #cbd5e1;background:#f8fafc;font-family:Consolas,monospace;font-size:13px}.progress-wrap{height:12px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin:8px 0 14px}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,var(--brand),var(--brand2));transition:.25s}.notes-panel{position:fixed;right:20px;bottom:20px;width:340px;max-width:calc(100vw - 40px);background:white;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:14px;z-index:20}.notes-panel textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:12px;padding:10px}.hidden{display:none!important}.sparkle{position:fixed;width:8px;height:8px;border-radius:50%;pointer-events:none;background:var(--brand2);box-shadow:0 0 12px var(--brand2);animation:spark .7s ease-out forwards;z-index:9999}@keyframes spark{to{transform:translateY(-18px) scale(0);opacity:0}}.footer{padding:22px;color:var(--muted);text-align:center}.mini{font-size:13px;color:var(--muted)}.term{font-weight:900;color:#1e3a8a}.exercise{border-left:4px solid #3b82f6}.solution{display:none;margin-top:10px}.solution.open{display:block}.timer{font-size:20px;font-weight:900;color:#7c2d12;background:#ffedd5;padding:8px 12px;border-radius:12px;display:inline-block}@media(max-width:950px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.main{padding:16px}.grid.two,.grid.three,.flash{grid-template-columns:1fr}.hero h2{font-size:28px}.flow{flex-direction:column;align-items:stretch}.arrow{transform:rotate(90deg);text-align:center}.search{min-width:100%;}.section-title{flex-direction:column}.notes-panel{left:20px;right:20px;width:auto}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><div class="logo">Py</div><div><h1>Python RDD Tutorial</h1><p>Corporate classroom notes</p></div></div>
+    <span class="pill">PySpark</span><span class="pill">RDD</span><span class="pill">Exercises</span><span class="pill">Interview</span>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="mini" id="progressText">0% completed</p>
+    <nav class="toc" id="toc">
+      <a href="#s1">1. Course Overview</a>
+      <a href="#s2">2. RDD Concept</a>
+      <a href="#s3">3. Environment Setup</a>
+      <a href="#s4">4. Creating RDDs</a>
+      <a href="#s5">5. Transformations</a>
+      <a href="#s6">6. Actions</a>
+      <a href="#s7">7. Pair RDDs</a>
+      <a href="#s8">8. Word Count Project</a>
+      <a href="#s9">9. Lazy Evaluation</a>
+      <a href="#s10">10. Partitions & Persistence</a>
+      <a href="#s11">11. Exercises</a>
+      <a href="#s12">12. Interview Q&A</a>
+      <a href="#s13">13. Quiz & Mock Exam</a>
+    </nav>
+  </aside>
+  <main class="main">
+    <header class="hero">
+      <h2>Python RDD with Exercises</h2>
+      <p>A complete beginner-to-interview classroom tutorial on Apache Spark RDD programming using Python. Learn how RDDs work, how to create them, transform them, trigger actions, solve word count, handle key-value data, optimize with partitions/cache, and practice with real exercises.</p>
+      <div class="meta"><span>Single HTML file</span><span>Beginner friendly</span><span>Code examples</span><span>Practice + Exam</span><span>Double-click notes</span></div>
+    </header>
+
+    <div class="toolbar">
+      <input class="search" id="searchBox" placeholder="Search inside tutorial... e.g. reduceByKey, cache" />
+      <button class="btn secondary" onclick="toggleNotes()">Open Notes</button>
+      <button class="btn warn" onclick="resetProgress()">Reset Progress</button>
+      <button class="btn success" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <section id="s1" data-title="Course Overview">
+      <div class="section-title"><h2>1. Course Overview and Learning Outcomes</h2><span class="tag">Foundation</span></div>
+      <p><span class="term">RDD</span> means <b>Resilient Distributed Dataset</b>. In PySpark, RDD is the low-level distributed collection used to process data across a cluster. Apache Spark documentation describes RDD as the basic abstraction in Spark: an immutable, partitioned collection of elements that can be operated on in parallel.</p>
+      <div class="grid two">
+        <div class="card soft">
+          <h3>By the end, you can explain</h3>
+          <ul>
+            <li>What RDD is and why Spark introduced it.</li>
+            <li>Difference between transformation and action.</li>
+            <li>How lazy evaluation and lineage work.</li>
+            <li>How pair RDDs solve grouping and aggregation problems.</li>
+            <li>How to write RDD programs in Python.</li>
+          </ul>
+        </div>
+        <div class="card orange">
+          <h3>By the end, you can code</h3>
+          <ul>
+            <li>Word count using <code>flatMap</code>, <code>map</code>, and <code>reduceByKey</code>.</li>
+            <li>Filtering logs and finding error counts.</li>
+            <li>Customer transaction aggregation.</li>
+            <li>RDD exercises with solutions.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s1"> I understand the learning goals and RDD purpose.</label></div>
+    </section>
+
+    <section id="s2" data-title="RDD Concept">
+      <div class="section-title"><h2>2. What is RDD?</h2><span class="tag">Core Concept</span></div>
+      <p>An RDD is a distributed collection of records. Spark splits a large dataset into <b>partitions</b>, sends those partitions to worker nodes, and processes them in parallel.</p>
+      <div class="diagram">
+        <div class="flow">
+          <div class="box">Large Dataset</div><div class="arrow">→</div><div class="box">Partition 1</div><div class="box">Partition 2</div><div class="box">Partition 3</div><div class="arrow">→</div><div class="box">Parallel Processing</div>
+        </div>
+      </div>
+      <table>
+        <tr><th>RDD Feature</th><th>Meaning</th><th>Simple Example</th></tr>
+        <tr><td>Resilient</td><td>Can recover lost data using lineage.</td><td>If a partition fails, Spark recalculates it.</td></tr>
+        <tr><td>Distributed</td><td>Data is split across machines.</td><td>1 TB file split into many partitions.</td></tr>
+        <tr><td>Dataset</td><td>Collection of records.</td><td>Lines from a file, words, transactions.</td></tr>
+        <tr><td>Immutable</td><td>Original RDD is not changed.</td><td><code>filter()</code> creates a new RDD.</td></tr>
+        <tr><td>Lazy</td><td>Execution waits until an action.</td><td><code>map()</code> waits until <code>collect()</code>.</td></tr>
+      </table>
+      <div class="note"><b>Interview line:</b> RDD is Spark’s low-level immutable distributed dataset abstraction. It supports fault tolerance through lineage and parallel processing through partitions.</div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s2"> I can define RDD in interview language.</label></div>
+    </section>
+
+    <section id="s3" data-title="Environment Setup">
+      <div class="section-title"><h2>3. Environment Setup for PySpark RDD</h2><span class="tag">Setup</span></div>
+      <p>For learning, you can run PySpark locally. In real projects, Spark runs on clusters such as Hadoop YARN, Kubernetes, Databricks, EMR, or standalone Spark clusters.</p>
+      <div class="grid two">
+        <div class="card">
+          <h3>Install PySpark locally</h3>
+          <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>python -m venv .venv
+.venv\Scripts\activate      # Windows
+# source .venv/bin/activate  # Mac/Linux
+pip install pyspark</code></pre>
+        </div>
+        <div class="card">
+          <h3>Start PySpark shell</h3>
+          <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>pyspark</code></pre>
+          <p class="mini">For scripts, create a <code>SparkSession</code>. For RDD examples, use <code>spark.sparkContext</code>.</p>
+        </div>
+      </div>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("Python RDD Tutorial") \
+    .master("local[*]") \
+    .getOrCreate()
+
+sc = spark.sparkContext
+print(sc.appName)</code></pre>
+      <div class="danger-note"><b>Note:</b> In modern Spark applications, DataFrames are usually preferred for structured data. RDDs are still important for understanding Spark internals, custom low-level transformations, and interview foundations.</div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s3"> I can create SparkSession and SparkContext.</label></div>
+    </section>
+
+    <section id="s4" data-title="Creating RDDs">
+      <div class="section-title"><h2>4. Creating RDDs in Python</h2><span class="tag">Hands-on</span></div>
+      <p>You can create RDDs mainly in three ways: from Python collections, from files, or from DataFrames.</p>
+      <h3>4.1 Create RDD from Python List</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>numbers = [10, 20, 30, 40, 50]
+rdd = sc.parallelize(numbers)
+print(rdd.collect())</code></pre>
+      <h3>4.2 Create RDD from Text File</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>lines_rdd = sc.textFile("data/input.txt")
+print(lines_rdd.take(5))</code></pre>
+      <h3>4.3 Convert DataFrame to RDD</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>df = spark.createDataFrame([(1, "Gopi"), (2, "Anu")], ["id", "name"])
+rdd_from_df = df.rdd
+print(rdd_from_df.collect())</code></pre>
+      <table>
+        <tr><th>Method</th><th>Use Case</th></tr>
+        <tr><td><code>sc.parallelize()</code></td><td>Learning, testing, small in-memory collections.</td></tr>
+        <tr><td><code>sc.textFile()</code></td><td>Read text/log/CSV-like files as lines.</td></tr>
+        <tr><td><code>df.rdd</code></td><td>Convert DataFrame rows to RDD for low-level processing.</td></tr>
+      </table>
+      <div class="checklist"><label><input type="checkbox" data-progress="s4"> I can create RDDs from list, file, and DataFrame.</label></div>
+    </section>
+
+    <section id="s5" data-title="Transformations">
+      <div class="section-title"><h2>5. RDD Transformations</h2><span class="tag">Most Important</span></div>
+      <p>A <b>transformation</b> creates a new RDD from an existing RDD. Transformations are lazy. They do not execute immediately.</p>
+      <div class="diagram"><div class="flow"><div class="box">RDD</div><div class="arrow">→</div><div class="box">map/filter/flatMap</div><div class="arrow">→</div><div class="box">New RDD</div><div class="arrow">→</div><div class="box">No execution yet</div></div></div>
+      <h3>5.1 map()</h3>
+      <p>Applies a function to each element.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize([1, 2, 3, 4])
+squared = rdd.map(lambda x: x * x)
+print(squared.collect())   # [1, 4, 9, 16]</code></pre>
+      <h3>5.2 filter()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize([10, 15, 20, 25, 30])
+even_numbers = rdd.filter(lambda x: x % 2 == 0)
+print(even_numbers.collect())   # [10, 20, 30]</code></pre>
+      <h3>5.3 flatMap()</h3>
+      <p><code>flatMap()</code> is useful when one input can produce multiple outputs.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>lines = sc.parallelize(["hello hadoop", "hello big data"])
+words = lines.flatMap(lambda line: line.split(" "))
+print(words.collect())
+# ['hello', 'hadoop', 'hello', 'big', 'data']</code></pre>
+      <h3>5.4 distinct(), union(), intersection()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>a = sc.parallelize([1, 2, 2, 3])
+b = sc.parallelize([3, 4, 5])
+print(a.distinct().collect())
+print(a.union(b).collect())
+print(a.intersection(b).collect())</code></pre>
+      <table>
+        <tr><th>Transformation</th><th>Purpose</th><th>Example Output</th></tr>
+        <tr><td><code>map</code></td><td>One input → one output</td><td>1 → 1, 2 → 4</td></tr>
+        <tr><td><code>flatMap</code></td><td>One input → many outputs</td><td>"hello spark" → hello, spark</td></tr>
+        <tr><td><code>filter</code></td><td>Keep matching records</td><td>Only even numbers</td></tr>
+        <tr><td><code>distinct</code></td><td>Remove duplicates</td><td>[1,2,2] → [1,2]</td></tr>
+      </table>
+      <div class="checklist"><label><input type="checkbox" data-progress="s5"> I can explain and use common RDD transformations.</label></div>
+    </section>
+
+    <section id="s6" data-title="Actions">
+      <div class="section-title"><h2>6. RDD Actions</h2><span class="tag">Execution Trigger</span></div>
+      <p>An <b>action</b> triggers actual execution and returns result to the driver or writes output to storage.</p>
+      <div class="diagram"><div class="flow"><div class="box">Transformations</div><div class="arrow">→</div><div class="box">DAG Created</div><div class="arrow">→</div><div class="box">Action Called</div><div class="arrow">→</div><div class="box">Execution Starts</div></div></div>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize([10, 20, 30, 40])
+print(rdd.count())        # 4
+print(rdd.first())        # 10
+print(rdd.take(2))        # [10, 20]
+print(rdd.collect())      # [10, 20, 30, 40]
+print(rdd.reduce(lambda a, b: a + b))  # 100</code></pre>
+      <div class="danger-note"><b>Important:</b> Avoid <code>collect()</code> on huge datasets because it brings all data to the driver machine. Use <code>take()</code>, <code>count()</code>, or save output instead.</div>
+      <table>
+        <tr><th>Action</th><th>Purpose</th></tr>
+        <tr><td><code>collect()</code></td><td>Return all records to driver. Use only for small data.</td></tr>
+        <tr><td><code>count()</code></td><td>Count records.</td></tr>
+        <tr><td><code>take(n)</code></td><td>Return first n records.</td></tr>
+        <tr><td><code>first()</code></td><td>Return first record.</td></tr>
+        <tr><td><code>reduce()</code></td><td>Aggregate records using a function.</td></tr>
+        <tr><td><code>saveAsTextFile()</code></td><td>Write output to folder.</td></tr>
+      </table>
+      <div class="checklist"><label><input type="checkbox" data-progress="s6"> I know which methods are actions and why actions trigger jobs.</label></div>
+    </section>
+
+    <section id="s7" data-title="Pair RDDs">
+      <div class="section-title"><h2>7. Pair RDDs: Key-Value Processing</h2><span class="tag">Aggregation</span></div>
+      <p>A <b>Pair RDD</b> stores data as key-value pairs like <code>(customer_id, amount)</code> or <code>(word, 1)</code>. Pair RDDs are used heavily in grouping, counting, joining, and aggregation.</p>
+      <h3>7.1 reduceByKey()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>sales = sc.parallelize([
+    ("Chennai", 1000),
+    ("Bangalore", 1500),
+    ("Chennai", 2000),
+    ("Mumbai", 1200)
+])
+
+city_total = sales.reduceByKey(lambda a, b: a + b)
+print(city_total.collect())
+# [('Chennai', 3000), ('Bangalore', 1500), ('Mumbai', 1200)]</code></pre>
+      <h3>7.2 groupByKey()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>grouped = sales.groupByKey().mapValues(list)
+print(grouped.collect())</code></pre>
+      <div class="note"><b>Best practice:</b> Prefer <code>reduceByKey()</code> for aggregation because it combines data locally before shuffle. <code>groupByKey()</code> can move more data across network.</div>
+      <h3>7.3 sortByKey()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>marks = sc.parallelize([("Ravi", 80), ("Anu", 95), ("Bala", 70)])
+print(marks.sortByKey().collect())</code></pre>
+      <h3>7.4 join()</h3>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>customers = sc.parallelize([(1, "Gopi"), (2, "Priya")])
+loans = sc.parallelize([(1, 500000), (2, 300000)])
+joined = customers.join(loans)
+print(joined.collect())
+# [(1, ('Gopi', 500000)), (2, ('Priya', 300000))]</code></pre>
+      <div class="checklist"><label><input type="checkbox" data-progress="s7"> I can use Pair RDD operations like reduceByKey, groupByKey, sortByKey, and join.</label></div>
+    </section>
+
+    <section id="s8" data-title="Word Count Project">
+      <div class="section-title"><h2>8. Mini Project: Word Count Using RDD</h2><span class="tag">Classic Interview</span></div>
+      <p>Word count is the most common RDD interview example because it explains <code>flatMap</code>, <code>map</code>, <code>shuffle</code>, and <code>reduceByKey</code>.</p>
+      <div class="diagram">
+        <div class="tree">Input:
+hello hadoop hello big data
+
+flatMap:
+hello, hadoop, hello, big, data
+
+map:
+(hello,1), (hadoop,1), (hello,1), (big,1), (data,1)
+
+shuffle + reduceByKey:
+hello -> [1,1] -> 2
+hadoop -> [1] -> 1
+big -> [1] -> 1
+data -> [1] -> 1</div>
+      </div>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>text = sc.parallelize(["hello hadoop hello big data"])
+
+word_counts = text \
+    .flatMap(lambda line: line.split(" ")) \
+    .map(lambda word: (word, 1)) \
+    .reduceByKey(lambda a, b: a + b)
+
+print(word_counts.collect())
+# [('hello', 2), ('hadoop', 1), ('big', 1), ('data', 1)]</code></pre>
+      <h3>Step-by-step Explanation</h3>
+      <table>
+        <tr><th>Step</th><th>RDD Operation</th><th>Purpose</th></tr>
+        <tr><td>1</td><td><code>parallelize</code></td><td>Create RDD from input sentence.</td></tr>
+        <tr><td>2</td><td><code>flatMap</code></td><td>Split line into words.</td></tr>
+        <tr><td>3</td><td><code>map</code></td><td>Convert each word to <code>(word, 1)</code>.</td></tr>
+        <tr><td>4</td><td><code>reduceByKey</code></td><td>Add counts for same word.</td></tr>
+        <tr><td>5</td><td><code>collect</code></td><td>Trigger execution and return result.</td></tr>
+      </table>
+      <div class="checklist"><label><input type="checkbox" data-progress="s8"> I can explain word count end-to-end.</label></div>
+    </section>
+
+    <section id="s9" data-title="Lazy Evaluation">
+      <div class="section-title"><h2>9. Lazy Evaluation, DAG, and Lineage</h2><span class="tag">Interview Favorite</span></div>
+      <p>Spark does not execute transformations immediately. It records the transformations as a <b>DAG</b>, which means Directed Acyclic Graph. Execution starts only when an action is called.</p>
+      <div class="diagram"><div class="flow"><div class="box">textFile()</div><div class="arrow">→</div><div class="box">flatMap()</div><div class="arrow">→</div><div class="box">map()</div><div class="arrow">→</div><div class="box">reduceByKey()</div><div class="arrow">→</div><div class="box">collect()</div></div></div>
+      <h3>Why Lazy Evaluation?</h3>
+      <ul>
+        <li>Spark can optimize the execution plan.</li>
+        <li>Spark can combine multiple transformations.</li>
+        <li>Spark avoids unnecessary computation.</li>
+        <li>Fault recovery is possible through lineage.</li>
+      </ul>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize([1, 2, 3, 4, 5])
+filtered = rdd.filter(lambda x: x > 2)  # No execution yet
+mapped = filtered.map(lambda x: x * 10) # No execution yet
+print(mapped.collect())                 # Execution starts here</code></pre>
+      <div class="success-note"><b>Interview line:</b> Transformations are lazy because Spark builds a logical execution plan first. Actions trigger the job.</div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s9"> I can explain lazy evaluation and lineage.</label></div>
+    </section>
+
+    <section id="s10" data-title="Partitions & Persistence">
+      <div class="section-title"><h2>10. Partitions, Cache, Persist, Broadcast, and Accumulators</h2><span class="tag">Performance</span></div>
+      <h3>10.1 Partitions</h3>
+      <p>Partitions are smaller chunks of an RDD. Spark runs tasks on partitions.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize(range(1, 101), 4)
+print(rdd.getNumPartitions())  # 4</code></pre>
+      <h3>10.2 Repartition and Coalesce</h3>
+      <table>
+        <tr><th>Operation</th><th>Use</th><th>Shuffle?</th></tr>
+        <tr><td><code>repartition(n)</code></td><td>Increase or decrease partitions.</td><td>Yes</td></tr>
+        <tr><td><code>coalesce(n)</code></td><td>Usually decrease partitions efficiently.</td><td>Usually avoids full shuffle</td></tr>
+      </table>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd2 = rdd.repartition(8)
+rdd3 = rdd2.coalesce(2)</code></pre>
+      <h3>10.3 Cache and Persist</h3>
+      <p>Use <code>cache()</code> or <code>persist()</code> when the same RDD is reused multiple times.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>logs = sc.textFile("logs/app.log")
+errors = logs.filter(lambda line: "ERROR" in line)
+errors.cache()
+
+print(errors.count())
+print(errors.take(10))</code></pre>
+      <h3>10.4 Broadcast Variable</h3>
+      <p>Broadcast sends a read-only value to all workers efficiently.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>blocked_countries = sc.broadcast({"XX", "YY"})
+transactions = sc.parallelize([("T1", "IN"), ("T2", "XX")])
+valid = transactions.filter(lambda t: t[1] not in blocked_countries.value)
+print(valid.collect())</code></pre>
+      <h3>10.5 Accumulator</h3>
+      <p>Accumulator is used to aggregate counters across tasks.</p>
+      <pre><button class="copy" onclick="copyCode(this)">Copy</button><code>invalid_count = sc.accumulator(0)
+records = sc.parallelize([10, -5, 20, -1])
+
+def validate(x):
+    global invalid_count
+    if x < 0:
+        invalid_count.add(1)
+    return x >= 0
+
+valid_records = records.filter(validate).collect()
+print(valid_records)
+print("Invalid count:", invalid_count.value)</code></pre>
+      <div class="checklist"><label><input type="checkbox" data-progress="s10"> I understand partitioning, caching, broadcast, and accumulators.</label></div>
+    </section>
+
+    <section id="s11" data-title="Exercises">
+      <div class="section-title"><h2>11. Hands-on Exercises with Solutions</h2><span class="tag">Practice</span></div>
+      <p>Try each exercise first, then click “Show Solution”.</p>
+      <div class="card exercise"><h3>Exercise 1: Square all numbers</h3><p>Input: <code>[2, 4, 6, 8]</code>. Output: <code>[4, 16, 36, 64]</code>.</p><button class="btn secondary" onclick="toggleSolution('sol1')">Show Solution</button><div class="solution" id="sol1"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>rdd = sc.parallelize([2, 4, 6, 8])
+result = rdd.map(lambda x: x * x)
+print(result.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 2: Filter salaries greater than 50000</h3><p>Input: <code>[25000, 50000, 75000, 90000]</code>.</p><button class="btn secondary" onclick="toggleSolution('sol2')">Show Solution</button><div class="solution" id="sol2"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>salaries = sc.parallelize([25000, 50000, 75000, 90000])
+high = salaries.filter(lambda s: s > 50000)
+print(high.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 3: Split lines into words</h3><p>Use <code>flatMap</code> to convert lines into words.</p><button class="btn secondary" onclick="toggleSolution('sol3')">Show Solution</button><div class="solution" id="sol3"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>lines = sc.parallelize(["spark is fast", "spark uses rdd"])
+words = lines.flatMap(lambda line: line.split())
+print(words.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 4: Count department employees</h3><p>Input: <code>[('IT','Ravi'), ('HR','Anu'), ('IT','Bala')]</code>. Output: IT = 2, HR = 1.</p><button class="btn secondary" onclick="toggleSolution('sol4')">Show Solution</button><div class="solution" id="sol4"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>employees = sc.parallelize([('IT','Ravi'), ('HR','Anu'), ('IT','Bala')])
+counts = employees.map(lambda x: (x[0], 1)).reduceByKey(lambda a, b: a + b)
+print(counts.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 5: Find total transaction amount by customer</h3><p>Input: <code>[('C1',100), ('C2',200), ('C1',300)]</code>.</p><button class="btn secondary" onclick="toggleSolution('sol5')">Show Solution</button><div class="solution" id="sol5"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>txns = sc.parallelize([('C1',100), ('C2',200), ('C1',300)])
+total = txns.reduceByKey(lambda a, b: a + b)
+print(total.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 6: Find top 3 words</h3><p>Count words and sort by count descending.</p><button class="btn secondary" onclick="toggleSolution('sol6')">Show Solution</button><div class="solution" id="sol6"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>lines = sc.parallelize(["spark spark rdd", "python spark data"])
+counts = lines.flatMap(lambda x: x.split()) \
+    .map(lambda w: (w, 1)) \
+    .reduceByKey(lambda a, b: a + b)
+
+top3 = counts.takeOrdered(3, key=lambda x: -x[1])
+print(top3)</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 7: Error log count</h3><p>Count ERROR, WARN, and INFO from log lines.</p><button class="btn secondary" onclick="toggleSolution('sol7')">Show Solution</button><div class="solution" id="sol7"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>logs = sc.parallelize([
+    "INFO service started",
+    "ERROR database failed",
+    "WARN retrying",
+    "ERROR timeout"
+])
+levels = logs.map(lambda line: (line.split()[0], 1)).reduceByKey(lambda a,b: a+b)
+print(levels.collect())</code></pre></div></div>
+      <div class="card exercise"><h3>Exercise 8: Join customer and loan RDD</h3><p>Join customer names with loan amount.</p><button class="btn secondary" onclick="toggleSolution('sol8')">Show Solution</button><div class="solution" id="sol8"><pre><button class="copy" onclick="copyCode(this)">Copy</button><code>customers = sc.parallelize([(101, "Gopi"), (102, "Meena")])
+loans = sc.parallelize([(101, 500000), (102, 300000)])
+result = customers.join(loans)
+print(result.collect())</code></pre></div></div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s11"> I completed the hands-on exercises.</label></div>
+    </section>
+
+    <section id="s12" data-title="Interview Q&A">
+      <div class="section-title"><h2>12. Interview Questions and Answers</h2><span class="tag">15+ Q&A</span></div>
+      <div class="flash">
+        <div class="card"><h3>1. What is RDD?</h3><p>RDD is Spark’s immutable, distributed collection of elements processed in parallel. It supports fault tolerance using lineage.</p></div>
+        <div class="card"><h3>2. Why is RDD immutable?</h3><p>Immutability makes recovery easier. Instead of changing old data, Spark creates a new RDD from transformations.</p></div>
+        <div class="card"><h3>3. What is lazy evaluation?</h3><p>Spark delays execution of transformations until an action is called.</p></div>
+        <div class="card"><h3>4. Transformation vs Action?</h3><p>Transformation creates a new RDD. Action triggers execution and returns/writes result.</p></div>
+        <div class="card"><h3>5. map vs flatMap?</h3><p><code>map</code> returns one output per input. <code>flatMap</code> can return multiple outputs per input and flattens them.</p></div>
+        <div class="card"><h3>6. reduceByKey vs groupByKey?</h3><p><code>reduceByKey</code> aggregates locally before shuffle. <code>groupByKey</code> groups all values and may cause more network transfer.</p></div>
+        <div class="card"><h3>7. What is lineage?</h3><p>Lineage is the record of transformations used to create an RDD. Spark uses it to recompute lost partitions.</p></div>
+        <div class="card"><h3>8. What is partition?</h3><p>A partition is a chunk of an RDD. Spark creates tasks based on partitions.</p></div>
+        <div class="card"><h3>9. Why avoid collect()?</h3><p><code>collect()</code> brings all records to the driver and can cause memory issues for large data.</p></div>
+        <div class="card"><h3>10. What is cache?</h3><p><code>cache()</code> stores an RDD in memory for reuse, avoiding repeated recomputation.</p></div>
+        <div class="card"><h3>11. What is persist?</h3><p><code>persist()</code> stores RDD using a selected storage level such as memory or disk.</p></div>
+        <div class="card"><h3>12. What is shuffle?</h3><p>Shuffle is data movement across partitions/nodes, usually needed for grouping, joining, and aggregation.</p></div>
+        <div class="card"><h3>13. What is broadcast variable?</h3><p>A read-only variable copied efficiently to worker nodes for lookup/reference data.</p></div>
+        <div class="card"><h3>14. What is accumulator?</h3><p>A shared write-only counter used by tasks to add values, commonly for metrics.</p></div>
+        <div class="card"><h3>15. When should we use RDD over DataFrame?</h3><p>Use RDD for low-level transformations, unstructured custom processing, or learning internals. Use DataFrame for structured data and optimization.</p></div>
+        <div class="card"><h3>16. What is SparkContext?</h3><p>SparkContext connects the driver program to the Spark cluster and is used to create RDDs.</p></div>
+        <div class="card"><h3>17. What is a narrow transformation?</h3><p>A transformation where each output partition depends on one input partition, such as <code>map</code> and <code>filter</code>.</p></div>
+        <div class="card"><h3>18. What is a wide transformation?</h3><p>A transformation where output partitions depend on multiple input partitions, usually causing shuffle, such as <code>reduceByKey</code> and <code>join</code>.</p></div>
+      </div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s12"> I reviewed the interview questions.</label></div>
+    </section>
+
+    <section id="s13" data-title="Quiz & Mock Exam">
+      <div class="section-title"><h2>13. Practice Quiz, Timed Exam, Notes, and Preparation Tracker</h2><span class="tag">Assessment</span></div>
+      <h3>Practice Quiz</h3>
+      <div id="practiceQuiz"></div>
+      <button class="btn" onclick="gradeQuiz('practice')">Submit Practice Quiz</button>
+      <div id="practiceResult" class="result"></div>
+
+      <h3 style="margin-top:28px">Formal Timed Mock Exam</h3>
+      <p>Duration: <b>10 minutes</b>. Click start, answer all questions, then submit.</p>
+      <div class="timer" id="timer">10:00</div>
+      <button class="btn success" onclick="startExam()">Start Exam</button>
+      <div id="examQuiz"></div>
+      <button class="btn" onclick="gradeQuiz('exam')">Submit Exam</button>
+      <div id="examResult" class="result"></div>
+
+      <h3 style="margin-top:28px">Preparation Checklist</h3>
+      <div class="checklist">
+        <label><input type="checkbox" data-progress="prep1"> I can write word count without seeing notes.</label>
+        <label><input type="checkbox" data-progress="prep2"> I can explain lazy evaluation with example.</label>
+        <label><input type="checkbox" data-progress="prep3"> I can compare reduceByKey and groupByKey.</label>
+        <label><input type="checkbox" data-progress="prep4"> I can solve at least 5 exercises.</label>
+        <label><input type="checkbox" data-progress="prep5"> I can answer 15 interview questions confidently.</label>
+      </div>
+      <div class="success-note"><b>Double-click notes:</b> Double-click any important paragraph or heading to add it to your notes.</div>
+      <div class="checklist"><label><input type="checkbox" data-progress="s13"> I completed quiz/exam practice.</label></div>
+    </section>
+
+    <section>
+      <div class="section-title"><h2>References Used</h2><span class="tag">Official Docs</span></div>
+      <ul>
+        <li>Apache Spark RDD Programming Guide, Spark 4.1.2 Documentation.</li>
+        <li>PySpark RDD API Reference, Apache Spark 4.1.2 Documentation.</li>
+        <li>PySpark API documentation and DataFrame to RDD reference.</li>
+      </ul>
+    </section>
+
+    <div class="footer">Created for classroom-style corporate training. Use locally in browser. Progress and notes are saved in localStorage when available.</div>
+  </main>
+</div>
+
+<div class="notes-panel hidden" id="notesPanel">
+  <h3 style="margin:0 0 8px;color:var(--brand)">My Notes</h3>
+  <p class="mini">Double-click content to add it here.</p>
+  <textarea id="notesArea" placeholder="Your notes..."></textarea>
+  <div style="display:flex;gap:8px;margin-top:8px"><button class="btn secondary" onclick="saveNotes()">Save</button><button class="btn warn" onclick="clearNotes()">Clear</button><button class="btn secondary" onclick="toggleNotes()">Close</button></div>
+</div>
+
+<script>
+const storage = (()=>{try{localStorage.setItem('__t','1');localStorage.removeItem('__t');return localStorage;}catch(e){let m={};return{getItem:k=>m[k],setItem:(k,v)=>m[k]=v,removeItem:k=>delete m[k]}}})();
+
+function copyCode(btn){const code=btn.parentElement.querySelector('code').innerText;navigator.clipboard?.writeText(code);btn.innerText='Copied';setTimeout(()=>btn.innerText='Copy',1000)}
+function toggleSolution(id){document.getElementById(id).classList.toggle('open')}
+function toggleNotes(){document.getElementById('notesPanel').classList.toggle('hidden')}
+function saveNotes(){storage.setItem('rdd_notes',document.getElementById('notesArea').value)}
+function clearNotes(){document.getElementById('notesArea').value='';storage.removeItem('rdd_notes')}
+
+document.getElementById('notesArea').value=storage.getItem('rdd_notes')||'';
+document.addEventListener('dblclick',e=>{const text=(e.target.innerText||'').trim();if(text.length>10 && !e.target.closest('.notes-panel')){const area=document.getElementById('notesArea');area.value += (area.value?'\n\n':'') + '• ' + text.substring(0,500);saveNotes();document.getElementById('notesPanel').classList.remove('hidden');}});
+
+document.addEventListener('mousemove',e=>{if(Math.random()>.92){const s=document.createElement('span');s.className='sparkle';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),700)}});
+
+function updateProgress(){const boxes=[...document.querySelectorAll('input[data-progress]')];let checked=0;boxes.forEach(b=>{const key='rdd_prog_'+b.dataset.progress;b.checked=storage.getItem(key)==='1';if(b.checked)checked++;});const pct=boxes.length?Math.round(checked/boxes.length*100):0;document.getElementById('progressBar').style.width=pct+'%';document.getElementById('progressText').innerText=pct+'% completed ('+checked+'/'+boxes.length+')'}
+document.querySelectorAll('input[data-progress]').forEach(b=>b.addEventListener('change',()=>{storage.setItem('rdd_prog_'+b.dataset.progress,b.checked?'1':'0');updateProgress()}));
+function resetProgress(){if(confirm('Reset progress and quiz scores?')){Object.keys(storage).forEach?.(k=>{if(k.startsWith('rdd_prog_')||k.startsWith('rdd_score_'))storage.removeItem(k)});document.querySelectorAll('input[data-progress]').forEach(b=>{storage.removeItem('rdd_prog_'+b.dataset.progress);b.checked=false});updateProgress();}}
+updateProgress();
+
+const practiceQuestions=[
+ {q:'What does RDD stand for?',opts:['Reliable Data Document','Resilient Distributed Dataset','Runtime Data Driver','Reusable Data Definition'],ans:1,exp:'RDD means Resilient Distributed Dataset.'},
+ {q:'Which operation is a transformation?',opts:['collect','count','map','take'],ans:2,exp:'map creates a new RDD and is lazy.'},
+ {q:'Which operation triggers execution?',opts:['filter','flatMap','map','collect'],ans:3,exp:'collect is an action.'},
+ {q:'Which is best for word count aggregation?',opts:['reduceByKey','groupByKey only','collect then count in driver','first'],ans:0,exp:'reduceByKey aggregates values for each key efficiently.'},
+ {q:'Why should collect be avoided on huge data?',opts:['It deletes data','It brings all data to driver','It stops SparkContext','It removes partitions'],ans:1,exp:'collect can overload driver memory.'},
+ {q:'What is lazy evaluation?',opts:['Spark sleeps before execution','Transformations wait until action','Python waits for JVM','RDD is stored permanently'],ans:1,exp:'Spark executes only when an action is called.'},
+ {q:'map vs flatMap: which can produce multiple outputs per input?',opts:['map','flatMap','count','cache'],ans:1,exp:'flatMap flattens multiple outputs.'},
+ {q:'What is lineage used for?',opts:['UI theme','Fault recovery','Password encryption','SQL parsing'],ans:1,exp:'Spark can recompute lost partitions using lineage.'}
+];
+const examQuestions=[
+ {q:'SparkContext is mainly used to:',opts:['Create RDDs and connect driver to cluster','Create HTML pages','Manage browser cache','Compile Python'],ans:0},
+ {q:'Which method creates RDD from Python list?',opts:['parallelize','toRDD','readRDD','makeRDDOnly'],ans:0},
+ {q:'Which method reads text file as RDD?',opts:['sc.textFile','spark.read.rdd','openTextRDD','readTextOnly'],ans:0},
+ {q:'Which transformation removes records based on condition?',opts:['filter','first','count','collect'],ans:0},
+ {q:'Which is an action?',opts:['flatMap','map','reduce','filter'],ans:2},
+ {q:'reduceByKey works on:',opts:['Pair RDDs','Only DataFrames','Only SQL tables','Only strings'],ans:0},
+ {q:'A wide transformation often causes:',opts:['Shuffle','No execution ever','HTML render','Driver deletion'],ans:0},
+ {q:'A narrow transformation example is:',opts:['map','join','groupByKey','reduceByKey'],ans:0},
+ {q:'cache is useful when:',opts:['RDD is reused multiple times','RDD has one record','You want to delete data','You want to disable Spark'],ans:0},
+ {q:'Broadcast variables are:',opts:['Read-only shared values sent to workers','Writable global database','Spark logs','DataFrame schemas'],ans:0},
+ {q:'Accumulator is commonly used for:',opts:['Counters and metrics','Joining tables','Sorting keys','Splitting text'],ans:0},
+ {q:'Best operation for department count is:',opts:['map to (dept,1) then reduceByKey','collect then manual count only','first','take'],ans:0},
+ {q:'RDD is immutable means:',opts:['Original RDD cannot be modified','RDD is always small','RDD cannot be processed','RDD is not distributed'],ans:0},
+ {q:'coalesce is generally used to:',opts:['Reduce partitions efficiently','Create database','Start browser','Encrypt data'],ans:0},
+ {q:'In word count, flatMap is used to:',opts:['Split lines into words','Add counts','Start job','Cache output'],ans:0}
+];
+function renderQuiz(type,questions,target){const el=document.getElementById(target);el.innerHTML=questions.map((qq,i)=>`<div class="quiz-question"><h4>${i+1}. ${qq.q}</h4>${qq.opts.map((o,j)=>`<label><input type="radio" name="${type}_${i}" value="${j}"> ${o}</label>`).join('')}<p class="mini" id="${type}_exp_${i}" style="display:none"></p></div>`).join('')}
+renderQuiz('practice',practiceQuestions,'practiceQuiz');
+renderQuiz('exam',examQuestions,'examQuiz');
+let examTimer=null, examSeconds=600;
+function startExam(){clearInterval(examTimer);examSeconds=600;document.getElementById('timer').innerText='10:00';examTimer=setInterval(()=>{examSeconds--;let m=Math.floor(examSeconds/60),s=examSeconds%60;document.getElementById('timer').innerText=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(examSeconds<=0){clearInterval(examTimer);gradeQuiz('exam')}},1000)}
+function gradeQuiz(type){const qs=type==='practice'?practiceQuestions:examQuestions;let score=0;qs.forEach((qq,i)=>{const chosen=document.querySelector(`input[name="${type}_${i}"]:checked`);if(chosen && Number(chosen.value)===qq.ans)score++;const exp=document.getElementById(`${type}_exp_${i}`);if(exp){exp.style.display='block';exp.innerHTML=(Number(chosen?.value)===qq.ans?'✅ Correct. ':'❌ Correct answer: '+qq.opts[qq.ans]+'. ')+(qq.exp||'Review the relevant section.')}});const pct=Math.round(score/qs.length*100);const box=document.getElementById(type+'Result');box.style.display='block';box.className='result '+(pct>=80?'good':pct>=50?'avg':'bad');let mood=pct>=80?'Excellent preparation 🎉':pct>=50?'Good start — revise weak areas 🙂':'Needs revision — practice exercises again 💪';box.innerHTML=`Score: ${score}/${qs.length} (${pct}%). ${mood}`;storage.setItem('rdd_score_'+type,score);if(type==='exam')clearInterval(examTimer)}
+
+const searchBox=document.getElementById('searchBox');searchBox.addEventListener('input',()=>{const q=searchBox.value.toLowerCase().trim();document.querySelectorAll('main section').forEach(sec=>{sec.style.display=!q||sec.innerText.toLowerCase().includes(q)?'block':'none'})});
+
+const sections=[...document.querySelectorAll('main section[id]')];const tocLinks=[...document.querySelectorAll('.toc a')];window.addEventListener('scroll',()=>{let current='';sections.forEach(sec=>{if(window.scrollY>=sec.offsetTop-120)current=sec.id});tocLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+current));});
+</script>
+</body>
+</html>
