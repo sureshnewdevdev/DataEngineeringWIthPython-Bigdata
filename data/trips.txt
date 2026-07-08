@@ -1,0 +1,31 @@
+trip_id,driver_id,rider_id,city,pickup_zone,dropoff_zone,distance_km,duration_min,fare,payment_type,rating
+T001,D101,R501,Delhi,Connaught Place,Saket,14.2,32,285.50,card,5
+T002,D102,R502,Delhi,Dwarka,Airport,18.6,40,360.00,cash,4
+T003,D101,R503,Delhi,Rohini,Karol Bagh,9.8,25,180.75,card,5
+T004,D103,R504,Mumbai,Andheri,Bandra,7.5,22,165.00,wallet,3
+T005,D104,R505,Mumbai,Colaba,Powai,21.3,55,410.25,card,4
+T006,D102,R506,Delhi,Saket,Noida,16.0,38,320.00,cash,5
+T007,D105,R507,Bangalore,Whitefield,Koramangala,19.4,48,375.50,wallet,4
+T008,D103,R508,Mumbai,Dadar,Thane,24.1,60,455.00,card,5
+T009,D101,R509,Delhi,Karol Bagh,Dwarka,22.7,50,430.00,cash,3
+T010,D106,R510,Bangalore,Indiranagar,Electronic City,27.5,65,510.75,card,4
+T011,D104,R511,Mumbai,Powai,Andheri,11.2,28,220.00,wallet,5
+T012,D105,R512,Bangalore,Koramangala,Whitefield,19.0,47,370.00,cash,4
+T013,D107,R513,Delhi,Noida,Gurgaon,32.4,72,610.50,card,5
+T014,D102,R514,Delhi,Airport,Connaught Place,15.8,35,300.00,wallet,4
+T015,D108,R515,Bangalore,Electronic City,Indiranagar,28.0,66,520.00,cash,3
+T016,D103,R516,Mumbai,Bandra,Colaba,8.9,24,175.50,card,5
+T017,D106,R517,Bangalore,Hebbal,Marathahalli,17.6,42,340.25,wallet,4
+T018,D101,R518,Delhi,Saket,Rohini,20.3,46,395.00,cash,5
+T019,D104,R519,Mumbai,Thane,Dadar,23.8,59,450.00,card,4
+T020,D109,R520,Delhi,Gurgaon,Noida,31.9,70,600.00,wallet,5
+T021,D105,R521,Bangalore,Marathahalli,Hebbal,17.2,41,335.00,cash,3
+T022,D107,R522,Delhi,Connaught Place,Dwarka,19.7,44,380.50,card,4
+T023,D108,R523,Bangalore,Whitefield,Electronic City,12.5,30,245.00,wallet,5
+T024,D102,R524,Delhi,Karol Bagh,Saket,13.4,31,260.00,cash,4
+T025,D103,R525,Mumbai,Andheri,Powai,10.8,27,210.00,card,5
+T026,D110,R526,Bangalore,Koramangala,Hebbal,21.6,52,415.75,wallet,4
+T027,D101,R527,Delhi,Rohini,Noida,25.3,58,480.00,cash,3
+T028,D104,R528,Mumbai,Colaba,Bandra,9.1,23,180.00,card,5
+T029,D106,R529,Bangalore,Indiranagar,Marathahalli,14.9,36,290.50,wallet,4
+T030,D109,R530,Delhi,Dwarka,Gurgaon,28.7,64,545.00,cash,5

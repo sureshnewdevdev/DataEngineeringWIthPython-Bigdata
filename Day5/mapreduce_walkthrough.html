@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MapReduce, Step by Step — SmartRide Trip Counter</title>
+<style>
+  :root {
+    --ink: #1a2b2b;
+    --paper: #fbf9f4;
+    --panel: #ffffff;
+    --line: #d9d2c4;
+    --map: #2f6f6a;      /* teal — the Map stage */
+    --shuffle: #b06f2a;  /* amber — the Shuffle stage */
+    --reduce: #7a4bab;   /* violet — the Reduce stage */
+    --code-bg: #14201f;
+    --code-ink: #d7e6e2;
+    --soft: #5b6b6a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    line-height: 1.65;
+    font-size: 17px;
+  }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 100px; }
+
+  /* ---- Header ---- */
+  header {
+    padding: 64px 0 40px;
+    border-bottom: 3px double var(--line);
+    margin-bottom: 48px;
+  }
+  .kicker {
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 13px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--map);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-size: clamp(34px, 6vw, 52px);
+    line-height: 1.08;
+    margin: 0 0 18px;
+    letter-spacing: -0.02em;
+  }
+  .lede {
+    font-size: 20px;
+    color: var(--soft);
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  /* ---- Section scaffolding ---- */
+  section { margin-bottom: 54px; }
+  h2 {
+    font-size: 28px;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+  }
+  h2 .num {
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 15px;
+    color: var(--soft);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    width: 34px; height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: center;
+  }
+  h3 { font-size: 20px; margin: 32px 0 8px; }
+  p { margin: 0 0 16px; }
+
+  /* ---- Callout note ---- */
+  .note {
+    background: #eef3f0;
+    border-left: 4px solid var(--map);
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 20px 0;
+    font-size: 15.5px;
+  }
+  .note strong { color: var(--map); }
+  .note.warn { background: #fbf1e6; border-color: var(--shuffle); }
+  .note.warn strong { color: var(--shuffle); }
+
+  /* ---- Code / terminal ---- */
+  .term {
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 10px;
+    padding: 18px 20px;
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-x: auto;
+    margin: 18px 0;
+    box-shadow: 0 8px 24px rgba(20,32,31,0.14);
+  }
+  .term .prompt { color: #6fd6c4; user-select: none; }
+  .term .cmt { color: #7d9490; }
+  .term .out { color: #b9c9c4; }
+  .term-label {
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--soft);
+    margin: 22px 0 -8px;
+  }
+  code.inline {
+    background: #ece7db;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 0.9em;
+  }
+
+  /* ---- File cards ---- */
+  .filecard {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px 0;
+    background: var(--panel);
+  }
+  .filecard .head {
+    background: #f0ece2;
+    padding: 8px 16px;
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 13px;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+  }
+  .filecard .head .where { color: var(--soft); }
+  .filecard pre {
+    margin: 0;
+    padding: 16px;
+    font-family: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+    font-size: 13.5px;
+    line-height: 1.55;
+    overflow-x: auto;
+    color: #2b3a39;
+  }
+  .filecard pre .py-cmt { color: #9a8f5f; font-style: italic; }
+  .filecard pre .py-kw  { color: #b06f2a; }
+  .filecard pre .py-str { color: #2f6f6a; }
+
+  /* ---- The pipeline diagram ---- */
+  .pipe {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin: 28px 0;
+  }
+  .stage {
+    border-radius: 10px;
+    padding: 16px 18px;
+    color: #fff;
+    position: relative;
+  }
+  .stage h4 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .stage p { margin: 0; font-size: 14.5px; opacity: 0.95; }
+  .stage .tag {
+    font-family: "SF Mono", monospace;
+    font-size: 11px;
+    background: rgba(255,255,255,0.22);
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.08em;
+  }
+  .stage.map { background: var(--map); }
+  .stage.shuffle { background: var(--shuffle); }
+  .stage.reduce { background: var(--reduce); }
+  .arrow {
+    text-align: center;
+    color: var(--soft);
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  /* ---- Data flow table ---- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 14.5px;
+  }
+  th, td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  th {
+    font-family: "SF Mono", monospace;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--soft);
+  }
+  td code {
+    font-family: "SF Mono", monospace;
+    font-size: 13px;
+    background: #f0ece2;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+  }
+  .chip {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "SF Mono", monospace;
+    font-size: 14px;
+  }
+  .chip b { color: var(--reduce); font-size: 18px; }
+
+  footer {
+    border-top: 3px double var(--line);
+    padding-top: 24px;
+    color: var(--soft);
+    font-size: 14px;
+  }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    h2 { font-size: 23px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <p class="kicker">Hadoop · MapReduce · Word Count</p>
+  <h1>Counting words the distributed way</h1>
+  <p class="lede">A step-by-step walkthrough of a real MapReduce job — where the input file lives, what the Mapper and Reducer do, and where the answer comes out. Built around the SmartRide trip dataset.</p>
+</header>
+
+<!-- ============ THE BIG IDEA ============ -->
+<section>
+  <h2><span class="num">i</span> The one-sentence idea</h2>
+  <p>MapReduce answers questions about <em>huge</em> amounts of data by splitting the work into small pieces, processing every piece at the same time on many machines, and then combining the answers. Our example question is simple: <strong>how many times does each word appear in the trip log?</strong></p>
+  <p>It runs in three stages. Keep these colours in mind — they follow you through the whole page.</p>
+
+  <div class="pipe">
+    <div class="stage map">
+      <h4><span class="tag">STAGE 1</span> Map</h4>
+      <p>Read each line, break it into words, and tag every word with the number 1. Turns <code style="color:#cdeee7">Chennai completed</code> into <code style="color:#cdeee7">(Chennai, 1)</code> and <code style="color:#cdeee7">(completed, 1)</code>.</p>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="stage shuffle">
+      <h4><span class="tag">STAGE 2</span> Shuffle &amp; Sort</h4>
+      <p>Hadoop does this automatically. It gathers all identical words together, so every <code style="color:#f6e2c8">(Chennai, 1)</code> ends up side by side, ready to be added up. This is the "group by" step.</p>
+    </div>
+    <div class="arrow">▼</div>
+    <div class="stage reduce">
+      <h4><span class="tag">STAGE 3</span> Reduce</h4>
+      <p>For each group of identical words, add up all the 1s. <code style="color:#e6d5f5">(Chennai, [1,1,1…])</code> becomes <code style="color:#e6d5f5">(Chennai, 8)</code>. That final number is the answer.</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Mapper picks the group, Reducer does the math.</strong> That single rule is the whole flexibility of MapReduce. Change what the Mapper emits and you change what you're grouping by; change the Reducer and you change the calculation (count, sum, average, max…).
+  </div>
+</section>
+
+<!-- ============ WHERE THE FILE LIVES ============ -->
+<section>
+  <h2><span class="num">1</span> Where the input file lives</h2>
+  <p>There are two separate storage worlds, and mixing them up is the most common beginner confusion:</p>
+
+  <table>
+    <tr><th>Storage</th><th>What it is</th><th>How you look inside</th></tr>
+    <tr><td><b>Local disk</b></td><td>The normal Linux filesystem on the machine</td><td><code>ls</code>, <code>cd</code>, <code>cat</code></td></tr>
+    <tr><td><b>HDFS</b></td><td>Hadoop's distributed filesystem — where jobs read &amp; write</td><td><code>hdfs dfs -ls</code>, <code>hdfs dfs -cat</code></td></tr>
+  </table>
+
+  <p>Our input file <code class="inline">smartride_trip_words.txt</code> was created on the local disk first, then <strong>copied into HDFS</strong> so the job could read it. You cannot <code class="inline">cd</code> into HDFS — you always pass the full HDFS path to an <code class="inline">hdfs dfs</code> command.</p>
+
+  <p class="term-label">Creating the input folder in HDFS and loading the file</p>
+  <div class="term">
+<span class="cmt"># 1. make the input folder inside HDFS (-p builds the whole path)</span>
+<span class="prompt">$</span> hdfs dfs -mkdir -p /smartride/mapreduce/input
+
+<span class="cmt"># 2. copy the local file INTO HDFS</span>
+<span class="prompt">$</span> hdfs dfs -put ~/smartride/smartride_trip_words.txt /smartride/mapreduce/input/
+
+<span class="cmt"># 3. confirm it landed</span>
+<span class="prompt">$</span> hdfs dfs -ls /smartride/mapreduce/input
+<span class="out">-rw-r--r--   1 vmuser supergroup   226  /smartride/mapreduce/input/smartride_trip_words.txt</span>
+  </div>
+
+  <div class="filecard">
+    <div class="head"><span>smartride_trip_words.txt</span><span class="where">input · lives in HDFS</span></div>
+<pre>Chennai completed
+Bangalore completed
+Chennai completed
+Hyderabad cancelled
+Bangalore completed
+Chennai completed
+Hyderabad completed
+Mumbai completed
+Chennai completed
+Bangalore cancelled
+Mumbai completed
+Hyderabad completed</pre>
+  </div>
+
+  <div class="note">
+    <strong>Read this like a spreadsheet:</strong> each line is one trip. The first word is the <em>city</em>, the second word is the trip's <em>status</em>. Our job will simply count how often each individual word appears.
+  </div>
+</section>
+
+<!-- ============ MAPPER.PY ============ -->
+<section>
+  <h2><span class="num">2</span> What is <code class="inline">mapper.py</code>?</h2>
+  <p>The Mapper is a small program that runs <strong>once for every chunk of input</strong>. It reads text line by line and emits key–value pairs. For word counting, the key is a <em>word</em> and the value is always <em>1</em> — meaning "I saw this word one time."</p>
+
+  <div class="filecard">
+    <div class="head"><span>mapper.py</span><span class="where">the "Map" stage</span></div>
+<pre><span class="py-cmt"># mapper.py — runs once per line of the input file.</span>
+<span class="py-cmt"># Its ONLY job: turn each word into the pair (word, 1).</span>
+
+<span class="py-kw">import</span> sys
+
+<span class="py-cmt"># sys.stdin = the input text streamed in by Hadoop, line by line</span>
+<span class="py-kw">for</span> line <span class="py-kw">in</span> sys.stdin:
+    line = line.strip()          <span class="py-cmt"># remove leading/trailing spaces + newline</span>
+    words = line.split()         <span class="py-cmt"># "Chennai completed" -> ["Chennai", "completed"]</span>
+
+    <span class="py-kw">for</span> word <span class="py-kw">in</span> words:
+        <span class="py-cmt"># print "word &lt;TAB&gt; 1". The TAB separates key from value.</span>
+        <span class="py-cmt"># Hadoop reads everything before the tab as the KEY (what we group by).</span>
+        <span class="py-kw">print</span>(<span class="py-str">f"{word}\t1"</span>)</pre>
+  </div>
+
+  <p>So the line <code class="inline">Chennai completed</code> makes the Mapper print two lines: <code class="inline">Chennai&nbsp;1</code> and <code class="inline">completed&nbsp;1</code>. Nothing is added up yet — the Mapper only <em>tags</em>.</p>
+</section>
+
+<!-- ============ SHUFFLE ============ -->
+<section>
+  <h2><span class="num">3</span> The Shuffle &amp; Sort (Hadoop's free magic)</h2>
+  <p>You don't write any code for this stage — Hadoop does it for you. It takes every pair the Mappers produced and <strong>groups them by key</strong>, sorting so all identical words sit together. This is exactly what a SQL <code class="inline">GROUP BY</code> does.</p>
+
+  <table>
+    <tr><th>After Map (unsorted)</th><th>→</th><th>After Shuffle (grouped by word)</th></tr>
+    <tr><td><code>Chennai 1</code></td><td>→</td><td><code>Chennai → [1, 1, 1, 1]</code></td></tr>
+    <tr><td><code>completed 1</code></td><td>→</td><td><code>completed → [1, 1, 1, 1, 1 …]</code></td></tr>
+    <tr><td><code>Hyderabad 1</code></td><td>→</td><td><code>Hyderabad → [1, 1, 1]</code></td></tr>
+    <tr><td><code>cancelled 1</code></td><td>→</td><td><code>cancelled → [1, 1]</code></td></tr>
+  </table>
+</section>
+
+<!-- ============ REDUCER.PY ============ -->
+<section>
+  <h2><span class="num">4</span> What is <code class="inline">reducer.py</code>?</h2>
+  <p>The Reducer receives the grouped keys and <strong>collapses each group into a single answer</strong>. For word counting, that means adding up all the 1s in a group to get the total count for that word.</p>
+
+  <div class="filecard">
+    <div class="head"><span>reducer.py</span><span class="where">the "Reduce" stage</span></div>
+<pre><span class="py-cmt"># reducer.py — receives words already SORTED by Hadoop,</span>
+<span class="py-cmt"># so identical words arrive one after another. We add up their 1s.</span>
+
+<span class="py-kw">import</span> sys
+
+current_word = <span class="py-kw">None</span>   <span class="py-cmt"># the word we are currently counting</span>
+current_count = 0     <span class="py-cmt"># running total for that word</span>
+
+<span class="py-kw">for</span> line <span class="py-kw">in</span> sys.stdin:
+    word, count = line.strip().split(<span class="py-str">"\t"</span>)   <span class="py-cmt"># split "word &lt;TAB&gt; 1"</span>
+    count = int(count)
+
+    <span class="py-kw">if</span> word == current_word:
+        current_count += count        <span class="py-cmt"># same word -> keep adding</span>
+    <span class="py-kw">else</span>:
+        <span class="py-kw">if</span> current_word <span class="py-kw">is not</span> <span class="py-kw">None</span>:
+            <span class="py-kw">print</span>(<span class="py-str">f"{current_word}\t{current_count}"</span>)  <span class="py-cmt"># new word -> print the finished total</span>
+        current_word = word           <span class="py-cmt"># start counting the new word</span>
+        current_count = count
+
+<span class="py-cmt"># don't forget the very last word</span>
+<span class="py-kw">if</span> current_word <span class="py-kw">is not</span> <span class="py-kw">None</span>:
+    <span class="py-kw">print</span>(<span class="py-str">f"{current_word}\t{current_count}"</span>)</pre>
+  </div>
+
+  <div class="note">
+    <strong>Why the counting works so simply:</strong> because Hadoop already sorted the words, all the <code class="inline">Chennai</code> lines arrive in a row. The Reducer just watches for the word to change, and when it does, prints the total it built up.
+  </div>
+</section>
+
+<!-- ============ RUNNING IT ============ -->
+<section>
+  <h2><span class="num">5</span> Running the job</h2>
+  <p>Because our Mapper and Reducer are Python (not Java), we launch them with <strong>Hadoop Streaming</strong>. We tell Hadoop: here are the two scripts, here is the input folder, and here is where to write the output.</p>
+
+  <p class="term-label">The command</p>
+  <div class="term">
+<span class="prompt">$</span> hadoop jar $HADOOP_HOME/share/hadoop/tools/lib/hadoop-streaming-*.jar \
+    -files mapper.py,reducer.py \
+    -mapper <span class="out">"python3 mapper.py"</span> \
+    -reducer <span class="out">"python3 reducer.py"</span> \
+    -input /smartride/mapreduce/input \
+    -output /smartride/mapreduce/output
+  </div>
+
+  <div class="note warn">
+    <strong>Important rule:</strong> the <code class="inline">-output</code> folder must <em>not</em> already exist. Hadoop refuses to overwrite it, to protect your results. Before re-running, delete the old one first:<br>
+    <code class="inline">hdfs dfs -rm -r -f /smartride/mapreduce/output</code>
+  </div>
+
+  <p>While it runs, Hadoop prints its progress. A successful job looks like this:</p>
+  <div class="term">
+<span class="out">map   0% reduce   0%
+map  50% reduce   0%
+map 100% reduce   0%
+map 100% reduce 100%</span>
+<span class="prompt"> </span><span style="color:#6fd6c4">Job completed successfully</span>
+  </div>
+</section>
+
+<!-- ============ RESULT ============ -->
+<section>
+  <h2><span class="num">6</span> Where the output comes out</h2>
+  <p>The results are written back <strong>into HDFS</strong>, inside the output folder you named. Two files appear there:</p>
+
+  <table>
+    <tr><th>File</th><th>What it holds</th></tr>
+    <tr><td><code>_SUCCESS</code></td><td>An empty marker file. It just says "the job finished cleanly." No data.</td></tr>
+    <tr><td><code>part-r-00000</code></td><td><b>Your actual answer</b> — every word and its count.</td></tr>
+  </table>
+
+  <p class="term-label">Viewing the result</p>
+  <div class="term">
+<span class="cmt"># list what the job produced</span>
+<span class="prompt">$</span> hdfs dfs -ls /smartride/mapreduce/output
+<span class="out">-rw-r--r--   1 vmuser supergroup   0    _SUCCESS
+-rw-r--r--   1 vmuser supergroup   ...  part-r-00000</span>
+
+<span class="cmt"># print the word counts</span>
+<span class="prompt">$</span> hdfs dfs -cat /smartride/mapreduce/output/part-r-00000
+  </div>
+
+  <p>For our 12-line sample file, the counts come out like this:</p>
+
+  <div class="result-grid">
+    <div class="chip">Chennai <b>4</b></div>
+    <div class="chip">Bangalore <b>3</b></div>
+    <div class="chip">Hyderabad <b>3</b></div>
+    <div class="chip">Mumbai <b>2</b></div>
+    <div class="chip">completed <b>10</b></div>
+    <div class="chip">cancelled <b>2</b></div>
+  </div>
+
+  <div class="note">
+    <strong>Reading the answer:</strong> "completed" appears 10 times and "cancelled" 2 times, so 10 of the 12 trips finished successfully. Chennai is the busiest city with 4 trips. That is the entire point of the job — a grouped count, produced by machines that could just as easily have handled billions of lines.
+  </div>
+</section>
+
+<!-- ============ CUSTOMISE ============ -->
+<section>
+  <h2><span class="num">7</span> Want to group by something else?</h2>
+  <p>Change one line in the Mapper. Instead of emitting each word, emit the key you want to group by. For example, to count <strong>completed vs cancelled per city</strong>, join the two words into one key:</p>
+
+  <div class="filecard">
+    <div class="head"><span>mapper.py (city + status version)</span><span class="where">a custom group-by</span></div>
+<pre><span class="py-kw">for</span> line <span class="py-kw">in</span> sys.stdin:
+    city, status = line.strip().split()
+    <span class="py-cmt"># key becomes "City_status" -> that's the new GROUP BY</span>
+    <span class="py-kw">print</span>(<span class="py-str">f"{city}_{status}\t1"</span>)</pre>
+  </div>
+
+  <p>Same Reducer, new result:</p>
+  <div class="term">
+<span class="out">Bangalore_cancelled   1
+Bangalore_completed   2
+Chennai_completed     4
+Hyderabad_cancelled   1
+Hyderabad_completed   2
+Mumbai_completed      2</span>
+  </div>
+  <p>The takeaway for students: <strong>the Mapper's key is the grouping, the Reducer's logic is the calculation.</strong> Master those two ideas and you can express almost any data summary as a MapReduce job.</p>
+</section>
+
+<footer>
+  SmartRide MapReduce walkthrough · Hadoop Streaming with Python · Input and output both live in HDFS under <code class="inline" style="background:#e6e0d3">/smartride/mapreduce/</code>
+</footer>
+
+</div>
+</body>
+</html>
