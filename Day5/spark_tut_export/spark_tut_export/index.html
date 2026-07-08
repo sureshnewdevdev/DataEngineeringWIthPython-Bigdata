@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TUT - Apache Spark Spoon Feeding Notes | SmartRide Use Case</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --primary: #1f4e79;
+      --secondary: #f59e0b;
+      --text: #172033;
+      --muted: #5b6475;
+      --line: #d9e2ef;
+      --code-bg: #101827;
+      --code-text: #e6edf3;
+      --success: #15803d;
+      --danger: #b91c1c;
+      --info: #0369a1;
+      --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    header {
+      background: linear-gradient(135deg, #0f172a, #1f4e79);
+      color: white;
+      padding: 36px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      box-shadow: var(--shadow);
+    }
+    header h1 { margin: 0 0 8px; font-size: 30px; }
+    header p { margin: 0; color: #dbeafe; }
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 22px;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+    nav {
+      position: sticky;
+      top: 125px;
+      align-self: start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 150px);
+      overflow-y: auto;
+    }
+    nav a {
+      display: block;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    nav a:hover { background: #eff6ff; }
+    main { min-width: 0; }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    section:hover {
+      transform: translateY(-2px);
+      border-color: #93c5fd;
+    }
+    h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #e5edf8; padding-bottom: 8px; }
+    h3 { color: #0f3b63; margin-top: 24px; }
+    .badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #075985;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-right: 6px;
+    }
+    .trainer-note, .activity, .warning, .output, .interview {
+      border-left: 5px solid var(--primary);
+      background: #f8fbff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin: 14px 0;
+    }
+    .activity { border-left-color: var(--secondary); background: #fffbeb; }
+    .warning { border-left-color: var(--danger); background: #fff1f2; }
+    .output { border-left-color: var(--success); background: #f0fdf4; }
+    .interview { border-left-color: #7c3aed; background: #f5f3ff; }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px;
+      border-radius: 14px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    code { font-family: Consolas, Monaco, monospace; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; overflow: hidden; border-radius: 12px; }
+    th, td { border: 1px solid var(--line); padding: 10px; vertical-align: top; }
+    th { background: #eaf3ff; color: #123d63; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+    .step {
+      counter-increment: step;
+      position: relative;
+      padding-left: 48px;
+      margin: 16px 0;
+    }
+    .step::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: var(--primary);
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 32px;
+      font-weight: bold;
+    }
+    .steps { counter-reset: step; }
+    .progress-box {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+    .check-item {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-width: 220px;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      margin: 6px 6px 6px 0;
+    }
+    button:hover { filter: brightness(1.1); }
+    .secondary-btn { background: #475569; }
+    .success-btn { background: var(--success); }
+    .danger-btn { background: var(--danger); }
+    .quiz-question, .exam-question {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      margin: 12px 0;
+      background: #fbfdff;
+    }
+    label { display: block; margin: 7px 0; cursor: pointer; }
+    .score { font-weight: bold; font-size: 18px; margin-top: 12px; }
+    .notes-box {
+      width: 100%; min-height: 100px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-family: inherit;
+    }
+    .sparkle {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #facc15;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: sparkle 0.8s linear forwards;
+      z-index: 9999;
+    }
+    @keyframes sparkle {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(0); opacity: 0; }
+    }
+    .hidden { display: none; }
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      padding: 30px 10px;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; padding: 14px; }
+      nav { position: static; max-height: none; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      header { position: static; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <h1>TUT: Apache Spark Spoon-Feeding Notes</h1>
+  <p>SmartRide use case based tutorial for Spark basics, ecosystem, architecture, SparkSession, SparkContext, SQLContext, HiveContext, features and limitations.</p>
+</header>
+<div class="layout">
+  <nav>
+    <strong>Course Navigation</strong>
+    <a href="#s1">1. Course Overview</a>
+    <a href="#s2">2. Use Case Story</a>
+    <a href="#s3">3. What is Spark?</a>
+    <a href="#s4">4. Hadoop, MapReduce and Spark</a>
+    <a href="#s5">5. Spark Features</a>
+    <a href="#s6">6. Spark Ecosystem</a>
+    <a href="#s7">7. Spark Architecture</a>
+    <a href="#s8">8. SparkContext, SparkConf, SparkSession</a>
+    <a href="#s9">9. SQLContext and HiveContext</a>
+    <a href="#s10">10. Hands-on Lab</a>
+    <a href="#s11">11. Limitations and Best Practices</a>
+    <a href="#s12">12. Interview Q&A</a>
+    <a href="#s13">13. Quiz, Exam and Checklist</a>
+  </nav>
+
+  <main>
+    <section id="s1">
+      <h2>1. Course Overview</h2>
+      <span class="badge">Beginner Friendly</span><span class="badge">Corporate Training</span><span class="badge">Use Case Based</span>
+      <p>This tutorial explains Apache Spark from zero level. The complete explanation follows one business story: <strong>SmartRide</strong>, an Uber/Ola-like ride-hailing company.</p>
+      <div class="trainer-note">
+        <strong>Trainer Goal:</strong> By the end of this session, learners should clearly understand why Spark is required, how it is different from Hadoop MapReduce, what Spark ecosystem components do, and how Driver, Executor and Task work internally.
+      </div>
+      <h3>Topics Covered</h3>
+      <ul>
+        <li>What is Spark?</li>
+        <li>Hadoop vs MapReduce vs Spark</li>
+        <li>Spark features</li>
+        <li>Spark ecosystem: Spark Core, Spark SQL, Spark Streaming, MLlib, GraphX, SparkR</li>
+        <li>Spark architecture: Driver, Executor, Task</li>
+        <li>SparkContext, SparkConf, SparkSession</li>
+        <li>SQLContext and HiveContext</li>
+        <li>Features and limitations of Spark</li>
+      </ul>
+    </section>
+
+    <section id="s2">
+      <h2>2. Use Case Story: SmartRide Trip Analytics</h2>
+      <p>SmartRide collects trip data from mobile apps, driver apps and payment systems. Every trip produces records like trip id, driver id, city, distance, fare, payment mode and rating.</p>
+      <pre><code>trip_id,driver_id,city,distance_km,fare,payment_mode,rating
+T001,D101,Chennai,12,350,UPI,4.5
+T002,D102,Bangalore,8,220,Cash,4.0
+T003,D101,Chennai,15,420,Card,4.8
+T004,D103,Hyderabad,20,600,UPI,4.7</code></pre>
+      <h3>Business Questions</h3>
+      <div class="grid-2">
+        <div class="card">Which city has the highest number of trips?</div>
+        <div class="card">Which city generated the highest fare?</div>
+        <div class="card">Which driver has the best average rating?</div>
+        <div class="card">Which payment mode is most commonly used?</div>
+      </div>
+      <div class="activity">
+        <strong>Class Activity:</strong> Ask learners whether normal Python can process 100 records. Then ask what happens if we receive 100 crore records. This leads to the need for distributed processing.
+      </div>
+    </section>
+
+    <section id="s3">
+      <h2>3. What is Apache Spark?</h2>
+      <h3>Simple Definition</h3>
+      <p><strong>Apache Spark is a fast distributed data processing engine used to process large data using multiple machines.</strong></p>
+      <h3>Technical Definition</h3>
+      <p>Apache Spark is an open-source distributed computing framework used for batch processing, SQL analytics, real-time streaming, machine learning, graph processing and ETL workloads.</p>
+      <div class="trainer-note">
+        <strong>Spoon-feeding Explanation:</strong> If one laptop cannot process huge trip data, Spark divides the data into partitions and gives the work to multiple executors. Each executor processes a small part of the data. Finally Spark combines the result.
+      </div>
+      <h3>Where Spark is Used</h3>
+      <table>
+        <tr><th>Scenario</th><th>Example</th></tr>
+        <tr><td>Batch Processing</td><td>Analyze yesterday's completed trips</td></tr>
+        <tr><td>Streaming</td><td>Analyze live driver locations from Kafka</td></tr>
+        <tr><td>SQL Analytics</td><td>Revenue by city using SQL query</td></tr>
+        <tr><td>Machine Learning</td><td>Predict trip fare or cancellation chance</td></tr>
+        <tr><td>Graph Processing</td><td>Analyze customer-driver-city relationships</td></tr>
+      </table>
+    </section>
+
+    <section id="s4">
+      <h2>4. Hadoop, MapReduce and Spark</h2>
+      <h3>Hadoop</h3>
+      <p>Hadoop is a big data ecosystem. It mainly contains HDFS for storage, YARN for resource management and MapReduce for processing.</p>
+      <h3>MapReduce</h3>
+      <p>MapReduce is an older Hadoop processing model. It works using map phase and reduce phase. It is reliable but slower because it writes intermediate data to disk.</p>
+      <h3>Spark</h3>
+      <p>Spark is a modern processing engine. It is faster because it can keep intermediate data in memory.</p>
+      <table>
+        <tr><th>Point</th><th>Hadoop MapReduce</th><th>Spark</th></tr>
+        <tr><td>Processing Style</td><td>Disk based</td><td>In-memory when possible</td></tr>
+        <tr><td>Speed</td><td>Slower for iterative jobs</td><td>Faster for iterative and interactive workloads</td></tr>
+        <tr><td>Code</td><td>More boilerplate</td><td>Less code</td></tr>
+        <tr><td>Streaming</td><td>Not natural</td><td>Streaming supported</td></tr>
+        <tr><td>SQL</td><td>Usually Hive is used</td><td>Spark SQL available</td></tr>
+        <tr><td>Machine Learning</td><td>Separate tools required</td><td>MLlib available</td></tr>
+      </table>
+      <div class="output">
+        <strong>Memory Point:</strong> Hadoop is an ecosystem. MapReduce is an old processing engine. Spark is a faster processing engine.
+      </div>
+    </section>
+
+    <section id="s5">
+      <h2>5. Spark Features</h2>
+      <div class="grid-3">
+        <div class="card"><strong>Fast</strong><br>Uses memory to speed up processing.</div>
+        <div class="card"><strong>Distributed</strong><br>Divides data and work across machines.</div>
+        <div class="card"><strong>Multi-language</strong><br>Supports Python, Scala, Java, SQL and R.</div>
+        <div class="card"><strong>Batch + Streaming</strong><br>Can process historical and live data.</div>
+        <div class="card"><strong>Fault Tolerant</strong><br>Can recompute lost data using lineage.</div>
+        <div class="card"><strong>Lazy Evaluation</strong><br>Executes only when an action is called.</div>
+      </div>
+      <h3>Lazy Evaluation Example</h3>
+      <pre><code>df2 = df.filter(df.city == "Chennai")
+# No execution yet
+
+df2.show()
+# Execution starts here because show() is an action</code></pre>
+      <table>
+        <tr><th>Type</th><th>Meaning</th><th>Examples</th></tr>
+        <tr><td>Transformation</td><td>Creates a new RDD/DataFrame</td><td>filter, map, select, groupBy</td></tr>
+        <tr><td>Action</td><td>Triggers execution</td><td>show, count, collect, take</td></tr>
+      </table>
+    </section>
+
+    <section id="s6">
+      <h2>6. Spark Ecosystem</h2>
+      <pre><code>Apache Spark
+│
+├── Spark Core
+├── Spark SQL
+├── Spark Streaming
+├── MLlib
+├── GraphX
+└── SparkR</code></pre>
+      <table>
+        <tr><th>Component</th><th>Purpose</th><th>SmartRide Example</th></tr>
+        <tr><td>Spark Core</td><td>Base execution engine</td><td>RDD processing for trip data</td></tr>
+        <tr><td>Spark SQL</td><td>Structured data and SQL</td><td>Revenue by city query</td></tr>
+        <tr><td>Spark Streaming</td><td>Real-time processing</td><td>Live driver location stream</td></tr>
+        <tr><td>MLlib</td><td>Machine learning</td><td>Fare prediction</td></tr>
+        <tr><td>GraphX</td><td>Graph processing</td><td>Customer-driver relationship analysis</td></tr>
+        <tr><td>SparkR</td><td>R language support</td><td>Statistical trip analysis</td></tr>
+      </table>
+      <div class="trainer-note">
+        <strong>Trainer Tip:</strong> Explain Spark Core as the engine. Other libraries are like additional features installed on top of the engine.
+      </div>
+    </section>
+
+    <section id="s7">
+      <h2>7. Spark Architecture</h2>
+      <pre><code>             Spark Application
+                    |
+                    v
+             +--------------+
+             |    Driver    |
+             +--------------+
+                    |
+                    v
+          +-------------------+
+          |  Cluster Manager  |
+          +-------------------+
+              /       |       \
+             v        v        v
+      +----------+ +----------+ +----------+
+      | Executor | | Executor | | Executor |
+      +----------+ +----------+ +----------+
+          |            |            |
+        Task         Task         Task</code></pre>
+      <h3>Driver</h3>
+      <p>The Driver is the main controller of a Spark application. It creates SparkSession or SparkContext, converts user code into jobs, creates DAG, divides jobs into stages and schedules tasks.</p>
+      <h3>Executor</h3>
+      <p>Executors are worker processes. They run tasks, store cached data and return results to the Driver.</p>
+      <h3>Task</h3>
+      <p>A Task is the smallest unit of execution. Usually, one task processes one partition.</p>
+      <h3>Job, Stage and Task Flow</h3>
+      <pre><code>Action
+↓
+Job
+↓
+Stages
+↓
+Tasks</code></pre>
+      <div class="activity">
+        <strong>Activity:</strong> Give one CSV file example and split it into four partitions on the board. Assign four learners as tasks and one learner as Driver.
+      </div>
+    </section>
+
+    <section id="s8">
+      <h2>8. SparkContext, SparkConf and SparkSession</h2>
+      <h3>SparkContext</h3>
+      <p>SparkContext is the older entry point for Spark Core. It connects the application to the Spark cluster and is commonly used for RDD operations.</p>
+      <pre><code>rdd = sc.parallelize([10, 20, 30, 40])
+print(rdd.map(lambda x: x * 2).collect())</code></pre>
+      <h3>SparkConf</h3>
+      <p>SparkConf stores Spark application configuration like app name, master URL, driver memory and executor memory.</p>
+      <pre><code>from pyspark import SparkConf, SparkContext
+
+conf = SparkConf() \
+    .setAppName("SmartRideAnalysis") \
+    .setMaster("local[*]")
+
+sc = SparkContext(conf=conf)</code></pre>
+      <h3>SparkSession</h3>
+      <p>SparkSession is the modern unified entry point introduced in Spark 2.x. It is recommended for DataFrame, SQL and Hive operations.</p>
+      <pre><code>from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("SmartRideTripAnalysis") \
+    .master("local[*]") \
+    .getOrCreate()</code></pre>
+      <table>
+        <tr><th>Component</th><th>Purpose</th><th>Current Usage</th></tr>
+        <tr><td>SparkContext</td><td>RDD and Spark Core entry point</td><td>Still available</td></tr>
+        <tr><td>SparkConf</td><td>Configuration object</td><td>Still used</td></tr>
+        <tr><td>SparkSession</td><td>Unified entry point</td><td>Recommended</td></tr>
+      </table>
+    </section>
+
+    <section id="s9">
+      <h2>9. SQLContext and HiveContext</h2>
+      <h3>SQLContext</h3>
+      <p>SQLContext was used in older Spark versions for SQL and DataFrame operations.</p>
+      <pre><code>from pyspark.sql import SQLContext
+sqlContext = SQLContext(sc)</code></pre>
+      <h3>HiveContext</h3>
+      <p>HiveContext was used in older Spark versions to connect Spark with Hive metastore and run Hive queries.</p>
+      <h3>Modern Approach</h3>
+      <p>Today, SparkSession replaces SQLContext and HiveContext for most practical use cases.</p>
+      <pre><code>spark = SparkSession.builder \
+    .appName("HiveExample") \
+    .enableHiveSupport() \
+    .getOrCreate()</code></pre>
+      <table>
+        <tr><th>Old Component</th><th>Used For</th><th>Modern Replacement</th></tr>
+        <tr><td>SQLContext</td><td>SQL and DataFrame</td><td>SparkSession</td></tr>
+        <tr><td>HiveContext</td><td>Hive integration</td><td>SparkSession + enableHiveSupport()</td></tr>
+      </table>
+    </section>
+
+    <section id="s10">
+      <h2>10. Hands-on Lab: SmartRide Spark Program</h2>
+      <h3>Sample File: data/trips.csv</h3>
+      <pre><code>trip_id,driver_id,city,distance_km,fare,payment_mode,rating
+T001,D101,Chennai,12,350,UPI,4.5
+T002,D102,Bangalore,8,220,Cash,4.0
+T003,D101,Chennai,15,420,Card,4.8
+T004,D103,Hyderabad,20,600,UPI,4.7</code></pre>
+      <h3>PySpark Program</h3>
+      <pre><code>from pyspark.sql import SparkSession
+from pyspark.sql.functions import sum, avg, count
+
+spark = SparkSession.builder \
+    .appName("SmartRideSparkIntro") \
+    .master("local[*]") \
+    .getOrCreate()
+
+trips_df = spark.read.csv("data/trips.csv", header=True, inferSchema=True)
+
+trips_df.show()
+
+trips_df.groupBy("city").agg(sum("fare").alias("total_fare")).show()
+trips_df.groupBy("city").agg(count("*").alias("trip_count")).show()
+trips_df.groupBy("driver_id").agg(avg("rating").alias("avg_rating")).show()
+
+spark.stop()</code></pre>
+      <h3>Step-by-Step Execution</h3>
+      <div class="steps">
+        <div class="step"><strong>Create SparkSession:</strong> Starts the Spark application.</div>
+        <div class="step"><strong>Read CSV:</strong> Loads SmartRide trip data into a DataFrame.</div>
+        <div class="step"><strong>Group by City:</strong> Calculates total fare and trip count.</div>
+        <div class="step"><strong>Group by Driver:</strong> Calculates average driver rating.</div>
+        <div class="step"><strong>Stop Spark:</strong> Releases Spark resources.</div>
+      </div>
+      <div class="output">
+        <strong>Expected Learning Outcome:</strong> Learners understand how SparkSession reads data, how transformations are written and how actions trigger execution.
+      </div>
+    </section>
+
+    <section id="s11">
+      <h2>11. Limitations and Best Practices</h2>
+      <h3>Limitations</h3>
+      <table>
+        <tr><th>Limitation</th><th>Explanation</th></tr>
+        <tr><td>Needs memory</td><td>Spark is fast because of memory, but low memory can reduce performance.</td></tr>
+        <tr><td>Small file problem</td><td>Too many small files create too many tasks and overhead.</td></tr>
+        <tr><td>Not needed for tiny data</td><td>Small data can be processed with normal Python or SQL.</td></tr>
+        <tr><td>Requires tuning</td><td>Executor memory, driver memory, partitions and shuffle need tuning.</td></tr>
+        <tr><td>Debugging is harder</td><td>Errors can happen in Driver, Executor, input data or cluster configuration.</td></tr>
+      </table>
+      <h3>Best Practices</h3>
+      <ul>
+        <li>Use Spark only when data is large enough.</li>
+        <li>Prefer DataFrame and Spark SQL for structured data.</li>
+        <li>Avoid collecting huge data to the Driver.</li>
+        <li>Cache only reused datasets.</li>
+        <li>Use proper file formats like Parquet or ORC in real projects.</li>
+        <li>Monitor Spark UI to understand jobs, stages and tasks.</li>
+      </ul>
+      <div class="warning"><strong>Important:</strong> Do not use <code>collect()</code> on huge data. It brings all data to the Driver and may crash the application.</div>
+    </section>
+
+    <section id="s12">
+      <h2>12. Interview Questions and Answers</h2>
+      <div class="interview"><strong>Q1. What is Apache Spark?</strong><br>Apache Spark is a distributed data processing engine used for batch, streaming, SQL analytics, machine learning and graph processing.</div>
+      <div class="interview"><strong>Q2. Why is Spark faster than MapReduce?</strong><br>Spark is faster because it performs in-memory processing, while MapReduce writes intermediate data to disk.</div>
+      <div class="interview"><strong>Q3. What is Spark Core?</strong><br>Spark Core is the base engine that handles task scheduling, memory management, fault tolerance and RDD operations.</div>
+      <div class="interview"><strong>Q4. What is Spark SQL?</strong><br>Spark SQL is used to process structured data using SQL queries and DataFrames.</div>
+      <div class="interview"><strong>Q5. What is Spark Streaming?</strong><br>Spark Streaming is used to process real-time data from sources such as Kafka, socket and files.</div>
+      <div class="interview"><strong>Q6. What is MLlib?</strong><br>MLlib is Spark's machine learning library used for classification, regression, clustering and recommendation.</div>
+      <div class="interview"><strong>Q7. What is GraphX?</strong><br>GraphX is Spark's graph processing library for relationship-based data.</div>
+      <div class="interview"><strong>Q8. What is SparkR?</strong><br>SparkR allows R language users to work with Spark for big data analytics.</div>
+      <div class="interview"><strong>Q9. What is Driver?</strong><br>Driver is the main controller of a Spark application. It creates jobs, stages and tasks.</div>
+      <div class="interview"><strong>Q10. What is Executor?</strong><br>Executor is a worker process that runs tasks and stores cached data.</div>
+      <div class="interview"><strong>Q11. What is a Task?</strong><br>A task is the smallest unit of execution in Spark.</div>
+      <div class="interview"><strong>Q12. What is SparkContext?</strong><br>SparkContext is the older entry point to Spark Core and is used to create RDDs.</div>
+      <div class="interview"><strong>Q13. What is SparkSession?</strong><br>SparkSession is the modern unified entry point for Spark DataFrame, SQL and RDD operations.</div>
+      <div class="interview"><strong>Q14. What is SQLContext?</strong><br>SQLContext is the older entry point for SQL and DataFrame operations.</div>
+      <div class="interview"><strong>Q15. What is HiveContext?</strong><br>HiveContext is the older component used to connect Spark with Hive.</div>
+    </section>
+
+    <section id="s13">
+      <h2>13. Quiz, Formal Exam, Notes and Checklist</h2>
+      <h3>Learning Progress Checklist</h3>
+      <div class="progress-box" id="progressBox"></div>
+      <button onclick="resetProgress()" class="secondary-btn">Reset Progress</button>
+
+      <h3>Practice MCQ Quiz</h3>
+      <div id="quiz"></div>
+      <button onclick="submitQuiz()">Submit Practice Quiz</button>
+      <button onclick="resetQuiz()" class="secondary-btn">Reset Quiz</button>
+      <div id="quizScore" class="score"></div>
+
+      <h3>Formal Timed Exam</h3>
+      <p><strong>Duration:</strong> 5 minutes | <strong>Total Questions:</strong> 10</p>
+      <button onclick="startExam()" class="success-btn">Start Exam</button>
+      <button onclick="submitExam()" class="danger-btn">Submit Exam</button>
+      <div id="timer" class="score"></div>
+      <div id="exam"></div>
+      <div id="examScore" class="score"></div>
+
+      <h3>Double-click Notes</h3>
+      <p>Double-click any section heading or paragraph to copy selected text into your notes area.</p>
+      <textarea id="notes" class="notes-box" placeholder="Your notes will appear here. You can also type your own notes."></textarea>
+      <br>
+      <button onclick="saveNotes()">Save Notes</button>
+      <button onclick="clearNotes()" class="secondary-btn">Clear Notes</button>
+    </section>
+
+    <div class="footer">Generated for classroom-style technical training | SmartRide Spark TUT</div>
+  </main>
+</div>
+
+<script>
+  const checklist = [
+    "I can explain what Spark is",
+    "I can compare Hadoop MapReduce and Spark",
+    "I can explain Spark Core",
+    "I can explain Spark SQL",
+    "I can explain Spark Streaming",
+    "I can explain MLlib, GraphX and SparkR",
+    "I can explain Driver, Executor and Task",
+    "I can explain SparkContext and SparkSession",
+    "I can explain SQLContext and HiveContext",
+    "I can list Spark limitations"
+  ];
+
+  const quizQuestions = [
+    {q:"What is Apache Spark?", o:["Storage system", "Distributed data processing engine", "Operating system", "Database only"], a:1},
+    {q:"Why is Spark faster than MapReduce?", o:["It uses only one machine", "It uses in-memory processing", "It avoids data", "It is only for SQL"], a:1},
+    {q:"Which component is the base engine of Spark?", o:["Spark Core", "SparkR", "GraphX", "HiveContext"], a:0},
+    {q:"Which component is used for structured data?", o:["Spark SQL", "MLlib", "GraphX", "YARN only"], a:0},
+    {q:"What is the smallest unit of execution in Spark?", o:["Job", "Stage", "Task", "Cluster"], a:2},
+    {q:"Who controls the Spark application?", o:["Executor", "Driver", "Task", "Partition"], a:1},
+    {q:"Which component runs tasks?", o:["Executor", "SQLContext", "SparkConf", "Hive Metastore"], a:0},
+    {q:"What is SparkSession?", o:["Modern Spark entry point", "Only a file format", "Only a database", "Only a scheduler"], a:0},
+    {q:"What is MLlib used for?", o:["Machine learning", "Graph storage", "Cluster hardware", "Operating system"], a:0},
+    {q:"What should we avoid on huge data?", o:["collect()", "filter()", "select()", "read.csv()"], a:0}
+  ];
+
+  const examQuestions = [
+    {q:"Spark can process both batch and streaming data.", o:["True", "False"], a:0},
+    {q:"MapReduce writes intermediate data to disk frequently.", o:["True", "False"], a:0},
+    {q:"SparkSession is recommended for modern DataFrame operations.", o:["True", "False"], a:0},
+    {q:"HiveContext is the modern replacement for SparkSession.", o:["True", "False"], a:1},
+    {q:"Executor is responsible for running tasks.", o:["True", "False"], a:0},
+    {q:"GraphX is used for machine learning algorithms.", o:["True", "False"], a:1},
+    {q:"MLlib is Spark's machine learning library.", o:["True", "False"], a:0},
+    {q:"Lazy evaluation means transformations execute immediately.", o:["True", "False"], a:1},
+    {q:"SparkContext is commonly represented as sc.", o:["True", "False"], a:0},
+    {q:"Using collect() on very large data is always safe.", o:["True", "False"], a:1}
+  ];
+
+  function initProgress() {
+    const box = document.getElementById("progressBox");
+    checklist.forEach((item, i) => {
+      const saved = localStorage.getItem("sparkTutCheck" + i) === "true";
+      const div = document.createElement("div");
+      div.className = "check-item";
+      div.innerHTML = `<label><input type="checkbox" ${saved ? "checked" : ""} onchange="saveProgress(${i}, this.checked)"> ${item}</label>`;
+      box.appendChild(div);
+    });
+  }
+  function saveProgress(i, checked) { localStorage.setItem("sparkTutCheck" + i, checked); }
+  function resetProgress() {
+    checklist.forEach((_, i) => localStorage.removeItem("sparkTutCheck" + i));
+    document.getElementById("progressBox").innerHTML = "";
+    initProgress();
+  }
+
+  function renderQuiz() {
+    const quiz = document.getElementById("quiz");
+    quizQuestions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "quiz-question";
+      div.innerHTML = `<strong>Q${i+1}. ${q.q}</strong>` + q.o.map((op, j) => `<label><input type="radio" name="quiz${i}" value="${j}"> ${op}</label>`).join("");
+      quiz.appendChild(div);
+    });
+  }
+  function submitQuiz() {
+    let score = 0;
+    quizQuestions.forEach((q, i) => {
+      const selected = document.querySelector(`input[name="quiz${i}"]:checked`);
+      if (selected && Number(selected.value) === q.a) score++;
+    });
+    const mood = score >= 8 ? "Excellent 😊" : score >= 5 ? "Good, revise once 🙂" : "Need more practice 💪";
+    document.getElementById("quizScore").innerText = `Practice Quiz Score: ${score}/${quizQuestions.length} - ${mood}`;
+  }
+  function resetQuiz() {
+    document.querySelectorAll('#quiz input[type="radio"]').forEach(x => x.checked = false);
+    document.getElementById("quizScore").innerText = "";
+  }
+
+  let examStarted = false;
+  let examTimer = null;
+  let secondsLeft = 300;
+  function renderExam() {
+    const exam = document.getElementById("exam");
+    exam.innerHTML = "";
+    examQuestions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "exam-question";
+      div.innerHTML = `<strong>Q${i+1}. ${q.q}</strong>` + q.o.map((op, j) => `<label><input type="radio" name="exam${i}" value="${j}"> ${op}</label>`).join("");
+      exam.appendChild(div);
+    });
+  }
+  function startExam() {
+    if (examStarted) return;
+    examStarted = true;
+    secondsLeft = 300;
+    renderExam();
+    examTimer = setInterval(() => {
+      secondsLeft--;
+      const min = Math.floor(secondsLeft / 60);
+      const sec = secondsLeft % 60;
+      document.getElementById("timer").innerText = `Time Left: ${min}:${sec.toString().padStart(2, "0")}`;
+      if (secondsLeft <= 0) submitExam();
+    }, 1000);
+  }
+  function submitExam() {
+    if (!examStarted && !document.getElementById("exam").children.length) renderExam();
+    clearInterval(examTimer);
+    examStarted = false;
+    let score = 0;
+    examQuestions.forEach((q, i) => {
+      const selected = document.querySelector(`input[name="exam${i}"]:checked`);
+      if (selected && Number(selected.value) === q.a) score++;
+    });
+    const mood = score >= 8 ? "Ready for interview 🚀" : score >= 5 ? "Revise architecture and ecosystem 🙂" : "Repeat this tutorial once more 💪";
+    document.getElementById("examScore").innerText = `Formal Exam Score: ${score}/${examQuestions.length} - ${mood}`;
+  }
+
+  function saveNotes() {
+    localStorage.setItem("sparkTutNotes", document.getElementById("notes").value);
+    alert("Notes saved locally in this browser.");
+  }
+  function clearNotes() {
+    document.getElementById("notes").value = "";
+    localStorage.removeItem("sparkTutNotes");
+  }
+
+  document.addEventListener("dblclick", function(e) {
+    const tag = e.target.tagName.toLowerCase();
+    if (["p", "h2", "h3", "li", "td"].includes(tag)) {
+      const notes = document.getElementById("notes");
+      notes.value += (notes.value ? "\n" : "") + e.target.innerText;
+      localStorage.setItem("sparkTutNotes", notes.value);
+    }
+  });
+
+  document.addEventListener("mousemove", function(e) {
+    if (Math.random() > 0.85) {
+      const s = document.createElement("div");
+      s.className = "sparkle";
+      s.style.left = e.clientX + "px";
+      s.style.top = e.clientY + "px";
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 800);
+    }
+  });
+
+  window.onload = function() {
+    initProgress();
+    renderQuiz();
+    const savedNotes = localStorage.getItem("sparkTutNotes");
+    if (savedNotes) document.getElementById("notes").value = savedNotes;
+  };
+</script>
+</body>
+</html>

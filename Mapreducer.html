@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TUT - Hadoop MapReduce with SmartRide Use Case</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--text:#1f2937;--primary:#2563eb;--secondary:#0f766e;--accent:#f59e0b;--danger:#dc2626;--success:#16a34a;--code:#111827}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+header{background:linear-gradient(135deg,#0f172a,#1e3a8a,#0f766e);color:#fff;padding:32px 20px;text-align:center}
+header h1{margin:0;font-size:34px}.container{display:grid;grid-template-columns:285px 1fr;gap:20px;max-width:1450px;margin:0 auto;padding:20px}
+nav{position:sticky;top:10px;height:calc(100vh - 20px);overflow:auto;background:var(--card);border-radius:16px;padding:18px;box-shadow:0 8px 22px rgba(15,23,42,.08)}
+nav a{display:block;padding:8px 10px;color:#334155;text-decoration:none;border-radius:8px;font-size:14px}nav a:hover{background:#dbeafe;color:#1d4ed8}
+section{background:var(--card);border-radius:18px;margin-bottom:20px;padding:24px;box-shadow:0 8px 22px rgba(15,23,42,.08);transition:.2s}
+section:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(15,23,42,.13);background:#fcfdff}
+h2{color:#1e3a8a;border-left:6px solid var(--primary);padding-left:12px}h3{color:#0f766e}
+.badge{display:inline-block;background:#dbeafe;color:#1e40af;padding:4px 10px;border-radius:999px;font-size:13px;margin:4px}
+.trainer-note{background:#fffbeb;border-left:5px solid var(--accent);padding:12px;border-radius:10px;margin:12px 0}
+.usecase{background:#ecfeff;border-left:5px solid #0891b2;padding:14px;border-radius:10px;margin:12px 0}
+.warning{background:#fef2f2;border-left:5px solid var(--danger);padding:14px;border-radius:10px;margin:12px 0}
+.success{background:#f0fdf4;border-left:5px solid var(--success);padding:14px;border-radius:10px;margin:12px 0}
+pre{background:var(--code);color:#e5e7eb;padding:16px;border-radius:12px;overflow:auto}code{background:#eef2ff;color:#3730a3;padding:2px 5px;border-radius:5px}pre code{background:transparent;color:inherit;padding:0}
+table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid #cbd5e1;padding:10px;text-align:left;vertical-align:top}th{background:#dbeafe;color:#1e3a8a}
+.diagram{background:#f8fafc;border:1px dashed #94a3b8;border-radius:12px;padding:15px;font-family:Consolas,monospace;white-space:pre;overflow:auto}
+.quiz-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:14px;margin:12px 0}
+button{background:var(--primary);color:white;border:none;padding:10px 14px;border-radius:8px;cursor:pointer;margin:5px}.danger{background:#dc2626}.secondary{background:#0f766e}
+.result{font-weight:bold;margin-top:10px;padding:12px;border-radius:10px;background:#f1f5f9}.checklist label{display:block;padding:8px;background:#f8fafc;margin:6px 0;border-radius:8px}
+.progress-wrap{background:#e2e8f0;border-radius:999px;height:18px;overflow:hidden;margin:10px 0}.progress-bar{height:100%;width:0%;background:linear-gradient(90deg,#2563eb,#0f766e)}
+.note-box{width:100%;min-height:80px;border:1px solid #cbd5e1;border-radius:10px;padding:10px}.sparkle{position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;background:#f59e0b;opacity:.8;animation:fade .7s forwards;z-index:9999}
+@keyframes fade{to{transform:translateY(-18px) scale(0);opacity:0}}footer{text-align:center;padding:20px;color:#64748b}
+@media(max-width:900px){.container{grid-template-columns:1fr}nav{position:relative;height:auto}}
+</style>
+</head>
+<body>
+<header>
+<h1>TUT: Hadoop MapReduce</h1>
+<p>Mapper, Reducer, Driver Program, Data Flow, Blocks vs InputSplit, RecordReader, WordCount Implementation</p>
+<p><span class="badge">SmartRide Real-Time Example</span><span class="badge">Hadoop Diagram</span><span class="badge">Java WordCount</span><span class="badge">MCQ + Timed Exam</span></p>
+</header>
+
+<div class="container">
+<nav>
+<h3>13-Section TUT Menu</h3>
+<a href="#s1">1. Course Goal</a>
+<a href="#s2">2. Real-Time Use Case</a>
+<a href="#s3">3. What is MapReduce?</a>
+<a href="#s4">4. Hadoop Working Diagram</a>
+<a href="#s5">5. Data Flow</a>
+<a href="#s6">6. Mapper Class</a>
+<a href="#s7">7. Reducer Class</a>
+<a href="#s8">8. Driver Program</a>
+<a href="#s9">9. Blocks vs InputSplit</a>
+<a href="#s10">10. RecordReader</a>
+<a href="#s11">11. WordCount Lab</a>
+<a href="#s12">12. Interview Q&A</a>
+<a href="#s13">13. Quiz, Exam, Tracker</a>
+</nav>
+
+<main>
+
+<section id="s1">
+<h2>1. Course Goal</h2>
+<p>This tutorial explains Hadoop MapReduce in a spoon-feeding classroom style using one real-time SmartRide/Uber-like use case.</p>
+<div class="trainer-note"><strong>Trainer Opening:</strong> MapReduce is an old but very important Hadoop processing model. Even if modern projects use Spark, MapReduce helps learners understand distributed processing fundamentals.</div>
+<h3>By the end, learners can explain:</h3>
+<ul><li>What MapReduce is</li><li>Mapper class, Reducer class, Driver program</li><li>How data flows in MapReduce</li><li>Difference between HDFS Block and InputSplit</li><li>Role of RecordReader</li><li>WordCount implementation in Hadoop</li><li>How MapReduce works inside Hadoop with HDFS and YARN</li></ul>
+</section>
+
+<section id="s2">
+<h2>2. Real-Time Example: SmartRide Trip WordCount</h2>
+<div class="usecase"><p><strong>Business Story:</strong> SmartRide is an Uber/Ola-like ride booking company. It receives huge trip logs from different cities. The data engineering team wants to process daily trip files and count important words such as city names and trip status.</p></div>
+<h3>Sample Input File</h3>
+<pre><code>Chennai completed
+Bangalore completed
+Chennai completed
+Hyderabad cancelled
+Bangalore completed
+Chennai completed
+Hyderabad completed
+Mumbai completed</code></pre>
+<h3>Business Questions</h3>
+<ul><li>How many times does each city appear?</li><li>How many trips are completed?</li><li>How many trips are cancelled?</li><li>Can this data be processed across many machines?</li></ul>
+<h3>Expected Output</h3>
+<pre><code>Bangalore    2
+Chennai      3
+Hyderabad    2
+Mumbai       1
+cancelled    1
+completed    7</code></pre>
+<div class="success"><strong>Simple Understanding:</strong> MapReduce will split the input, map every word to count 1, shuffle same words together, and reduce the counts.</div>
+</section>
+
+<section id="s3">
+<h2>3. Introduction to MapReduce</h2>
+<p><strong>MapReduce</strong> is a distributed data processing model used in Hadoop.</p>
+<h3>Simple Definition</h3><div class="success">MapReduce divides a big data processing job into two major phases: Map phase and Reduce phase.</div>
+<h3>Technical Definition</h3><p>MapReduce is a programming model and processing framework that processes large datasets in parallel across a Hadoop cluster. It reads input data from HDFS, processes it using Mapper and Reducer logic, and writes the final output back to HDFS.</p>
+<h3>Two Main Phases</h3>
+<table><tr><th>Phase</th><th>Purpose</th><th>SmartRide Example</th></tr><tr><td>Map</td><td>Read input and create intermediate key-value pairs</td><td>Chennai → 1, completed → 1</td></tr><tr><td>Reduce</td><td>Group same keys and aggregate values</td><td>Chennai → 3, completed → 7</td></tr></table>
+<pre><code>Map = Convert raw data into key-value pairs
+Reduce = Combine same keys and produce final result</code></pre>
+</section>
+
+<section id="s4">
+<h2>4. Diagram: How MapReduce Works in Hadoop</h2>
+<div class="diagram">User / Client
+    |
+    | Submit MapReduce Job
+    v
++----------------------+
+| YARN ResourceManager |
++----------------------+
+    |
+    | Starts Application Master
+    v
++----------------------+
+| Application Master   |
+| for MapReduce Job    |
++----------------------+
+    |
+    | Requests Containers
+    v
++----------------------+       +----------------------+
+| Node Manager         |       | Node Manager         |
+| Container: Mapper    |       | Container: Mapper    |
++----------------------+       +----------------------+
+    |                              |
+    | Reads HDFS block/split       | Reads HDFS block/split
+    v                              v
++----------------------+       +----------------------+
+| DataNode             |       | DataNode             |
+| HDFS Blocks          |       | HDFS Blocks          |
++----------------------+       +----------------------+
+
+Mapper Output
+    |
+    v
+Shuffle and Sort
+    |
+    v
++----------------------+
+| Container: Reducer   |
++----------------------+
+    |
+    | Writes final output
+    v
+HDFS Output Folder</div>
+<h3>Very Simple Working</h3>
+<ol><li>Input file is stored in HDFS.</li><li>HDFS stores the file as blocks in DataNodes.</li><li>MapReduce creates input splits.</li><li>RecordReader reads each split line by line.</li><li>Mapper produces intermediate key-value pairs.</li><li>Shuffle and Sort groups same keys.</li><li>Reducer aggregates values.</li><li>Final output is written back to HDFS.</li></ol>
+</section>
+
+<section id="s5">
+<h2>5. Data Flow in MapReduce</h2>
+<div class="diagram">Input File:
+Chennai completed
+Bangalore completed
+Chennai completed
+
+Step 1: RecordReader
+(0, "Chennai completed")
+(18, "Bangalore completed")
+(38, "Chennai completed")
+
+Step 2: Mapper
+(Chennai, 1)
+(completed, 1)
+(Bangalore, 1)
+(completed, 1)
+(Chennai, 1)
+(completed, 1)
+
+Step 3: Shuffle and Sort
+Bangalore  -> [1]
+Chennai    -> [1, 1]
+completed  -> [1, 1, 1]
+
+Step 4: Reducer
+Bangalore  -> 1
+Chennai    -> 2
+completed  -> 3
+
+Step 5: HDFS Output
+part-r-00000</div>
+<table><tr><th>Term</th><th>Meaning</th></tr><tr><td>Input</td><td>Data stored in HDFS</td></tr><tr><td>Mapper Output</td><td>Intermediate key-value pairs</td></tr><tr><td>Shuffle</td><td>Transfers mapper output to reducers</td></tr><tr><td>Sort</td><td>Sorts keys before reducer</td></tr><tr><td>Reducer Output</td><td>Final output stored in HDFS</td></tr></table>
+<div class="warning"><strong>Common Mistake:</strong> Mapper output is not final output. Final output is written by Reducer.</div>
+</section>
+
+<section id="s6">
+<h2>6. Mapper Class</h2>
+<p>The Mapper class reads input records and emits intermediate key-value pairs.</p>
+<table><tr><th>Input Key</th><th>Input Value</th></tr><tr><td>Byte offset</td><td>Line of text</td></tr></table>
+<pre><code>Input:
+0, "Chennai completed"
+
+Mapper Output:
+Chennai, 1
+completed, 1</code></pre>
+<h3>Java Mapper Code</h3>
+<pre><code>public static class WordMapper
+        extends Mapper&lt;Object, Text, Text, IntWritable&gt; {
+
+    private final static IntWritable one = new IntWritable(1);
+    private Text word = new Text();
+
+    protected void map(Object key, Text value, Context context)
+            throws IOException, InterruptedException {
+
+        String line = value.toString();
+        StringTokenizer tokenizer = new StringTokenizer(line);
+
+        while (tokenizer.hasMoreTokens()) {
+            word.set(tokenizer.nextToken());
+            context.write(word, one);
+        }
+    }
+}</code></pre>
+<ul><li><code>key</code> is the byte offset of the line.</li><li><code>value</code> is one line from the input file.</li><li><code>context.write(word, one)</code> sends intermediate output.</li></ul>
+</section>
+
+<section id="s7">
+<h2>7. Reducer Class</h2>
+<p>The Reducer class receives grouped keys and values, then produces final output.</p>
+<pre><code>Reducer Input:
+Chennai -> [1, 1, 1]
+completed -> [1, 1, 1, 1, 1, 1, 1]
+
+Reducer Output:
+Chennai -> 3
+completed -> 7</code></pre>
+<h3>Java Reducer Code</h3>
+<pre><code>public static class WordReducer
+        extends Reducer&lt;Text, IntWritable, Text, IntWritable&gt; {
+
+    private IntWritable result = new IntWritable();
+
+    protected void reduce(Text key, Iterable&lt;IntWritable&gt; values, Context context)
+            throws IOException, InterruptedException {
+
+        int sum = 0;
+
+        for (IntWritable value : values) {
+            sum += value.get();
+        }
+
+        result.set(sum);
+        context.write(key, result);
+    }
+}</code></pre>
+<ul><li>Reducer receives one key at a time.</li><li>All values of the same key are grouped together.</li><li>Reducer loops through all values.</li><li>Reducer writes final key and total count.</li></ul>
+</section>
+
+<section id="s8">
+<h2>8. Driver Program</h2>
+<p>The Driver Program is the main class that configures and submits the MapReduce job.</p>
+<ul><li>Create Hadoop configuration</li><li>Create job object</li><li>Set Mapper class</li><li>Set Reducer class</li><li>Set input path</li><li>Set output path</li><li>Set output key and value types</li><li>Submit job to Hadoop/YARN</li></ul>
+<pre><code>public static void main(String[] args) throws Exception {
+
+    Configuration conf = new Configuration();
+
+    Job job = Job.getInstance(conf, "SmartRide WordCount MapReduce");
+
+    job.setJarByClass(SmartRideWordCount.class);
+    job.setMapperClass(WordMapper.class);
+    job.setReducerClass(WordReducer.class);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+}</code></pre>
+<div class="success">Driver Program is like the project setup file. It tells Hadoop what class to run, where input is located, and where output should be stored.</div>
+</section>
+
+<section id="s9">
+<h2>9. Difference Between HDFS Blocks and InputSplit</h2>
+<table><tr><th>Point</th><th>HDFS Block</th><th>InputSplit</th></tr><tr><td>Type</td><td>Physical storage unit</td><td>Logical processing unit</td></tr><tr><td>Used By</td><td>HDFS</td><td>MapReduce</td></tr><tr><td>Purpose</td><td>Store data</td><td>Process data</td></tr><tr><td>Created By</td><td>HDFS</td><td>InputFormat</td></tr><tr><td>Example Size</td><td>128 MB</td><td>Usually same as block size, but can vary</td></tr></table>
+<div class="diagram">File: smartride_trip_words.txt
+
+HDFS Storage View:
++--------------+  +--------------+
+| Block 1      |  | Block 2      |
+| 128 MB       |  | 128 MB       |
++--------------+  +--------------+
+
+MapReduce Processing View:
++--------------+  +--------------+
+| InputSplit 1 |  | InputSplit 2 |
+| Mapper 1     |  | Mapper 2     |
++--------------+  +--------------+</div>
+<div class="trainer-note"><strong>Trainer Memory Point:</strong> Block is for storage. InputSplit is for processing.</div>
+</section>
+
+<section id="s10">
+<h2>10. Role of RecordReader</h2>
+<p>RecordReader converts an InputSplit into key-value records for the Mapper.</p>
+<p>Mapper cannot directly understand raw file blocks. RecordReader reads the split and gives records in key-value format.</p>
+<table><tr><th>Mapper Input Key</th><th>Mapper Input Value</th></tr><tr><td>Byte offset</td><td>One line of text</td></tr></table>
+<pre><code>Input line:
+Chennai completed
+
+RecordReader gives Mapper:
+Key   = 0
+Value = Chennai completed</code></pre>
+<div class="diagram">InputSplit
+   |
+   v
+RecordReader
+   |
+   | Creates key-value records
+   v
+Mapper
+
+Example:
+Raw Data: "Chennai completed"
+Record:   (0, "Chennai completed")</div>
+<div class="success">RecordReader acts like a translator between InputSplit and Mapper.</div>
+</section>
+
+<section id="s11">
+<h2>11. Implementation of MapReduce WordCount</h2>
+<h3>Step 1: Start Hadoop Services</h3><pre><code>start-dfs.sh
+start-yarn.sh
+jps</code></pre>
+<h3>Step 2: Create HDFS Input Directory</h3><pre><code>hdfs dfs -mkdir -p /smartride/mapreduce/input</code></pre>
+<h3>Step 3: Upload Input File</h3><pre><code>hdfs dfs -put smartride_trip_words.txt /smartride/mapreduce/input/</code></pre>
+<h3>Step 4: Verify Input</h3><pre><code>hdfs dfs -ls /smartride/mapreduce/input
+hdfs dfs -cat /smartride/mapreduce/input/smartride_trip_words.txt</code></pre>
+<h3>Step 5: Run Built-in WordCount</h3><pre><code>hdfs dfs -rm -r -f /smartride/mapreduce/output_builtin
+
+hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar \
+wordcount \
+/smartride/mapreduce/input \
+/smartride/mapreduce/output_builtin</code></pre>
+<h3>Step 6: View Output</h3><pre><code>hdfs dfs -cat /smartride/mapreduce/output_builtin/part-r-00000</code></pre>
+<h3>Step 7: Build Custom Java WordCount</h3><pre><code>cd java-wordcount
+mvn clean package</code></pre>
+<h3>Step 8: Run Custom Java WordCount</h3><pre><code>hdfs dfs -rm -r -f /smartride/mapreduce/output_custom
+
+hadoop jar target/mapreduce-wordcount-1.0.jar \
+com.smartride.mapreduce.SmartRideWordCount \
+/smartride/mapreduce/input \
+/smartride/mapreduce/output_custom</code></pre>
+<h3>Step 9: Monitor in YARN UI</h3><pre><code>http://localhost:8088</code></pre>
+<h3>Step 10: Check Blocks and Locations</h3><pre><code>hdfs fsck /smartride/mapreduce/input/smartride_trip_words.txt -files -blocks -locations</code></pre>
+</section>
+
+<section id="s12">
+<h2>12. Interview Questions and Answers</h2>
+<details open><summary>Q1. What is MapReduce?</summary><p>MapReduce is a distributed processing model in Hadoop that processes large data using Map and Reduce phases.</p></details>
+<details><summary>Q2. What is Mapper?</summary><p>Mapper reads input records and produces intermediate key-value pairs.</p></details>
+<details><summary>Q3. What is Reducer?</summary><p>Reducer receives grouped keys and values and produces final aggregated output.</p></details>
+<details><summary>Q4. What is Driver Program?</summary><p>Driver Program configures and submits the MapReduce job to Hadoop/YARN.</p></details>
+<details><summary>Q5. What is Shuffle and Sort?</summary><p>Shuffle transfers mapper output to reducers and Sort orders/group keys before reducer execution.</p></details>
+<details><summary>Q6. What is HDFS Block?</summary><p>HDFS Block is a physical storage unit used by HDFS to store files.</p></details>
+<details><summary>Q7. What is InputSplit?</summary><p>InputSplit is a logical processing unit used by MapReduce to assign data to mappers.</p></details>
+<details><summary>Q8. Difference between Block and InputSplit?</summary><p>Block is for storage; InputSplit is for processing.</p></details>
+<details><summary>Q9. What is RecordReader?</summary><p>RecordReader converts InputSplit into key-value records for Mapper.</p></details>
+<details><summary>Q10. What are Mapper input key and value in TextInputFormat?</summary><p>Key is byte offset and value is one line of text.</p></details>
+<details><summary>Q11. Where is final output stored?</summary><p>Final output is stored in the HDFS output directory.</p></details>
+<details><summary>Q12. Why output directory should not already exist?</summary><p>MapReduce fails if output path already exists to avoid accidental overwrite.</p></details>
+<details><summary>Q13. Can MapReduce run without Reducer?</summary><p>Yes, map-only jobs are possible when aggregation is not needed.</p></details>
+<details><summary>Q14. What is Combiner?</summary><p>Combiner is an optional mini-reducer that runs after mapper to reduce data transfer.</p></details>
+<details><summary>Q15. Why is MapReduce slower than Spark?</summary><p>MapReduce writes intermediate data to disk, while Spark can process data in memory.</p></details>
+<details><summary>Q16. Which component runs MapReduce job in Hadoop 2.x/3.x?</summary><p>YARN runs and manages MapReduce jobs using Resource Manager, Node Manager, Application Master and containers.</p></details>
+</section>
+
+<section id="s13">
+<h2>13. Practice Quiz, Timed Exam and Progress Tracker</h2>
+<h3>Practice MCQ Quiz</h3><div id="practiceQuiz"></div><button onclick="submitPractice()">Submit Practice Quiz</button><div id="practiceResult" class="result"></div>
+<h3>Formal Timed Exam</h3><p><strong>Time:</strong> 5 minutes</p><p id="timer" class="result">Timer not started</p><button onclick="startExam()">Start Exam</button><div id="examQuiz"></div><button onclick="submitExam()">Submit Exam</button><div id="examResult" class="result"></div>
+<h3>Preparation Checklist</h3>
+<div class="checklist">
+<label><input type="checkbox" class="progress" value="intro"> I can explain MapReduce</label>
+<label><input type="checkbox" class="progress" value="flow"> I can draw MapReduce data flow</label>
+<label><input type="checkbox" class="progress" value="mapper"> I can explain Mapper class</label>
+<label><input type="checkbox" class="progress" value="reducer"> I can explain Reducer class</label>
+<label><input type="checkbox" class="progress" value="driver"> I can explain Driver Program</label>
+<label><input type="checkbox" class="progress" value="block-split"> I can explain Blocks vs InputSplit</label>
+<label><input type="checkbox" class="progress" value="recordreader"> I can explain RecordReader</label>
+<label><input type="checkbox" class="progress" value="lab"> I completed WordCount lab</label>
+</div>
+<div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div><div id="progressText"></div>
+<h3>Double-Click Trainer Notes</h3><p>Double-click any section to add a trainer note. Notes are also stored locally below.</p>
+<textarea id="globalNotes" class="note-box" placeholder="Write your MapReduce trainer notes here..."></textarea><br>
+<button onclick="saveGlobalNotes()">Save Notes</button><button class="danger" onclick="clearProgress()">Clear Progress</button><div id="noteStatus" class="result"></div>
+</section>
+
+<footer>TUT-style Hadoop MapReduce tutorial | SmartRide Data Engineering Use Case</footer>
+</main>
+</div>
+
+<script>
+const practiceQuestions=[
+{q:"What is MapReduce?",a:["Storage system","Distributed processing model","Database","Visualization tool"],c:1},
+{q:"What does Mapper produce?",a:["Final output only","Intermediate key-value pairs","HDFS blocks","JAR files"],c:1},
+{q:"What does Reducer do?",a:["Aggregates grouped values","Starts NameNode","Creates DataNode","Formats HDFS"],c:0},
+{q:"What is Driver Program?",a:["Job configuration and submission class","Linux driver","DataNode script","Rack file"],c:0},
+{q:"What is HDFS Block?",a:["Physical storage unit","Logical processing unit","Reducer output","Java package"],c:0},
+{q:"What is InputSplit?",a:["Logical processing unit","Database index","Only final output","Node memory"],c:0},
+{q:"What is RecordReader?",a:["Converts split into records","Deletes records","Compresses blocks only","Starts ResourceManager"],c:0},
+{q:"In TextInputFormat, Mapper key is usually:",a:["Byte offset","City name","Reducer count","Driver name"],c:0},
+{q:"Which phase groups same keys?",a:["Shuffle and Sort","HDFS Format","NameNode checkpoint","Maven package"],c:0},
+{q:"Where is final output stored?",a:["HDFS output folder","Mapper memory only","NameNode metadata only","Local temp only"],c:0}
+];
+const examQuestions=[
+{q:"Which method is used inside Mapper to emit output?",a:["context.write()","print()","echo()","reduce()"],c:0},
+{q:"Which method submits the job and waits?",a:["job.waitForCompletion(true)","job.delete()","context.read()","hdfs.start()"],c:0},
+{q:"Which class is used to configure Hadoop job?",a:["Job","DataFrame","SparkSession","SQLContext"],c:0},
+{q:"Why output directory must not exist?",a:["To avoid accidental overwrite","Because input is deleted","Because reducer cannot read","Because mapper requires empty HDFS"],c:0},
+{q:"What comes after Mapper output?",a:["Shuffle and Sort","NameNode restart","File deletion","JDK installation"],c:0},
+{q:"MapReduce reads data from:",a:["HDFS","Only Excel","Only browser","Only PowerPoint"],c:0},
+{q:"Can MapReduce run on YARN?",a:["Yes","No","Only on Windows","Only in Excel"],c:0},
+{q:"Which one is physical?",a:["HDFS Block","InputSplit","Mapper function","RecordReader method"],c:0},
+{q:"Which one is logical?",a:["InputSplit","HDFS Block","DataNode disk","Rack"],c:0},
+{q:"What is the WordCount reducer input example?",a:["Chennai -> [1,1,1]","Chennai only","1 only","part-r file"],c:0}
+];
+function renderQuiz(targetId,questions,name){const target=document.getElementById(targetId);target.innerHTML="";questions.forEach((item,i)=>{const div=document.createElement("div");div.className="quiz-card";div.innerHTML=`<p><strong>${i+1}. ${item.q}</strong></p>`+item.a.map((opt,j)=>`<label><input type="radio" name="${name}${i}" value="${j}"> ${opt}</label><br>`).join("");target.appendChild(div);});}
+function scoreQuiz(questions,name){let score=0;questions.forEach((item,i)=>{const selected=document.querySelector(`input[name="${name}${i}"]:checked`);if(selected&&Number(selected.value)===item.c)score++;});return score;}
+function feedback(score,total){const pct=score/total*100;if(pct>=80)return"Excellent! You can explain MapReduce confidently.";if(pct>=60)return"Good. Revise Blocks vs InputSplit and RecordReader once more.";return"Needs revision. Focus on Mapper, Reducer, Driver and data flow.";}
+function submitPractice(){const score=scoreQuiz(practiceQuestions,"p");document.getElementById("practiceResult").innerHTML=`Score: ${score}/${practiceQuestions.length}<br>${feedback(score,practiceQuestions.length)}`;localStorage.setItem("mrPracticeScore",score);}
+let examTimer=null;let remaining=300;function startExam(){remaining=300;if(examTimer)clearInterval(examTimer);examTimer=setInterval(()=>{remaining--;const m=Math.floor(remaining/60),s=remaining%60;document.getElementById("timer").innerText=`Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;if(remaining<=0){clearInterval(examTimer);submitExam();}},1000);}
+function submitExam(){if(examTimer)clearInterval(examTimer);const score=scoreQuiz(examQuestions,"e");document.getElementById("examResult").innerHTML=`Exam Score: ${score}/${examQuestions.length}<br>${feedback(score,examQuestions.length)}`;localStorage.setItem("mrExamScore",score);}
+function updateProgress(){const checks=Array.from(document.querySelectorAll(".progress"));let done=0;checks.forEach(ch=>{localStorage.setItem("mr_progress_"+ch.value,ch.checked?"1":"0");if(ch.checked)done++;});const pct=Math.round(done/checks.length*100);document.getElementById("progressBar").style.width=pct+"%";document.getElementById("progressText").innerText=`Completed: ${done}/${checks.length} topics (${pct}%)`;}
+function loadProgress(){document.querySelectorAll(".progress").forEach(ch=>{ch.checked=localStorage.getItem("mr_progress_"+ch.value)==="1";ch.addEventListener("change",updateProgress);});document.getElementById("globalNotes").value=localStorage.getItem("mrGlobalNotes")||"";updateProgress();}
+function saveGlobalNotes(){localStorage.setItem("mrGlobalNotes",document.getElementById("globalNotes").value);document.getElementById("noteStatus").innerText="Notes saved locally.";}
+function clearProgress(){if(confirm("Clear progress and notes?")){Object.keys(localStorage).forEach(k=>{if(k.startsWith("mr"))localStorage.removeItem(k);});document.getElementById("globalNotes").value="";loadProgress();document.getElementById("noteStatus").innerText="Progress cleared.";}}
+document.addEventListener("dblclick",function(e){const section=e.target.closest("section");if(!section)return;const note=prompt("Add a quick trainer note for this section:");if(note){const p=document.createElement("div");p.className="trainer-note";p.innerHTML="<strong>Your Note:</strong> "+note.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));section.appendChild(p);}});
+document.addEventListener("mousemove",function(e){if(Math.random()>.86){const sp=document.createElement("div");sp.className="sparkle";sp.style.left=e.clientX+"px";sp.style.top=e.clientY+"px";document.body.appendChild(sp);setTimeout(()=>sp.remove(),700);}});
+renderQuiz("practiceQuiz",practiceQuestions,"p");renderQuiz("examQuiz",examQuestions,"e");loadProgress();
+</script>
+</body>
+</html>

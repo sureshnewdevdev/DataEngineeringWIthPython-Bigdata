@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starting Apache Hive 4 — Field Runbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14171C;
+    --ink-soft:#2A2F38;
+    --paper:#F5F6F8;
+    --paper-raised:#FFFFFF;
+    --line:#DDE1E7;
+    --muted:#6B7280;
+    --amber:#E8A33D;
+    --amber-deep:#B87715;
+    --green:#2E9E4F;
+    --green-bg:#E6F4EA;
+    --red:#D64541;
+    --red-bg:#FCEBEA;
+    --code-bg:#14171C;
+    --code-text:#E4E7EB;
+    --code-comment:#7A8494;
+    --code-amber:#F0B454;
+    --code-green:#5FD07E;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:820px;margin:0 auto;padding:0 24px 96px}
+
+  /* ---- Header ---- */
+  header{
+    background:var(--ink);
+    color:var(--paper);
+    padding:56px 0 44px;
+    margin-bottom:44px;
+    border-bottom:3px solid var(--amber);
+  }
+  .header-inner{max-width:820px;margin:0 auto;padding:0 24px}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:.72rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin-bottom:18px;
+  }
+  h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:2.6rem;
+    font-weight:700;
+    line-height:1.08;
+    letter-spacing:-.02em;
+    margin-bottom:16px;
+  }
+  .lede{font-size:1.05rem;color:#B9C0CC;max-width:620px}
+  .meta-row{
+    display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;
+    font-family:'JetBrains Mono',monospace;font-size:.74rem;
+  }
+  .chip{
+    border:1px solid #3A404B;border-radius:100px;
+    padding:5px 13px;color:#C6CCD6;
+  }
+  .chip b{color:var(--amber);font-weight:500}
+
+  /* ---- Intro block ---- */
+  .brief{
+    background:var(--paper-raised);
+    border:1px solid var(--line);
+    border-left:4px solid var(--amber);
+    border-radius:var(--radius);
+    padding:22px 24px;
+    margin-bottom:40px;
+  }
+  .brief h2{font-family:'Space Grotesk';font-size:1.15rem;margin-bottom:8px}
+  .brief p{color:var(--ink-soft);font-size:.96rem}
+  .brief p + p{margin-top:10px}
+
+  /* ---- Steps ---- */
+  .step{
+    position:relative;
+    padding-left:66px;
+    margin-bottom:38px;
+  }
+  .step-num{
+    position:absolute;left:0;top:0;
+    width:46px;height:46px;
+    background:var(--ink);color:var(--amber);
+    font-family:'Space Grotesk';font-weight:700;font-size:1.3rem;
+    display:flex;align-items:center;justify-content:center;
+    border-radius:12px;
+  }
+  .step::before{
+    content:"";position:absolute;left:22px;top:54px;bottom:-38px;
+    width:2px;background:var(--line);
+  }
+  .step:last-of-type::before{display:none}
+  .step h3{
+    font-family:'Space Grotesk';font-size:1.28rem;font-weight:600;
+    letter-spacing:-.01em;margin-bottom:6px;padding-top:8px;
+  }
+  .step p{color:var(--ink-soft);font-size:.96rem;margin-bottom:14px}
+  .step p code, .brief code, .why code, li code{
+    font-family:'JetBrains Mono',monospace;font-size:.86em;
+    background:#EAECEF;padding:1px 6px;border-radius:5px;color:var(--ink);
+  }
+
+  /* ---- Code blocks ---- */
+  .code{
+    position:relative;
+    background:var(--code-bg);
+    border-radius:var(--radius);
+    margin:14px 0;
+    overflow:hidden;
+  }
+  .code-head{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 14px;border-bottom:1px solid #262B33;
+  }
+  .dots{display:flex;gap:6px}
+  .dots span{width:11px;height:11px;border-radius:50%;background:#3A404B}
+  .dots span:first-child{background:#E5534B}
+  .dots span:nth-child(2){background:#E8A33D}
+  .dots span:nth-child(3){background:#3FB950}
+  .copy-btn{
+    font-family:'JetBrains Mono',monospace;font-size:.7rem;
+    letter-spacing:.08em;text-transform:uppercase;
+    background:transparent;border:1px solid #3A404B;color:#B9C0CC;
+    padding:5px 12px;border-radius:6px;cursor:pointer;transition:.16s;
+  }
+  .copy-btn:hover{border-color:var(--amber);color:var(--amber)}
+  .copy-btn.done{border-color:var(--green);color:var(--code-green)}
+  .code pre{
+    padding:16px 18px;overflow-x:auto;
+    font-family:'JetBrains Mono',monospace;font-size:.86rem;line-height:1.7;
+    color:var(--code-text);
+  }
+  .code pre .c{color:var(--code-comment)}
+  .code pre .p{color:var(--code-amber)}
+
+  /* ---- Callouts ---- */
+  .callout{
+    border-radius:var(--radius);padding:16px 18px 16px 18px;margin:16px 0;
+    font-size:.92rem;
+  }
+  .callout .tag{
+    font-family:'JetBrains Mono',monospace;font-size:.68rem;
+    letter-spacing:.14em;text-transform:uppercase;font-weight:700;
+    display:inline-block;margin-bottom:6px;
+  }
+  .danger{background:var(--red-bg);border:1px solid #F1BFBD}
+  .danger .tag{color:var(--red)}
+  .danger strong{color:var(--red)}
+  .success{background:var(--green-bg);border:1px solid #BFE3C9}
+  .success .tag{color:var(--green)}
+  .success pre{
+    font-family:'JetBrains Mono',monospace;font-size:.82rem;
+    background:#14171C;color:#C9F0D3;padding:12px 14px;border-radius:7px;
+    margin-top:10px;overflow-x:auto;
+  }
+  .note{background:#FFF7E8;border:1px solid #F0DEB0}
+  .note .tag{color:var(--amber-deep)}
+
+  /* ---- Section divider ---- */
+  .sec-label{
+    font-family:'JetBrains Mono',monospace;font-size:.74rem;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--muted);
+    margin:52px 0 24px;padding-bottom:10px;border-bottom:1px solid var(--line);
+  }
+
+  /* ---- Troubleshoot table ---- */
+  .tbl{width:100%;border-collapse:collapse;margin-top:8px;font-size:.9rem}
+  .tbl th,.tbl td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  .tbl th{
+    font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .tbl td:first-child{
+    font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--red);
+    white-space:nowrap;
+  }
+  .tbl td code{
+    font-family:'JetBrains Mono',monospace;font-size:.82em;
+    background:#EAECEF;padding:1px 5px;border-radius:4px;
+  }
+
+  ul.plain{margin:10px 0 0 20px}
+  ul.plain li{margin-bottom:6px;color:var(--ink-soft);font-size:.94rem}
+
+  footer{
+    margin-top:64px;padding-top:24px;border-top:1px solid var(--line);
+    font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--muted);
+    text-align:center;
+  }
+
+  @media (max-width:560px){
+    h1{font-size:2rem}
+    .step{padding-left:52px}
+    .step-num{width:38px;height:38px;font-size:1.1rem}
+    .step::before{left:18px}
+  }
+  @media print{
+    header{background:#fff;color:#000;border-bottom:2px solid #000}
+    .eyebrow,.chip b{color:#000}
+    .code,.success pre{background:#f0f0f0!important;color:#000!important;border:1px solid #ccc}
+    .code pre,.code pre .c,.code pre .p{color:#000!important}
+    .copy-btn{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="eyebrow">Ops Field Runbook · Apache Hive 4.1.0</div>
+    <h1>Starting Hive &amp; Beeline<br>on a Fresh Machine</h1>
+    <p class="lede">A copy-paste sequence to bring HiveServer2 up on an Ubuntu + Hadoop box — and to sidestep the Derby lock trap that stops the server from ever opening its port.</p>
+    <div class="meta-row">
+      <span class="chip">Hive <b>4.1.0</b></span>
+      <span class="chip">Metastore <b>Derby (embedded)</b></span>
+      <span class="chip">Client <b>Beeline → HiveServer2</b></span>
+      <span class="chip">Hadoop <b>HDFS running</b></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="brief">
+    <h2>What this guide assumes</h2>
+    <p>Hadoop/HDFS is already installed and running, and Hive 4.1.0 lives under <code>/opt/bigdata/apache-hive-4.1.0-bin</code>. Adjust that path if your install differs.</p>
+    <p><strong>The golden rule with embedded Derby:</strong> only <em>one</em> Hive process may touch the metastore at a time, and you must always launch from the <em>same</em> directory. Breaking either rule produces the dreaded <code>ERROR XSDB6: Another instance of Derby may have already booted the database</code>. Follow the steps in order and you'll avoid it.</p>
+  </div>
+
+  <div class="sec-label">Part A · First-time setup</div>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-num">1</div>
+    <h3>Use Hive's own Beeline, not Spark's</h3>
+    <p>Many Hadoop boxes ship Spark, and Spark bundles an <em>older</em> Beeline (2.3.9) that often wins on your <code>PATH</code>. Mixing it with a 4.1.0 server causes strange failures. Check which one you're getting:</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>which beeline</pre>
+    </div>
+    <p>If the result is anything like <code>/opt/bigdata/spark/bin/beeline</code>, don't fight the PATH — just call Hive's binary by its full path everywhere in this guide.</p>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-num">2</div>
+    <h3>Move to your home directory and stay there</h3>
+    <p>Derby writes its <code>metastore_db</code> folder into whatever directory you're standing in. Pick one home base and always start Hive from it, or Derby will create duplicate stores and lock conflicts.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>cd ~</pre>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step">
+    <div class="step-num">3</div>
+    <h3>Initialize the metastore schema (once per machine)</h3>
+    <p>Before the very first start, create the Derby schema. Skip this on machines where it's already been done — running it twice errors harmlessly but isn't needed.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>/opt/bigdata/apache-hive-4.1.0-bin/bin/schematool <span class="p">-dbType</span> derby <span class="p">-initSchema</span></pre>
+    </div>
+    <div class="callout success">
+      <span class="tag">Looks right when</span>
+      It finishes with <code>schemaTool completed</code> and no stack trace.
+    </div>
+  </div>
+
+  <div class="sec-label">Part B · Start the server &amp; connect</div>
+
+  <!-- Step 4 -->
+  <div class="step">
+    <div class="step-num">4</div>
+    <h3>Start HiveServer2 detached, logging to a file</h3>
+    <p>Running it with <code>nohup … &amp;</code> sends all its noisy logs into a file and gives your terminal back, so you don't have to juggle windows.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre><span class="c"># from ~ , launch in background, redirect logs</span>
+nohup /opt/bigdata/apache-hive-4.1.0-bin/bin/hiveserver2 &gt; ~/hs2.log 2&gt;&amp;1 &amp;</pre>
+    </div>
+  </div>
+
+  <!-- Step 5 -->
+  <div class="step">
+    <div class="step-num">5</div>
+    <h3>Wait for the port — don't rush it</h3>
+    <p>HiveServer2 is genuinely slow to open port <code>10000</code> (often 1–2 minutes, longer on small heaps). Watch the log, then confirm the port is actually listening.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre><span class="c"># follow startup — Ctrl+C stops the tail, NOT the server</span>
+tail <span class="p">-f</span> ~/hs2.log</pre>
+    </div>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre><span class="c"># the real proof: is anything listening on 10000?</span>
+ss <span class="p">-tlnp</span> | grep 10000</pre>
+    </div>
+    <div class="callout success">
+      <span class="tag">Ready when</span>
+      <code>ss</code> prints a line for port 10000. Until it does, Beeline will say “Connection refused” — that just means <em>keep waiting</em>, not that something broke.
+      <pre>LISTEN 0  50  *:10000  *:*  users:(("java",pid=7748,...))</pre>
+    </div>
+  </div>
+
+  <!-- Step 6 -->
+  <div class="step">
+    <div class="step-num">6</div>
+    <h3>Connect with Beeline</h3>
+    <p>Once the port is open, connect using Hive's own Beeline (full path, to dodge the Spark version).</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>/opt/bigdata/apache-hive-4.1.0-bin/bin/beeline <span class="p">-u</span> jdbc:hive2://localhost:10000</pre>
+    </div>
+    <div class="callout note">
+      <span class="tag">Prompt check</span>
+      SQL only works at the Hive prompt <code>0: jdbc:hive2://localhost:10000&gt;</code>. If your prompt still starts with <code>vmuser@host:~$</code> you're in Linux — SQL like <code>SHOW</code> will fail with “command not found.”
+    </div>
+  </div>
+
+  <!-- Step 7 -->
+  <div class="step">
+    <div class="step-num">7</div>
+    <h3>Verify it works</h3>
+    <p>At the Hive prompt, run:</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>SHOW DATABASES;</pre>
+    </div>
+    <div class="callout success">
+      <span class="tag">Finish line</span>
+      You should see <code>default</code> in the result. Hive is fully up. To leave Beeline cleanly, type <code>!quit</code>.
+    </div>
+  </div>
+
+  <div class="sec-label">Part C · The Derby lock trap (XSDB6)</div>
+
+  <div class="callout danger">
+    <span class="tag">Symptom</span>
+    HiveServer2 <strong>starts as a process but never opens port 10000</strong>, and <code>~/hs2.log</code> (or <code>/tmp/&lt;user&gt;/hive.log</code>) contains:
+    <br><br>
+    <strong>ERROR XSDB6: Another instance of Derby may have already booted the database /home/&lt;user&gt;/metastore_db.</strong>
+    <br><br>
+    <strong>Cause:</strong> a leftover Hive/Beeline/HiveServer2 process from an earlier attempt is still holding the Derby lock. Derby allows only one holder.
+  </div>
+
+  <p style="color:var(--ink-soft);font-size:.96rem;margin-bottom:6px"><strong>The fix — kill everything, clear the lock, start clean:</strong></p>
+
+  <div class="step">
+    <div class="step-num">A</div>
+    <h3>Kill every Hive-related process</h3>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre><span class="c"># list java processes to see what's running</span>
+jps
+<span class="c"># then stop the Hive ones</span>
+pkill <span class="p">-f</span> hiveserver2
+pkill <span class="p">-f</span> RunJar</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">B</div>
+    <h3>Delete the stale Derby lock files</h3>
+    <p>These <code>.lck</code> files are locks, not your data — safe to remove.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>rm <span class="p">-f</span> ~/metastore_db/*.lck
+rm <span class="p">-f</span> ~/metastore_db/db.lck</pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">C</div>
+    <h3>Start fresh from home</h3>
+    <p>Then go back to <strong>Step 4</strong> above and bring HiveServer2 up again. This time the log should show <code>Hive Session ID = …</code> lines with no XSDB6 error, and the port will open.</p>
+    <div class="code">
+      <div class="code-head"><div class="dots"><span></span><span></span><span></span></div><button class="copy-btn">Copy</button></div>
+      <pre>cd ~
+nohup /opt/bigdata/apache-hive-4.1.0-bin/bin/hiveserver2 &gt; ~/hs2.log 2&gt;&amp;1 &amp;</pre>
+    </div>
+  </div>
+
+  <div class="sec-label">Quick reference · Errors → fixes</div>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>You see</th><th>What it means &amp; the fix</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Connection refused</td>
+        <td>Nothing is listening on 10000 yet. Wait 1–2 min, then re-check <code>ss -tlnp | grep 10000</code>. If the process died, read the log.</td>
+      </tr>
+      <tr>
+        <td>ERROR XSDB6</td>
+        <td>Derby lock held by an old process. Do Part C: <code>pkill</code>, delete <code>*.lck</code>, restart from <code>~</code>.</td>
+      </tr>
+      <tr>
+        <td>SHOW: command not found</td>
+        <td>You typed SQL at the Linux shell. Connect Beeline first; run SQL only at the <code>jdbc:hive2&gt;</code> prompt.</td>
+      </tr>
+      <tr>
+        <td>Beeline version 2.3.9</td>
+        <td>You're using Spark's Beeline. Call Hive's full path: <code>/opt/bigdata/apache-hive-4.1.0-bin/bin/beeline</code>.</td>
+      </tr>
+      <tr>
+        <td>Stuck at <code>. . . .&gt;</code></td>
+        <td>Beeline is waiting to finish a statement. Type <code>;</code> then Enter, then <code>!quit</code>. Or Ctrl+C.</td>
+      </tr>
+      <tr>
+        <td>HiveServer2 running as process N. Stop it first.</td>
+        <td>An instance already exists. Don't start another — either connect to it, or <code>kill N</code> and restart clean.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout note" style="margin-top:32px">
+    <span class="tag">Long-term tip</span>
+    Embedded Derby's one-process limit is the root of most of this pain. For anything beyond learning/single-user, switch the metastore to <strong>MySQL or PostgreSQL</strong> — then multiple sessions can connect at once and the lock trap disappears.
+  </div>
+
+  <footer>
+    Apache Hive 4.1.0 startup runbook · keep alongside your cluster notes
+  </footer>
+
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var pre = btn.closest('.code').querySelector('pre');
+      // strip comment lines? no — copy exactly what's shown, minus nothing
+      var text = pre.innerText;
+      navigator.clipboard.writeText(text).then(function(){
+        var orig = btn.textContent;
+        btn.textContent = 'Copied ✓';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent = orig; btn.classList.remove('done'); }, 1600);
+      }).catch(function(){
+        btn.textContent = 'Ctrl+C';
+      });
+    });
+  });
+</script>
+
+</body>
+</html>

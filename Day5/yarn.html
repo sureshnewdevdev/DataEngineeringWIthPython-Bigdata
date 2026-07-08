@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TUT - Introduction to YARN | SmartRide Use Case</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root{
+  --bg:#f4f7fb;
+  --card:#ffffff;
+  --text:#1f2937;
+  --muted:#64748b;
+  --primary:#2563eb;
+  --secondary:#0f766e;
+  --accent:#f59e0b;
+  --danger:#dc2626;
+  --success:#16a34a;
+  --code:#111827;
+  --soft:#e0f2fe;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:Arial, Helvetica, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.7;
+}
+header{
+  background:linear-gradient(135deg,#1e3a8a,#2563eb,#0f766e);
+  color:white;
+  padding:32px 20px;
+  text-align:center;
+}
+header h1{margin:0;font-size:34px;}
+header p{font-size:18px;margin:8px 0 0;}
+.container{
+  display:grid;
+  grid-template-columns:280px 1fr;
+  gap:20px;
+  max-width:1400px;
+  margin:0 auto;
+  padding:20px;
+}
+nav{
+  position:sticky;
+  top:10px;
+  height:calc(100vh - 20px);
+  overflow:auto;
+  background:var(--card);
+  border-radius:16px;
+  padding:18px;
+  box-shadow:0 8px 22px rgba(15,23,42,0.08);
+}
+nav h3{margin-top:0;color:var(--primary);}
+nav a{
+  display:block;
+  padding:8px 10px;
+  color:#334155;
+  text-decoration:none;
+  border-radius:8px;
+  font-size:14px;
+}
+nav a:hover{background:#dbeafe;color:#1d4ed8;}
+main{min-width:0;}
+section{
+  background:var(--card);
+  border-radius:18px;
+  margin-bottom:20px;
+  padding:24px;
+  box-shadow:0 8px 22px rgba(15,23,42,0.08);
+  transition:transform .2s, box-shadow .2s, background .2s;
+}
+section:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 28px rgba(15,23,42,0.13);
+  background:#fcfdff;
+}
+h2{
+  color:#1e3a8a;
+  border-left:6px solid var(--primary);
+  padding-left:12px;
+}
+h3{color:#0f766e;}
+.badge{
+  display:inline-block;
+  background:#dbeafe;
+  color:#1e40af;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:13px;
+  margin:4px;
+}
+.trainer-note{
+  background:#fffbeb;
+  border-left:5px solid var(--accent);
+  padding:12px;
+  border-radius:10px;
+  margin:12px 0;
+}
+.usecase{
+  background:#ecfeff;
+  border-left:5px solid #0891b2;
+  padding:14px;
+  border-radius:10px;
+}
+.warning{
+  background:#fef2f2;
+  border-left:5px solid var(--danger);
+  padding:14px;
+  border-radius:10px;
+}
+.success{
+  background:#f0fdf4;
+  border-left:5px solid var(--success);
+  padding:14px;
+  border-radius:10px;
+}
+pre{
+  background:var(--code);
+  color:#e5e7eb;
+  padding:16px;
+  border-radius:12px;
+  overflow:auto;
+}
+code{
+  background:#eef2ff;
+  color:#3730a3;
+  padding:2px 5px;
+  border-radius:5px;
+}
+pre code{
+  background:transparent;
+  color:inherit;
+  padding:0;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin:12px 0;
+}
+th,td{
+  border:1px solid #cbd5e1;
+  padding:10px;
+  text-align:left;
+}
+th{
+  background:#dbeafe;
+  color:#1e3a8a;
+}
+.diagram{
+  background:#f8fafc;
+  border:1px dashed #94a3b8;
+  border-radius:12px;
+  padding:15px;
+  font-family:Consolas, monospace;
+  white-space:pre;
+  overflow:auto;
+}
+.checklist label{
+  display:block;
+  padding:8px;
+  background:#f8fafc;
+  margin:6px 0;
+  border-radius:8px;
+}
+.quiz-card{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:14px;
+  margin:12px 0;
+}
+button{
+  background:var(--primary);
+  color:white;
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  margin:5px;
+}
+button:hover{background:#1d4ed8;}
+button.secondary{background:#0f766e;}
+button.danger{background:#dc2626;}
+.result{
+  font-weight:bold;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  background:#f1f5f9;
+}
+.progress-wrap{
+  background:#e2e8f0;
+  border-radius:999px;
+  height:18px;
+  overflow:hidden;
+  margin:10px 0;
+}
+.progress-bar{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#2563eb,#0f766e);
+}
+.note-box{
+  width:100%;
+  min-height:80px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  padding:10px;
+}
+.sparkle{
+  position:fixed;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  pointer-events:none;
+  background:#f59e0b;
+  opacity:.8;
+  animation:fade .7s forwards;
+  z-index:9999;
+}
+@keyframes fade{
+  to{transform:translateY(-18px) scale(0);opacity:0;}
+}
+footer{
+  text-align:center;
+  padding:20px;
+  color:#64748b;
+}
+@media(max-width:900px){
+  .container{grid-template-columns:1fr;}
+  nav{position:relative;height:auto;}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>TUT: Introduction to YARN</h1>
+  <p>Classic MapReduce vs YARN, YARN Architecture, Resource Manager, Node Manager, Application Master, Schedulers and Fault Tolerance</p>
+  <p><span class="badge">SmartRide Use Case</span><span class="badge">Beginner Friendly</span><span class="badge">Trainer Notes</span><span class="badge">MCQ + Timed Exam</span></p>
+</header>
+
+<div class="container">
+<nav>
+  <h3>Course Menu</h3>
+  <a href="#s1">1. Learning Goal</a>
+  <a href="#s2">2. SmartRide Use Case</a>
+  <a href="#s3">3. What is YARN?</a>
+  <a href="#s4">4. Classic MapReduce vs YARN</a>
+  <a href="#s5">5. Advantages of YARN</a>
+  <a href="#s6">6. YARN Architecture</a>
+  <a href="#s7">7. Resource Manager</a>
+  <a href="#s8">8. Node Manager</a>
+  <a href="#s9">9. Application Master</a>
+  <a href="#s10">10. Application Submission</a>
+  <a href="#s11">11. Containers</a>
+  <a href="#s12">12. RM Components</a>
+  <a href="#s13">13. YARN Applications</a>
+  <a href="#s14">14. Scheduling</a>
+  <a href="#s15">15. Fault Tolerance</a>
+  <a href="#s16">16. Practical Lab</a>
+  <a href="#s17">17. Interview Q&A</a>
+  <a href="#s18">18. Quiz & Exam</a>
+  <a href="#s19">19. Progress Tracker</a>
+</nav>
+
+<main>
+
+<section id="s1">
+<h2>1. Learning Goal</h2>
+<p>This tutorial explains YARN in a spoon-feeding style. The goal is to help learners understand how Hadoop runs processing jobs in a distributed cluster.</p>
+
+<div class="trainer-note">
+<strong>Trainer Opening Line:</strong>
+Before Hadoop 2.x, MapReduce was doing both job processing and resource management. Hadoop 2.x introduced YARN to separate resource management from processing logic.
+</div>
+
+<h3>Topics Covered</h3>
+<p>
+<span class="badge">Introduction to YARN</span>
+<span class="badge">Classic MapReduce vs YARN</span>
+<span class="badge">Advantages of YARN</span>
+<span class="badge">Resource Manager</span>
+<span class="badge">Node Manager</span>
+<span class="badge">Application Master</span>
+<span class="badge">Containers</span>
+<span class="badge">Schedulers</span>
+<span class="badge">Fault Tolerance</span>
+</p>
+</section>
+
+<section id="s2">
+<h2>2. SmartRide Use Case</h2>
+<div class="usecase">
+<p><strong>Business Story:</strong> SmartRide is an Uber/Ola-like company. Every day, it receives millions of trip records from multiple cities. The company wants to process trip data and answer questions like:</p>
+<ul>
+<li>How many completed trips happened city-wise?</li>
+<li>Which city generated more trips?</li>
+<li>Which driver completed more rides?</li>
+<li>Can this job run on multiple machines?</li>
+<li>If one machine fails, can the job continue?</li>
+</ul>
+</div>
+
+<h3>Sample Input File: trip_words.txt</h3>
+<pre><code>Chennai completed
+Bangalore completed
+Chennai completed
+Hyderabad cancelled
+Bangalore completed
+Chennai completed
+Hyderabad completed
+Mumbai completed</code></pre>
+
+<h3>Expected WordCount Output</h3>
+<pre><code>Bangalore    2
+Chennai      3
+Hyderabad    2
+Mumbai       1
+completed    7
+cancelled    1</code></pre>
+
+<p>To run this job in Hadoop 2.x or 3.x, we need YARN.</p>
+</section>
+
+<section id="s3">
+<h2>3. What is YARN?</h2>
+<p><strong>YARN</strong> stands for <strong>Yet Another Resource Negotiator</strong>.</p>
+
+<p>YARN is the resource management layer of Hadoop. It manages CPU, memory, containers, and application execution across the Hadoop cluster.</p>
+
+<h3>Simple Definition</h3>
+<div class="success">
+YARN is like a cluster manager. It decides which application gets how much memory and CPU, and on which machine the work should run.
+</div>
+
+<h3>Technical Definition</h3>
+<p>YARN is a distributed resource management framework introduced in Hadoop 2.x. It separates resource management from data processing, allowing multiple processing engines such as MapReduce, Spark, Tez, and Flink to run on the same Hadoop cluster.</p>
+
+<h3>YARN Solves This Problem</h3>
+<table>
+<tr><th>Before YARN</th><th>After YARN</th></tr>
+<tr><td>Only MapReduce was tightly supported</td><td>Multiple engines can run</td></tr>
+<tr><td>JobTracker was overloaded</td><td>Resource Manager and Application Master split responsibility</td></tr>
+<tr><td>Scalability issues</td><td>Better scalability</td></tr>
+<tr><td>Less flexible</td><td>More flexible</td></tr>
+</table>
+</section>
+
+<section id="s4">
+<h2>4. Classic MapReduce vs YARN</h2>
+
+<h3>Classic MapReduce Architecture</h3>
+<p>In Hadoop 1.x, MapReduce had two main daemons:</p>
+<ul>
+<li><strong>JobTracker</strong> - master that handled scheduling, monitoring, and resource management</li>
+<li><strong>TaskTracker</strong> - worker that ran map and reduce tasks</li>
+</ul>
+
+<div class="diagram">Classic MapReduce / Hadoop 1.x
+
+              +----------------+
+              |   JobTracker   |
+              +----------------+
+                /      |      \
+               /       |       \
+              v        v        v
+       +----------+ +----------+ +----------+
+       |TaskTracker| |TaskTracker| |TaskTracker|
+       +----------+ +----------+ +----------+
+          Map/Reduce  Map/Reduce  Map/Reduce</div>
+
+<h3>Problem with Classic MapReduce</h3>
+<ul>
+<li>JobTracker had too many responsibilities.</li>
+<li>Only MapReduce jobs were naturally supported.</li>
+<li>Cluster scalability was limited.</li>
+<li>Resource utilization was not very flexible.</li>
+</ul>
+
+<h3>YARN Architecture</h3>
+<div class="diagram">YARN / Hadoop 2.x and later
+
+              +----------------------+
+              |   Resource Manager   |
+              +----------------------+
+                    /           \
+                   /             \
+                  v               v
+       +----------------+   +----------------+
+       |  Node Manager  |   |  Node Manager  |
+       +----------------+   +----------------+
+            Containers         Containers
+
+       Each Application has its own Application Master</div>
+
+<h3>Comparison Table</h3>
+<table>
+<tr><th>Point</th><th>Classic MapReduce</th><th>YARN</th></tr>
+<tr><td>Hadoop Version</td><td>Hadoop 1.x</td><td>Hadoop 2.x onwards</td></tr>
+<tr><td>Master</td><td>JobTracker</td><td>Resource Manager</td></tr>
+<tr><td>Worker</td><td>TaskTracker</td><td>Node Manager</td></tr>
+<tr><td>Application Control</td><td>JobTracker</td><td>Application Master</td></tr>
+<tr><td>Processing Engines</td><td>Mainly MapReduce</td><td>MapReduce, Spark, Tez, Flink</td></tr>
+<tr><td>Scalability</td><td>Limited</td><td>Better</td></tr>
+<tr><td>Resource Handling</td><td>Fixed slots</td><td>Flexible containers</td></tr>
+</table>
+</section>
+
+<section id="s5">
+<h2>5. Advantages of YARN</h2>
+
+<h3>1. Better Resource Management</h3>
+<p>YARN manages memory and CPU more flexibly using containers.</p>
+
+<h3>2. Supports Multiple Processing Engines</h3>
+<p>YARN can run different types of applications:</p>
+<ul>
+<li>MapReduce</li>
+<li>Spark</li>
+<li>Apache Tez</li>
+<li>Apache Flink</li>
+<li>Hive on Tez</li>
+</ul>
+
+<h3>3. Better Scalability</h3>
+<p>YARN can handle larger clusters because responsibility is divided between Resource Manager, Node Manager, and Application Master.</p>
+
+<h3>4. Better Cluster Utilization</h3>
+<p>Instead of fixed map/reduce slots, YARN uses containers based on memory and CPU requirements.</p>
+
+<h3>5. Fault Tolerance</h3>
+<p>If a task fails, YARN can retry it. If an Application Master fails, it can be restarted.</p>
+
+<div class="trainer-note">
+<strong>Trainer Tip:</strong> Explain YARN as a railway platform manager. Different trains are different applications. The platform manager allocates platforms, tracks, and timing.
+</div>
+</section>
+
+<section id="s6">
+<h2>6. YARN Architecture</h2>
+
+<h3>Main Components</h3>
+<ul>
+<li><strong>Resource Manager</strong> - cluster-level master</li>
+<li><strong>Node Manager</strong> - worker-level manager</li>
+<li><strong>Application Master</strong> - application-level manager</li>
+<li><strong>Container</strong> - resource unit where tasks run</li>
+</ul>
+
+<div class="diagram">YARN Architecture
+
+User submits application
+          |
+          v
++----------------------+
+|   Resource Manager   |
+| Scheduler + App Mgr  |
++----------------------+
+          |
+          | Starts Application Master
+          v
++----------------------+
+|  Application Master  |
++----------------------+
+          |
+          | Requests containers
+          v
++----------------------+       +----------------------+
+|     Node Manager     |       |     Node Manager     |
+|  Container,Container |       |  Container,Container |
++----------------------+       +----------------------+</div>
+
+<h3>SmartRide Example</h3>
+<p>When SmartRide submits a WordCount job:</p>
+<ol>
+<li>User submits job.</li>
+<li>Resource Manager receives request.</li>
+<li>Application Master starts for that job.</li>
+<li>Application Master asks Resource Manager for containers.</li>
+<li>Node Managers launch containers.</li>
+<li>Containers run map and reduce tasks.</li>
+<li>Result is stored back into HDFS.</li>
+</ol>
+</section>
+
+<section id="s7">
+<h2>7. Resource Manager</h2>
+
+<p>The Resource Manager is the master service of YARN.</p>
+
+<h3>Main Responsibilities</h3>
+<ul>
+<li>Accept application submission</li>
+<li>Allocate cluster resources</li>
+<li>Coordinate with Node Managers</li>
+<li>Manage scheduling</li>
+<li>Start Application Master</li>
+<li>Track application status</li>
+</ul>
+
+<h3>Simple Meaning</h3>
+<div class="success">
+Resource Manager is like the head office manager of the cluster. It knows available resources and decides how they should be distributed.
+</div>
+
+<h3>Resource Manager UI</h3>
+<pre><code>http://localhost:8088</code></pre>
+
+<h3>Useful Commands</h3>
+<pre><code>yarn application -list
+yarn node -list
+yarn application -status &lt;application_id&gt;</code></pre>
+</section>
+
+<section id="s8">
+<h2>8. Node Manager</h2>
+
+<p>Node Manager runs on every worker machine in the Hadoop cluster.</p>
+
+<h3>Responsibilities</h3>
+<ul>
+<li>Launch containers</li>
+<li>Monitor container CPU and memory usage</li>
+<li>Send heartbeat to Resource Manager</li>
+<li>Report node health</li>
+<li>Manage logs for containers</li>
+</ul>
+
+<h3>Simple Meaning</h3>
+<div class="success">
+Node Manager is like a branch manager. It manages work happening on one specific machine.
+</div>
+
+<h3>Node Manager in SmartRide Job</h3>
+<p>If SmartRide WordCount runs on three machines, each machine's Node Manager starts containers to process part of the input data.</p>
+
+<h3>Check Node Manager</h3>
+<pre><code>jps</code></pre>
+
+<p>Expected daemon:</p>
+<pre><code>NodeManager</code></pre>
+</section>
+
+<section id="s9">
+<h2>9. Application Master</h2>
+
+<p>Application Master is created for each application submitted to YARN.</p>
+
+<h3>Responsibilities</h3>
+<ul>
+<li>Negotiate resources from Resource Manager</li>
+<li>Request containers</li>
+<li>Coordinate tasks</li>
+<li>Monitor job progress</li>
+<li>Handle task failures</li>
+<li>Report final status</li>
+</ul>
+
+<h3>Simple Meaning</h3>
+<div class="success">
+Application Master is like the project manager for one specific job.
+</div>
+
+<h3>Example</h3>
+<p>If SmartRide runs one WordCount job, one Application Master manages that job. If another Spark job runs, another Application Master manages that Spark job.</p>
+
+<table>
+<tr><th>Component</th><th>Level</th><th>Example Role</th></tr>
+<tr><td>Resource Manager</td><td>Cluster level</td><td>Overall resource boss</td></tr>
+<tr><td>Node Manager</td><td>Machine level</td><td>Worker machine manager</td></tr>
+<tr><td>Application Master</td><td>Application level</td><td>Job-specific manager</td></tr>
+</table>
+</section>
+
+<section id="s10">
+<h2>10. Application Submission in YARN</h2>
+
+<h3>Step-by-Step Flow</h3>
+<ol>
+<li>User submits application using command or API.</li>
+<li>Resource Manager receives application request.</li>
+<li>Resource Manager allocates first container for Application Master.</li>
+<li>Node Manager launches Application Master.</li>
+<li>Application Master registers with Resource Manager.</li>
+<li>Application Master requests more containers.</li>
+<li>Resource Manager allocates containers on suitable nodes.</li>
+<li>Node Managers launch containers.</li>
+<li>Tasks run inside containers.</li>
+<li>Application Master monitors execution.</li>
+<li>Final output is written to HDFS.</li>
+<li>Application Master unregisters from Resource Manager.</li>
+</ol>
+
+<div class="diagram">Application Submission Flow
+
+Client
+  |
+  v
+Resource Manager
+  |
+  | Allocate AM Container
+  v
+Node Manager
+  |
+  | Launch Application Master
+  v
+Application Master
+  |
+  | Request task containers
+  v
+Resource Manager
+  |
+  | Allocate containers
+  v
+Node Managers
+  |
+  | Run tasks
+  v
+HDFS Output</div>
+
+<h3>Command Example</h3>
+<pre><code>hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar \
+  wordcount \
+  /smartride/yarn/input \
+  /smartride/yarn/output</code></pre>
+</section>
+
+<section id="s11">
+<h2>11. Node Manager Containers</h2>
+
+<p>A container is a bundle of resources allocated by YARN.</p>
+
+<h3>Container Includes</h3>
+<ul>
+<li>Memory</li>
+<li>CPU cores / vcores</li>
+<li>Environment variables</li>
+<li>Local resources</li>
+<li>Command to execute</li>
+</ul>
+
+<h3>Simple Meaning</h3>
+<div class="success">
+A container is like a small rented room on a worker machine where one task can run with allocated memory and CPU.
+</div>
+
+<h3>Example</h3>
+<pre><code>Container 1 = 1 GB memory + 1 vcore
+Container 2 = 2 GB memory + 2 vcores</code></pre>
+
+<h3>Why Containers Are Useful?</h3>
+<ul>
+<li>Flexible resource allocation</li>
+<li>Better resource utilization</li>
+<li>Supports different application types</li>
+<li>Prevents one job from consuming all resources</li>
+</ul>
+
+<h3>Important Configuration Examples</h3>
+<pre><code>yarn.nodemanager.resource.memory-mb
+yarn.scheduler.minimum-allocation-mb
+yarn.scheduler.maximum-allocation-mb
+yarn.nodemanager.resource.cpu-vcores</code></pre>
+</section>
+
+<section id="s12">
+<h2>12. Resource Manager Components</h2>
+
+<p>The Resource Manager has two major internal components:</p>
+
+<table>
+<tr><th>Component</th><th>Purpose</th></tr>
+<tr><td>Scheduler</td><td>Allocates resources to applications</td></tr>
+<tr><td>Applications Manager</td><td>Accepts job submissions and starts Application Master</td></tr>
+</table>
+
+<h3>1. Scheduler</h3>
+<p>The Scheduler decides how cluster resources should be shared among applications.</p>
+
+<p>It does not monitor tasks. It only allocates resources.</p>
+
+<h3>2. Applications Manager</h3>
+<p>The Applications Manager accepts submitted applications and negotiates the first container to start Application Master.</p>
+
+<div class="warning">
+<strong>Common Mistake:</strong> Many beginners think Resource Manager directly runs tasks. Actually, tasks run inside containers launched by Node Managers.
+</div>
+
+<h3>Resource Manager Internal View</h3>
+<div class="diagram">Resource Manager
+  |
+  +-- Scheduler
+  |     +-- Allocates resources
+  |
+  +-- Applications Manager
+        +-- Accepts applications
+        +-- Starts Application Master</div>
+</section>
+
+<section id="s13">
+<h2>13. YARN Applications</h2>
+
+<p>A YARN application is any distributed program submitted to YARN.</p>
+
+<h3>Examples of YARN Applications</h3>
+<ul>
+<li>MapReduce job</li>
+<li>Spark job</li>
+<li>Hive on Tez query</li>
+<li>Flink job</li>
+<li>Custom distributed application</li>
+</ul>
+
+<h3>SmartRide Examples</h3>
+<table>
+<tr><th>Business Need</th><th>YARN Application</th></tr>
+<tr><td>Daily trip count</td><td>MapReduce job</td></tr>
+<tr><td>Revenue analytics</td><td>Spark job</td></tr>
+<tr><td>Hive SQL reporting</td><td>Hive on Tez</td></tr>
+<tr><td>Real-time ride events</td><td>Spark Streaming / Flink</td></tr>
+</table>
+
+<h3>Application States</h3>
+<pre><code>NEW
+SUBMITTED
+ACCEPTED
+RUNNING
+FINISHED
+FAILED
+KILLED</code></pre>
+
+<h3>Command</h3>
+<pre><code>yarn application -list -appStates RUNNING
+yarn application -list -appStates FINISHED</code></pre>
+</section>
+
+<section id="s14">
+<h2>14. Scheduling in YARN</h2>
+
+<p>Scheduling decides how cluster resources are distributed between users, teams, and applications.</p>
+
+<h3>Why Scheduling Is Needed?</h3>
+<p>Assume SmartRide has three teams:</p>
+<ul>
+<li>Data Engineering team</li>
+<li>Analytics team</li>
+<li>Machine Learning team</li>
+</ul>
+
+<p>All teams may submit jobs at the same time. Scheduler decides who gets how much resource.</p>
+
+<h3>Types of Schedulers</h3>
+<table>
+<tr><th>Scheduler</th><th>Purpose</th></tr>
+<tr><td>FIFO Scheduler</td><td>First job gets resources first</td></tr>
+<tr><td>Capacity Scheduler</td><td>Provides guaranteed capacity to queues</td></tr>
+<tr><td>Fair Scheduler</td><td>Shares resources fairly among running jobs</td></tr>
+</table>
+
+<h3>Fair Scheduler</h3>
+<p>Fair Scheduler tries to give each application a fair share of cluster resources over time.</p>
+
+<div class="usecase">
+<strong>Example:</strong> If analytics and ML jobs are running together, Fair Scheduler tries to balance resources between them.
+</div>
+
+<h3>Capacity Scheduler</h3>
+<p>Capacity Scheduler divides cluster resources into queues. Each queue gets guaranteed capacity.</p>
+
+<div class="usecase">
+<strong>Example:</strong> SmartRide can allocate 50% cluster capacity to production jobs, 30% to analytics, and 20% to development.
+</div>
+
+<h3>Capacity Scheduler Example</h3>
+<pre><code>root
+├── production     50%
+├── analytics      30%
+└── development    20%</code></pre>
+
+<h3>Fair vs Capacity Scheduler</h3>
+<table>
+<tr><th>Point</th><th>Fair Scheduler</th><th>Capacity Scheduler</th></tr>
+<tr><td>Main Goal</td><td>Fair sharing</td><td>Guaranteed capacity</td></tr>
+<tr><td>Best For</td><td>Multiple users sharing cluster</td><td>Enterprise queue-based allocation</td></tr>
+<tr><td>Example</td><td>Equal sharing between jobs</td><td>Production gets fixed percentage</td></tr>
+</table>
+</section>
+
+<section id="s15">
+<h2>15. Fault Tolerance in YARN</h2>
+
+<p>Fault tolerance means the system can continue working even when something fails.</p>
+
+<h3>Failure Scenarios</h3>
+<table>
+<tr><th>Failure</th><th>What Happens?</th></tr>
+<tr><td>Task fails</td><td>Application Master retries the task</td></tr>
+<tr><td>Container fails</td><td>New container may be requested</td></tr>
+<tr><td>Node Manager fails</td><td>Resource Manager marks node as unhealthy/dead</td></tr>
+<tr><td>Application Master fails</td><td>Resource Manager can restart Application Master</td></tr>
+<tr><td>Resource Manager fails</td><td>High Availability setup can use standby RM</td></tr>
+</table>
+
+<h3>Heartbeats</h3>
+<p>Node Managers send regular heartbeats to Resource Manager.</p>
+
+<pre><code>Node Manager → heartbeat → Resource Manager</code></pre>
+
+<p>If heartbeat stops, Resource Manager assumes the node has failed.</p>
+
+<h3>SmartRide Example</h3>
+<div class="usecase">
+If a container processing Chennai trip data fails, Application Master requests another container and reruns that part of the job.
+</div>
+
+<h3>Fault Tolerance Summary</h3>
+<ul>
+<li>Task retry</li>
+<li>Container retry</li>
+<li>Application Master restart</li>
+<li>Node health monitoring</li>
+<li>Resource Manager HA</li>
+</ul>
+</section>
+
+<section id="s16">
+<h2>16. Practical Lab Activities</h2>
+
+<h3>Lab Goal</h3>
+<p>Run a SmartRide WordCount job using YARN and observe the job in Resource Manager UI.</p>
+
+<h3>Activity 1: Start Hadoop Services</h3>
+<pre><code>start-dfs.sh
+start-yarn.sh
+jps</code></pre>
+
+<p>Expected daemons:</p>
+<pre><code>NameNode
+DataNode
+SecondaryNameNode
+ResourceManager
+NodeManager</code></pre>
+
+<h3>Activity 2: Create HDFS Input Folder</h3>
+<pre><code>hdfs dfs -mkdir -p /smartride/yarn/input</code></pre>
+
+<h3>Activity 3: Upload Input File</h3>
+<pre><code>hdfs dfs -put trip_words.txt /smartride/yarn/input/</code></pre>
+
+<h3>Activity 4: Run WordCount</h3>
+<pre><code>hadoop jar $HADOOP_HOME/share/hadoop/mapreduce/hadoop-mapreduce-examples-*.jar \
+wordcount /smartride/yarn/input /smartride/yarn/output</code></pre>
+
+<h3>Activity 5: View Output</h3>
+<pre><code>hdfs dfs -cat /smartride/yarn/output/part-r-00000</code></pre>
+
+<h3>Activity 6: Open Resource Manager UI</h3>
+<pre><code>http://localhost:8088</code></pre>
+
+<h3>Activity 7: Check YARN Applications</h3>
+<pre><code>yarn application -list
+yarn application -list -appStates FINISHED</code></pre>
+
+<h3>Activity 8: Read Application Logs</h3>
+<pre><code>yarn logs -applicationId &lt;application_id&gt;</code></pre>
+
+<div class="trainer-note">
+<strong>Trainer Activity:</strong> Ask learners to identify Resource Manager, Node Manager, Application Master and container behavior from the ResourceManager UI.
+</div>
+</section>
+
+<section id="s17">
+<h2>17. Interview Questions and Answers</h2>
+
+<details open><summary>Q1. What is YARN?</summary><p>YARN is the resource management layer of Hadoop. It manages CPU, memory and application execution across the cluster.</p></details>
+<details><summary>Q2. Why was YARN introduced?</summary><p>YARN was introduced to separate resource management from MapReduce processing and support multiple engines such as Spark, Tez and Flink.</p></details>
+<details><summary>Q3. What is Resource Manager?</summary><p>Resource Manager is the master service of YARN. It manages cluster resources and scheduling.</p></details>
+<details><summary>Q4. What is Node Manager?</summary><p>Node Manager runs on each worker node and manages containers, node resources and health reporting.</p></details>
+<details><summary>Q5. What is Application Master?</summary><p>Application Master manages one specific application. It negotiates resources and monitors tasks.</p></details>
+<details><summary>Q6. What is a container in YARN?</summary><p>A container is a resource allocation unit containing memory, CPU and execution environment for a task.</p></details>
+<details><summary>Q7. What are Resource Manager components?</summary><p>The main components are Scheduler and Applications Manager.</p></details>
+<details><summary>Q8. What is the Scheduler?</summary><p>Scheduler allocates resources to applications based on scheduling policy.</p></details>
+<details><summary>Q9. What is the Applications Manager?</summary><p>Applications Manager accepts applications and starts the Application Master.</p></details>
+<details><summary>Q10. Difference between Classic MapReduce and YARN?</summary><p>Classic MapReduce used JobTracker and TaskTracker. YARN uses Resource Manager, Node Manager and Application Master.</p></details>
+<details><summary>Q11. What is Capacity Scheduler?</summary><p>Capacity Scheduler provides guaranteed capacity to different queues.</p></details>
+<details><summary>Q12. What is Fair Scheduler?</summary><p>Fair Scheduler shares resources fairly among applications over time.</p></details>
+<details><summary>Q13. What is YARN fault tolerance?</summary><p>YARN handles failures by retrying tasks, restarting containers, monitoring nodes, and restarting Application Masters.</p></details>
+<details><summary>Q14. Can Spark run on YARN?</summary><p>Yes. Spark can run on YARN by using YARN as the cluster manager.</p></details>
+<details><summary>Q15. What is heartbeat in YARN?</summary><p>Heartbeat is a regular signal sent by Node Manager to Resource Manager to report node health and container status.</p></details>
+<details><summary>Q16. What happens if Node Manager fails?</summary><p>Resource Manager marks the node as unhealthy or dead, and failed tasks may be rescheduled on other nodes.</p></details>
+<details><summary>Q17. What happens if Application Master fails?</summary><p>Resource Manager can restart the Application Master based on retry configuration.</p></details>
+<details><summary>Q18. What is the role of Resource Manager UI?</summary><p>It helps monitor applications, queues, nodes, resource usage and application status.</p></details>
+</section>
+
+<section id="s18">
+<h2>18. Practice MCQ Quiz and Formal Timed Exam</h2>
+
+<h3>Practice Quiz</h3>
+<div id="practiceQuiz"></div>
+<button onclick="submitPractice()">Submit Practice Quiz</button>
+<div id="practiceResult" class="result"></div>
+
+<h3>Formal Timed Exam</h3>
+<p><strong>Time:</strong> 5 minutes</p>
+<p id="timer" class="result">Timer not started</p>
+<button onclick="startExam()">Start Exam</button>
+<div id="examQuiz"></div>
+<button onclick="submitExam()">Submit Exam</button>
+<div id="examResult" class="result"></div>
+</section>
+
+<section id="s19">
+<h2>19. Preparation Tracking and Notes</h2>
+
+<h3>Progress Checklist</h3>
+<div class="checklist">
+<label><input type="checkbox" class="progress" value="intro"> I can explain what YARN is</label>
+<label><input type="checkbox" class="progress" value="mr-vs-yarn"> I can compare Classic MapReduce and YARN</label>
+<label><input type="checkbox" class="progress" value="architecture"> I can draw YARN architecture</label>
+<label><input type="checkbox" class="progress" value="rm"> I can explain Resource Manager</label>
+<label><input type="checkbox" class="progress" value="nm"> I can explain Node Manager</label>
+<label><input type="checkbox" class="progress" value="am"> I can explain Application Master</label>
+<label><input type="checkbox" class="progress" value="containers"> I can explain containers</label>
+<label><input type="checkbox" class="progress" value="schedulers"> I can explain Fair and Capacity Scheduler</label>
+<label><input type="checkbox" class="progress" value="fault"> I can explain fault tolerance</label>
+<label><input type="checkbox" class="progress" value="lab"> I completed the WordCount lab</label>
+</div>
+
+<div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
+<div id="progressText"></div>
+
+<h3>Double-Click Notes</h3>
+<p>Double-click any section to add your own trainer note below.</p>
+<textarea id="globalNotes" class="note-box" placeholder="Write your notes here..."></textarea>
+<br>
+<button onclick="saveGlobalNotes()">Save Notes</button>
+<button class="danger" onclick="clearProgress()">Clear Progress</button>
+<div id="noteStatus" class="result"></div>
+</section>
+
+<footer>
+  TUT-style YARN tutorial for classroom training | SmartRide Data Engineering Use Case
+</footer>
+
+</main>
+</div>
+
+<script>
+const practiceQuestions = [
+  {q:"What does YARN stand for?", a:["Yet Another Resource Negotiator","Young Application Resource Node","Yield Architecture Resource Network","YAML Application Runtime Node"], c:0},
+  {q:"Which Hadoop version introduced YARN?", a:["Hadoop 1.x","Hadoop 2.x","Hadoop 0.x","None"], c:1},
+  {q:"Which component is the master of YARN?", a:["Node Manager","Resource Manager","DataNode","Secondary NameNode"], c:1},
+  {q:"Which component runs on worker nodes?", a:["Node Manager","NameNode","Resource Manager only","HiveContext"], c:0},
+  {q:"Who manages one specific application?", a:["Application Master","NameNode","DataNode","Client only"], c:0},
+  {q:"What is a YARN container?", a:["HDFS folder","Resource allocation unit","Database table","Hive partition"], c:1},
+  {q:"Classic MapReduce used which master?", a:["Resource Manager","JobTracker","Application Master","Node Manager"], c:1},
+  {q:"Which scheduler provides guaranteed queue capacity?", a:["Fair Scheduler","Capacity Scheduler","FIFO only","Round Robin"], c:1},
+  {q:"Which scheduler tries to share resources fairly?", a:["Fair Scheduler","Capacity Scheduler","NameNode Scheduler","Block Scheduler"], c:0},
+  {q:"Which command lists running YARN applications?", a:["yarn application -list","hdfs dfs -ls","jps -format","spark-submit -list"], c:0}
+];
+
+const examQuestions = [
+  {q:"Resource Manager contains which major components?", a:["Scheduler and Applications Manager","Mapper and Reducer","NameNode and DataNode","Driver and Executor"], c:0},
+  {q:"What happens if a Node Manager stops sending heartbeat?", a:["RM marks node unhealthy/dead","NameNode formats disk","Hive table drops","Application always succeeds"], c:0},
+  {q:"Which component requests containers for tasks?", a:["Application Master","DataNode","Secondary NameNode","Client browser"], c:0},
+  {q:"What is the main benefit of YARN?", a:["Only stores files","Separates resource management from processing","Deletes MapReduce","Replaces HDFS"], c:1},
+  {q:"Which processing engine can run on YARN?", a:["Spark","Tez","MapReduce","All of these"], c:3},
+  {q:"Which UI is commonly used for YARN monitoring?", a:["localhost:8088","localhost:9870","localhost:4040 only","localhost:3306"], c:0},
+  {q:"What does Node Manager launch?", a:["Containers","NameNode metadata","Rack scripts only","SQLContext"], c:0},
+  {q:"What state means a YARN application completed successfully?", a:["FINISHED","KILLED","FAILED","LOST"], c:0},
+  {q:"Which scheduler is best for enterprise queue-based allocation?", a:["Capacity Scheduler","No scheduler","File scheduler","Driver scheduler"], c:0},
+  {q:"If a task fails, who generally coordinates retry?", a:["Application Master","Secondary NameNode","Hive metastore","Client only"], c:0}
+];
+
+function renderQuiz(targetId, questions, name){
+  const target = document.getElementById(targetId);
+  target.innerHTML = "";
+  questions.forEach((item, i)=>{
+    const div = document.createElement("div");
+    div.className = "quiz-card";
+    div.innerHTML = `<p><strong>${i+1}. ${item.q}</strong></p>` + item.a.map((opt,j)=>
+      `<label><input type="radio" name="${name}${i}" value="${j}"> ${opt}</label><br>`
+    ).join("");
+    target.appendChild(div);
+  });
+}
+
+function scoreQuiz(questions, name){
+  let score = 0;
+  questions.forEach((item, i)=>{
+    const selected = document.querySelector(`input[name="${name}${i}"]:checked`);
+    if(selected && Number(selected.value) === item.c) score++;
+  });
+  return score;
+}
+
+function feedback(score, total){
+  const pct = score/total*100;
+  if(pct >= 80) return "Excellent! You are ready to explain this topic.";
+  if(pct >= 60) return "Good. Revise architecture and scheduler concepts once more.";
+  return "Needs revision. Focus on Resource Manager, Node Manager, Application Master and containers.";
+}
+
+function submitPractice(){
+  const score = scoreQuiz(practiceQuestions, "p");
+  document.getElementById("practiceResult").innerHTML = `Score: ${score}/${practiceQuestions.length}<br>${feedback(score, practiceQuestions.length)}`;
+  localStorage.setItem("yarnPracticeScore", score);
+}
+
+let examTimer = null;
+let remaining = 300;
+function startExam(){
+  remaining = 300;
+  document.getElementById("examResult").innerHTML = "";
+  if(examTimer) clearInterval(examTimer);
+  examTimer = setInterval(()=>{
+    remaining--;
+    const m = Math.floor(remaining/60);
+    const s = remaining%60;
+    document.getElementById("timer").innerText = `Time Remaining: ${m}:${s.toString().padStart(2,"0")}`;
+    if(remaining <= 0){
+      clearInterval(examTimer);
+      submitExam();
+    }
+  },1000);
+}
+
+function submitExam(){
+  if(examTimer) clearInterval(examTimer);
+  const score = scoreQuiz(examQuestions, "e");
+  document.getElementById("examResult").innerHTML = `Exam Score: ${score}/${examQuestions.length}<br>${feedback(score, examQuestions.length)}`;
+  localStorage.setItem("yarnExamScore", score);
+}
+
+function updateProgress(){
+  const checks = Array.from(document.querySelectorAll(".progress"));
+  let done = 0;
+  checks.forEach(ch=>{
+    localStorage.setItem("yarn_progress_"+ch.value, ch.checked ? "1" : "0");
+    if(ch.checked) done++;
+  });
+  const pct = Math.round(done/checks.length*100);
+  document.getElementById("progressBar").style.width = pct + "%";
+  document.getElementById("progressText").innerText = `Completed: ${done}/${checks.length} topics (${pct}%)`;
+}
+
+function loadProgress(){
+  document.querySelectorAll(".progress").forEach(ch=>{
+    ch.checked = localStorage.getItem("yarn_progress_"+ch.value) === "1";
+    ch.addEventListener("change", updateProgress);
+  });
+  document.getElementById("globalNotes").value = localStorage.getItem("yarnGlobalNotes") || "";
+  updateProgress();
+}
+
+function saveGlobalNotes(){
+  localStorage.setItem("yarnGlobalNotes", document.getElementById("globalNotes").value);
+  document.getElementById("noteStatus").innerText = "Notes saved locally.";
+}
+
+function clearProgress(){
+  if(confirm("Clear progress and notes?")){
+    Object.keys(localStorage).forEach(k=>{
+      if(k.startsWith("yarn")) localStorage.removeItem(k);
+    });
+    loadProgress();
+    document.getElementById("globalNotes").value = "";
+    document.getElementById("noteStatus").innerText = "Progress cleared.";
+  }
+}
+
+document.addEventListener("dblclick", function(e){
+  const section = e.target.closest("section");
+  if(!section) return;
+  const note = prompt("Add a quick trainer note for this section:");
+  if(note){
+    const p = document.createElement("div");
+    p.className = "trainer-note";
+    p.innerHTML = "<strong>Your Note:</strong> " + note.replace(/[<>&]/g, c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));
+    section.appendChild(p);
+  }
+});
+
+document.addEventListener("mousemove", function(e){
+  if(Math.random() > 0.85){
+    const sp = document.createElement("div");
+    sp.className = "sparkle";
+    sp.style.left = e.clientX + "px";
+    sp.style.top = e.clientY + "px";
+    document.body.appendChild(sp);
+    setTimeout(()=>sp.remove(),700);
+  }
+});
+
+renderQuiz("practiceQuiz", practiceQuestions, "p");
+renderQuiz("examQuiz", examQuestions, "e");
+loadProgress();
+</script>
+</body>
+</html>

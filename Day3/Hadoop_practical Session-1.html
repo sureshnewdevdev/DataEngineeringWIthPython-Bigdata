@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hadoop Practical Training: Lab Session One Plan</title>
+    <style>
+        :root {
+            --primary: #1a365d;
+            --primary-light: #2b6cb0;
+            --secondary: #2d3748;
+            --accent: #d69e2e;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --text-muted: #718096;
+            --border: #e2e8f0;
+            --success: #38a169;
+            --error: #e53e3e;
+            --note-bg: #fffaf0;
+            --note-border: #dd6b20;
+            --highlight-note: #fefcbf;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text);
+            background-color: var(--bg);
+            padding-left: 260px;
+        }
+
+        /* Sparkle Trail Styling */
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: var(--accent);
+            pointer-events: none;
+            z-index: 9999;
+            transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+        }
+
+        /* Sidebar TOC */
+        nav.toc-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100vh;
+            background-color: var(--primary);
+            color: white;
+            padding: 20px 15px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        nav.toc-panel h2 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            color: var(--accent);
+        }
+
+        .progress-container {
+            margin-bottom: 20px;
+            background: rgba(0,0,0,0.2);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .progress-bar-bg {
+            background: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress-bar-fill {
+            background: var(--accent);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        nav.toc-panel ul { list-style: none; }
+        nav.toc-panel li { margin-bottom: 8px; font-size: 0.9rem; }
+        nav.toc-panel a {
+            color: #cbd5e0;
+            text-decoration: none;
+            display: block;
+            padding: 5px;
+            border-radius: 3px;
+            transition: all 0.2s;
+        }
+        nav.toc-panel a:hover { color: white; background: rgba(255,255,255,0.1); }
+
+        /* Main Container Layout */
+        main { padding: 40px; max-width: 1100px; margin: 0 auto; }
+
+        section {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            scroll-margin-top: 20px;
+        }
+        section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        h1 { color: var(--primary); font-size: 2.2rem; margin-bottom: 10px; }
+        h2.section-title { color: var(--primary); font-size: 1.5rem; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+        h3 { color: var(--primary-light); margin: 15px 0 10px 0; }
+        p { margin-bottom: 15px; text-align: justify; }
+
+        .subtitle { font-size: 1.1rem; color: var(--text-muted); margin-bottom: 20px; }
+        
+        .prep-checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* Code Block Component */
+        pre {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+            border-left: 4px solid var(--accent);
+        }
+        code { font-family: monospace; font-weight: bold; color: #c53030; background: #fff5f5; padding: 2px 4px; border-radius: 3px; }
+        pre code { color: inherit; background: inherit; padding: 0; font-weight: normal; }
+
+        /* Board Notes Callout */
+        .board-note {
+            background: var(--note-bg);
+            border-left: 4px solid var(--note-border);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+        }
+        .board-note h4 { color: var(--note-border); margin-bottom: 5px; }
+
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background-color: var(--secondary); color: white; }
+        tr:nth-child(even) { background-color: #f7fafc; }
+
+        /* Custom Word Note Highlights */
+        .has-note {
+            background-color: var(--highlight-note) !important;
+            border-bottom: 2px dashed var(--note-border);
+            cursor: pointer;
+        }
+
+        /* Popups */
+        .note-popup {
+            position: fixed;
+            background: white;
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            width: 280px;
+        }
+        .note-popup textarea {
+            width: 100%;
+            height: 8px0px;
+            margin-bottom: 10px;
+            padding: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        .note-popup button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+        .note-popup .btn-save { background: var(--success); color: white; margin-right: 5px; }
+        .note-popup .btn-del { background: var(--error); color: white; }
+        .note-popup .btn-close { background: var(--secondary); color: white; float: right; }
+
+        /* Global Notes Display Panel */
+        .notes-panel {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+        }
+        .note-item {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+        .note-item-header {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Inline SVG Diagram Boxes */
+        .diagram-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f7fafc;
+            padding: 20px;
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+
+        /* Assessment UI Blocks */
+        .quiz-card, .exam-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        .options-group {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        .option-lbl {
+            display: flex;
+            align-items: center;
+            background: #f8fafc;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .option-lbl:hover { background: #edf2f7; }
+        .option-lbl input { margin-right: 10px; }
+        
+        .action-btn {
+            background: var(--primary-light);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+        .action-btn:hover { background: var(--primary); }
+
+        .result-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        .explanation-box {
+            margin-top: 10px;
+            padding: 10px;
+            background: #ebf8ff;
+            border-left: 4px solid var(--primary-light);
+            font-size: 0.9rem;
+        }
+        .correct-opt { background: #c6f6d5 !important; border-color: #48bb78 !important; }
+        .wrong-opt { background: #fed7d7 !important; border-color: #f56565 !important; }
+
+        /* Floating Info Bar */
+        .exam-timer-bar {
+            background: var(--secondary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: white;
+        }
+        .badge-beg { background: #4299e1; }
+        .badge-int { background: #ed8936; }
+        .badge-adv { background: #9b2c2c; }
+
+        /* Responsive Layout Optimization */
+        @media (max-width: 768px) {
+            body { padding-left: 0; }
+            nav.toc-panel { position: relative; width: 100%; height: auto; }
+            main { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="sparkle-layer"></div>
+
+    <nav class="toc-panel" id="toc-panel">
+        <h2>Lab Syllabus</h2>
+        <div class="progress-container" id="progress-container">
+            <div style="font-size: 0.8rem; display:flex; justify-content:space-between;">
+                <span>Progress:</span>
+                <span id="progress-text">0 / 13 Completed</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-bar"></div></div>
+            <button id="btn-reset-progress" style="margin-top:8px; width:100%; font-size:0.75rem; background:rgba(255,255,255,0.2); border:none; color:white; padding:3px; cursor:pointer; border-radius:3px;">Reset Progress</button>
+        </div>
+        <ul>
+            <li><a href="#title-page">1. Session Cover</a></li>
+            <li><a href="#introduction">2. Introduction</a></li>
+            <li><a href="#beginner-friendly">3. Plain Terms Analogy</a></li>
+            <li><a href="#technical-explanation">4. Architecture Concepts</a></li>
+            <li><a href="#simple-example">5. Minimal Base CLI</a></li>
+            <li><a href="#real-time-industry">6. Enterprise File Pipeline</a></li>
+            <li><a href="#code-examples">7. Configuration Lab Code</a></li>
+            <li><a href="#comparison-table">8. Architecture Mappings</a></li>
+            <li><a href="#best-practices">9. Practical Pitfalls</a></li>
+            <li><a href="#interview-qa">10. Technical Interview Prep</a></li>
+            <li><a href="#practice-quiz">11. Interactive Sandbox Quiz</a></li>
+            <li><a href="#formal-exam">12. Practical Entrance Exam</a></li>
+            <li><a href="#summary">13. Quick Blueprint Recap</a></li>
+        </ul>
+
+        <div class="notes-panel" id="global-notes-box" style="margin-top:20px; color: #2d3748;">
+            <h3 style="font-size:0.9rem; color: var(--primary);">My Lab Notes</h3>
+            <div id="notes-list-target" style="max-height:150px; overflow-y:auto; margin-top:5px;"></div>
+            <button id="btn-clear-notes" style="width:100%; margin-top:5px; font-size:0.75rem; background:var(--error); color:white; border:none; padding:3px; cursor:pointer; border-radius:3px;">Clear All Notes</button>
+        </div>
+    </nav>
+
+    <main id="main-content-area">
+
+        <section id="title-page">
+            <h1>Hadoop Practical Lab Frameworks</h1>
+            <p class="subtitle">Session 01 Deployment Blueprint: Running Local Single-Node Infrastructures and Managing File Systems Without Virtual Machine Overhead</p>
+            <div class="board-note" style="border-left-color: var(--primary-light);">
+                <h4>Learning Objectives</h4>
+                <ul>
+                    <li>Understand the architectural limits of Virtual Machines versus Local Application Sandboxes for training delivery.</li>
+                    <li>Configure single-node pseudodistributed properties for structural HDFS and YARN coordination loops.</li>
+                    <li>Execute explicit CLI commands inside live terminals to interface directly with core distribution nodes.</li>
+                    <li>Diagnose cluster resource starvation paths using declarative evaluation frameworks.</li>
+                </ul>
+            </div>
+            <div style="text-align: right;">
+                <label><input type="checkbox" class="prep-checkbox" data-index="1"> Mark Section as Prepared</label>
+            </div>
+        </section>
+
+        <section id="introduction">
+            <h2 class="section-title">2. Tactical Session Introduction <label><input type="checkbox" class="prep-checkbox" data-index="2"></label></h2>
+            <p>When delivering technical enterprise instruction on Big Data ecosystems to engineering cohorts, relying on heavy localized Virtual Machines (VMs) often creates major infrastructural friction. High memory footprints, virtualization hypervisor conflicts, and system crashes can severely stall a 1-hour session. To keep the training impactful and responsive, the session must shift away from localized VMs and utilize lightweight alternative execution layers.</p>
+            <p>This deployment blueprint is designed to teach freshers how to run single-node pseudodistributed environments natively on ephemeral platforms or lightweight online Unix shells (such as GitHub Codespaces, Gitpod, or Google Cloud Shell). This approach provides instant command-line access to Apache Hadoop core daemons, enabling candidates to build a deep mental model of storage distributions and job scheduling pipelines right from Day One.</p>
+        </section>
+
+        <section id="beginner-friendly">
+            <h2 class="section-title">3. Plain-Language Analogy <label><input type="checkbox" class="prep-checkbox" data-index="3"></label></h2>
+            <p><strong>The Everyday Analogy: The Corporate Mega-Warehouse Network</strong></p>
+            <p>Imagine you run a giant logistics business that manages millions of packages every single hour. If you attempt to store every single record block inside one computer or physical file room, your system will crash under the pure volume of operations. Instead, you design a distributed warehouse network.</p>
+            <p>In this network, the system uses three core roles to guarantee operational stability:</p>
+            <ul>
+                <li><strong>The Warehouse Inventory Director (HDFS NameNode):**</strong> This individual sits at the front desk. They do not carry boxes or move freight. Instead, they keep a master ledger tracking exactly which shelf across the city holds which parts of a customer's shipment.</li>
+                <li><strong>The Physical Storage Units (HDFS DataNodes):**</strong> These are the physical local rooms where the cargo blocks are split up and stored contiguously across shelves. They execute the manual work of storing and loading blocks.</li>
+                <li><strong>The Floor Resource Manager (YARN Engine):**</strong> This operational director handles worker tracking. When an order arrives, YARN calculates how many workers are available, allocates space on forklifts, and ensures that no single worker runs out of fuel while moving cargo containers.</li>
+            </ul>
+            <div class="board-note">
+                <h4>Classroom Blackboard Note</h4>
+                <p>When a traditional computer runs out of physical RAM or disk space, it hits an absolute ceiling. Hadoop expands this scale horizontally by linking generic machines together over a standard network protocol loop. The storage space reads as a single logical drive, but it spans a massive farm of independent computers.</p>
+            </div>
+        </section>
+
+        <section id="technical-explanation">
+            <h2 class="section-title">4. Deep-Dive Technical Core Architecture <label><input type="checkbox" class="prep-checkbox" data-index="4"></label></h2>
+            <p>In production enterprise setups, Apache Hadoop separates storage management completely from computation workflows via two decoupled sub-systems: **HDFS (Hadoop Distributed File System)** and **YARN (Yet Another Resource Negotiator)**.</p>
+            
+            <div class="diagram-container">
+                <svg width="600" height="220" viewBox="0 0 600 220" style="font-family:sans-serif;">
+                    <rect x="20" y="20" width="160" height="60" rx="5" fill="#1a365d" stroke="#000" stroke-width="1"/>
+                    <text x="100" y="55" fill="white" font-size="14" font-weight="bold" text-anchor="middle">NameNode (Metadata)</text>
+                    
+                    <rect x="420" y="20" width="160" height="60" rx="5" fill="#2b6cb0" stroke="#000" stroke-width="1"/>
+                    <text x="500" y="55" fill="white" font-size="14" font-weight="bold" text-anchor="middle">YARN RM</text>
+
+                    <path d="M 180 50 L 420 50" stroke="#718096" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="300" y="40" fill="#718096" font-size="11" text-anchor="middle">Coordination Loop</text>
+
+                    <rect x="20" y="140" width="110" height="50" rx="3" fill="#2d3748" stroke="#000" stroke-width="1"/>
+                    <text x="75" y="170" fill="white" font-size="12" text-anchor="middle">DataNode 1</text>
+
+                    <rect x="150" y="140" width="110" height="50" rx="3" fill="#2d3748" stroke="#000" stroke-width="1"/>
+                    <text x="205" y="170" fill="white" font-size="12" text-anchor="middle">DataNode 2</text>
+
+                    <rect x="340" y="140" width="110" height="50" rx="3" fill="#4a5568" stroke="#000" stroke-width="1"/>
+                    <text x="395" y="170" fill="white" font-size="12" text-anchor="middle">NodeManager 1</text>
+
+                    <rect x="470" y="140" width="110" height="50" rx="3" fill="#4a5568" stroke="#000" stroke-width="1"/>
+                    <text x="525" y="170" fill="white" font-size="12" text-anchor="middle">NodeManager 2</text>
+
+                    <path d="M 100 80 L 100 130" stroke="#d69e2e" stroke-width="2" marker-end="url(#arrow)"/>
+                    <path d="M 500 80 L 500 130" stroke="#d69e2e" stroke-width="2" marker-end="url(#arrow)"/>
+                </svg>
+            </div>
+
+            <h3>Core Definition Terms</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Architectural Component</th>
+                        <th>Technical Operational Definition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>NameNode</strong></td>
+                        <td>The master coordinator node that maintains filesystem tree directory structures and holds memory references mapping exact block hashes to underlying storage nodes.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DataNode</strong></td>
+                        <td>A slave daemon process that writes block streams into physical local disks and checks file health via periodic system heartbeats back to the NameNode master.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Resource Manager (RM)</strong></td>
+                        <td>The global YARN authority component that accepts computation sub-tasks, evaluates active node capabilities, and dynamically allocates strict computing boundaries.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Node Manager (NM)</strong></td>
+                        <td>The localized per-machine daemon that handles execution monitoring on independent physical clusters, tracking resource consumption patterns.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="simple-example">
+            <h2 class="section-title">5. Baseline HDFS Commands Sandbox <label><input type="checkbox" class="prep-checkbox" data-index="5"></label></h2>
+            <p>Before launching complex analytics jobs, candidates must master interacting with the distributed cluster file system via the standard Hadoop Shell CLI abstraction layer. The syntax follows standard Unix patterns, prefixed with the <code>hadoop fs</code> instruction set.</p>
+            
+            <pre><code># Create a target destination directory under the distributed network path root
+hadoop fs -mkdir -p /user/fresher_labs/input_data
+
+# Upload a local text file into the distributed HDFS storage array block
+hadoop fs -put local_dataset.txt /user/fresher_labs/input_data/
+
+# List the active files inside the HDFS directory to verify metadata population
+hadoop fs -ls /user/fresher_labs/input_data/</code></pre>
+
+            <h3>Line-by-Line Execution Breakdown</h3>
+            <ul>
+                <li><code>-mkdir -p</code>: Instructs the NameNode to update its master ledger with a new directory structure path mapping. The <code>-p</code> flag prevents execution failure paths if the parent directories do not exist yet.</li>
+                <li><code>-put</code>: Reads the byte block stream from the host operating system's local storage layer and transmits it across network sockets to the assigned target DataNode containers.</li>
+                <li><code>-ls</code>: Requests structural path metadata definitions directly from the NameNode, reporting back active block configurations and directory structures to the terminal window.</li>
+            </ul>
+        </section>
+
+        <section id="real-time-industry">
+            <h2 class="section-title">6. Production Enterprise Data Pipelines <label><input type="checkbox" class="prep-checkbox" data-index="6"></label></h2>
+            <p>In a production banking data architecture pipeline, a Core Banking System dumps millions of transaction data points at midnight into a central network folder. This raw data needs to be securely stored and parsed to flag potential credit card fraud anomalies.</p>
+            <p>When this file hits the landing gate, an automated orchestration layer triggers a file stream pipeline to securely push the file into an HDFS cluster. By breaking the file into distinct blocks across distributed storage channels, downstream processing frameworks can run parallel analysis queries simultaneously without encountering hardware bottlenecks.</p>
+
+            <div class="diagram-container">
+                <svg width="620" height="120" viewBox="0 0 620 120" style="font-family:sans-serif;">
+                    <rect x="10" y="30" width="120" height="50" rx="3" fill="#e2e8f0" stroke="#718096"/>
+                    <text x="70" y="60" font-size="11" text-anchor="middle" font-weight="bold">1. Core Banking Dump</text>
+
+                    <rect x="170" y="30" width="130" height="50" rx="3" fill="#feebc8" stroke="#dd6b20"/>
+                    <text x="235" y="60" font-size="11" text-anchor="middle" font-weight="bold">2. HDFS Ingestion Put</text>
+
+                    <rect x="340" y="30" width="120" height="50" rx="3" fill="#c6f6d5" stroke="#38a169"/>
+                    <text x="400" y="60" font-size="11" text-anchor="middle" font-weight="bold">3. Block Segregation</text>
+
+                    <rect x="500" y="30" width="110" height="50" rx="3" fill="#bee3f8" stroke="#3182ce"/>
+                    <text x="555" y="60" font-size="11" text-anchor="middle" font-weight="bold">4. YARN Parallel Run</text>
+
+                    <path d="M 130 55 L 170 55" stroke="#4a5568" stroke-width="2" fill="none"/>
+                    <path d="M 300 55 L 340 55" stroke="#4a5568" stroke-width="2" fill="none"/>
+                    <path d="M 460 55 L 500 55" stroke="#4a5568" stroke-width="2" fill="none"/>
+                </svg>
+            </div>
+            <p>During step 4, the **YARN Resource Manager** schedules and tracks application runtimes. It maps data execution slots close to the physical location of the stored HDFS blocks, a pattern known as *Data Locality*. This prevents heavy network data transfers and optimizes processing speeds.</p>
+        </section>
+
+        <section id="code-examples">
+            <h2 class="section-title">7. Core Pseudodistributed Configurations <label><input type="checkbox" class="prep-checkbox" data-index="7"></label></h2>
+            <p>To run a single-node pseudodistributed architecture sandbox inside an online environment, you must edit the core Hadoop XML configuration files. These files define your storage directories and tell the system where to run the master node daemons.</p>
+
+            <h3>1. Core System Property Declarations (`core-site.xml`)</h3>
+            <pre><code>&lt;configuration&gt;
+    &lt;!-- Define the default logical file system URI mapping target --&gt;
+    &lt;property&gt;
+        &lt;name&gt;fs.defaultFS&lt;/name&gt;
+        &lt;value&gt;hdfs://localhost:9000&lt;/value&gt;
+    &lt;/property&gt;
+&lt;/configuration&gt;</code></pre>
+            <p><strong>Code Logic:</strong> This property informs all client utilities that the NameNode master daemon process is actively listening on network socket port <code>9000</code> of the local interface.</p>
+
+            <h3>2. Block Distribution Configurations (`hdfs-site.xml`)</h3>
+            <pre><code>&lt;configuration&gt;
+    &lt;!-- Define the global replication target limit for block objects --&gt;
+    &lt;property&gt;
+        &lt;name&gt;dfs.replication&lt;/name&gt;
+        &lt;value&gt;1&lt;/value&gt;
+    &lt;/property&gt;
+&lt;/configuration&gt;</code></pre>
+            <p><strong>Code Logic:</strong> In multi-node production data centers, Hadoop defaults to a replication factor of <code>3</code> to ensure high availability. Because this lab runs in a single-node sandbox environment, we configure the limit to <code>1</code> to prevent the NameNode from logging constant block replication warning flags.</p>
+
+            <h3>3. Runtime Resource Management Mapping Configuration (`yarn-site.xml`)</h3>
+            <pre><code>&lt;configuration&gt;
+    &lt;!-- Bind execution properties to standard tracking managers --&gt;
+    &lt;property&gt;
+        &lt;name&gt;yarn.nodemanager.aux-services&lt;/name&gt;
+        &lt;value&gt;mapreduce_shuffle&lt;/value&gt;
+    &lt;/property&gt;
+    &lt;property&gt;
+        &lt;name&gt;yarn.nodemanager.env-whitelist&lt;/name&gt;
+        &lt;value&gt;JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR&lt;/value&gt;
+    &lt;/property&gt;
+&lt;/configuration&gt;</code></pre>
+            <p><strong>Code Logic:</strong> Configures YARN to allow auxiliary shuffle operations, which are essential for processing MapReduce data streams across the cluster container layers.</p>
+        </section>
+
+        <section id="comparison-table">
+            <h2 class="section-title">8. Storage Architecture Mapping Reference <label><input type="checkbox" class="prep-checkbox" data-index="8"></label></h2>
+            <p>Understanding where a technology fits compared to traditional filesystems is a common talking point in technical interviews. This reference matrix maps how distributed platforms handle file data versus local systems.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Architectural Metric</th>
+                        <th>Standard Unix File System (ext4)</th>
+                        <th>Hadoop HDFS Architecture Layer</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Physical File Storage Target</strong></td>
+                        <td>Local contiguous sector blocks on a single hard drive or SSD.</td>
+                        <td>Virtual block fragments distributed across a cluster network of independent machines.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Default Block Configuration Limit</strong></td>
+                        <td>Typically 4 Kilobytes (KB) per disk sector block pointer.</td>
+                        <td>128 Megabytes (MB) default per data block. Designed to reduce NameNode memory tracking overhead.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Modification Policy</strong></td>
+                        <td>Supports random read/write access paths, allowing edits anywhere in a file.</td>
+                        <td>Strict Write-Once, Append-Only architecture. Optimized for streaming reads of massive datasets.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="best-practices">
+            <h2 class="section-title">9. Operational Best Practices & Lab Troubleshooting <label><input type="checkbox" class="prep-checkbox" data-index="9"></label></h2>
+            <p>To keep a 1-hour practical lab session running smoothly, emphasize these fundamental rules and quick diagnostic steps to your students:</p>
+            
+            <h3>Development Best Practices (Do's)</h3>
+            <ul>
+                <li><strong>Always Format the NameNode Once Before First Launch:</strong> You must initialize the metadata directory structure using the command <code>hdfs namenode -format</code> before starting your daemons for the first time.</li>
+                <li><strong>Always Stop Active Clusters Cleanly:</strong> When wrapping up a lab session, ensure students stop active background tasks using the proper shutdown scripts: <code>stop-dfs.sh</code> and <code>stop-yarn.sh</code>. This prevents metadata file corruption.</li>
+                <li><strong>Leverage the Web UIs for Visual Debugging:</strong> Remind students that Hadoop hosts helpful web interfaces. They can monitor HDFS health at <code>http://localhost:9870</code> and view active YARN jobs at <code>http://localhost:8088</code>.</li>
+            </ul>
+
+            <h3>Common Student Mistakes to Avoid</h3>
+            <div class="board-note" style="border-left-color: var(--error);">
+                <h4>Critical Lab Pitfalls</h4>
+                <ul>
+                    <li><strong>Formatting an Active NameNode:</strong> Running <code>hdfs namenode -format</code> on an already operating cluster changes the cluster ID namespace. This breaks the link between the NameNode and existing DataNodes, causing data access errors.</li>
+                    <li><strong>Assuming HDFS acts like a standard mount:</strong> Remind freshers that they cannot run standard commands like <code>cat /user/data/file.txt</code> directly from their Linux prompt. They must use the Hadoop system wrapper: <code>hadoop fs -cat ...</code>.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="interview-qa">
+            <h2 class="section-title">10. Technical Interview Preparation Matrix <label><input type="checkbox" class="prep-checkbox" data-index="10"></label></h2>
+            <p>This section outlines common core technical interview questions, categorized by expected candidate experience levels.</p>
+
+            <div id="qa-target-container">
+                <p><strong>Q1: Why is the default block size in HDFS so much larger (128MB) than standard disk filesystems (4KB)?</strong> <span class="badge badge-beg">Beginner</span></p>
+                <p style="margin-left: 20px; color: #4a5568; font-style: italic;">Answer: HDFS uses large block sizes to minimize the NameNode's metadata memory tracking footprint and reduce network disk seek overhead. Every single block entry requires roughly 150 bytes of RAM inside the NameNode. If we stored multi-terabyte datasets in 4KB blocks, the NameNode would run out of memory tracking the block locations.</p>
+                <hr style="margin:10px 0; border:0; border-top:1px solid var(--border);">
+
+                <p><strong>Q2: What happens automatically if an active DataNode goes offline during a file operation?</strong> <span class="badge badge-beg">Beginner</span></p>
+                <p style="margin-left: 20px; color: #4a5568; font-style: italic;">Answer: If a DataNode misses its periodic heartbeat signal (usually 10 minutes), the NameNode marks it as dead. The NameNode then looks up which blocks were stored on that node and instructs other active DataNodes to replicate those blocks from healthy copies, maintaining cluster availability rules.</p>
+                <hr style="margin:10px 0; border:0; border-top:1px solid var(--border);">
+
+                <p><strong>Q3: Explain the concept of Data Locality and why it matters in YARN.</strong> <span class="badge badge-int">Intermediate</span></p>
+                <p style="margin-left: 20px; color: #4a5568; font-style: italic;">Answer: Data Locality is the practice of running processing jobs on the same physical worker node that already holds the required HDFS data blocks. YARN uses this approach to process files locally, avoiding heavy data transfers across the network switches.</p>
+                <hr style="margin:10px 0; border:0; border-top:1px solid var(--border);">
+
+                <p><strong>Q4: Why does HDFS enforce an append-only file write model instead of allowing random updates?</strong> <span class="badge badge-int">Intermediate</span></p>
+                <p style="margin-left: 20px; color: #4a5568; font-style: italic;">Answer: HDFS is optimized for high-throughput batch analytics rather than random transactional updates. An append-only structure prevents complex distributed locking challenges across network storage blocks, allowing for fast, sequential data streaming reads.</p>
+                <hr style="margin:10px 0; border:0; border-top:1px solid var(--border);">
+
+                <p><strong>Q5: What is the architectural role of the Secondary NameNode? Does it act as a failover backup?</strong> <span class="badge badge-adv">Advanced</span></p>
+                <p style="margin-left: 20px; color: #4a5568; font-style: italic;">Answer: No, the Secondary NameNode is not a hot-standby failover node. Its primary role is to periodically download the active edit logs (`edits`) and edit image (`fsimage`) from the main NameNode, merge them to keep the metadata file footprint small, and upload the clean copy back. This prevents the primary NameNode's startup process from stalling during initialization cycles.</p>
+            </div>
+            </section>
+
+        <section id="practice-quiz">
+            <h2 class="section-title">11. Interactive Sandbox Practice Quiz <label><input type="checkbox" class="prep-checkbox" data-index="11"></label></h2>
+            <p class="subtitle">Test your foundational knowledge. Correct options and structural explanations will be revealed instantly upon submitting your answers.</p>
+            
+            <div id="quiz-form-wrapper">
+                <div class="quiz-card" data-correct="1">
+                    <p><strong>Q1: Which command structure is used to initialize the distributed metadata directory ledger?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="q1" value="0"> <code>hadoop fs -format</code></label>
+                        <label class="option-lbl"><input type="radio" name="q1" value="1"> <code>hdfs namenode -format</code></label>
+                        <label class="option-lbl"><input type="radio" name="q1" value="2"> <code>yarn nodemanager -clean</code></label>
+                        <label class="option-lbl"><input type="radio" name="q1" value="3"> <code>start-all.sh --format</code></label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 2. The <code>hdfs namenode -format</code> command is required to build the initial directory structure and namespace IDs before launching the master cluster processes.</div>
+                </div>
+
+                <div class="quiz-card" data-correct="0">
+                    <p><strong>Q2: If you configure dfs.replication to 3 inside an active single-node pseudodistributed sandbox environment, what happens?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="q2" value="0"> The system writes 1 block copy but logs missing block alerts since other nodes don't exist.</label>
+                        <label class="option-lbl"><input type="radio" name="q2" value="1"> The terminal forces a hard crash because of insufficient system resources.</label>
+                        <label class="option-lbl"><input type="radio" name="q2" value="2"> The local machine creates 3 separate virtual sub-folders to simulate individual nodes.</label>
+                        <label class="option-lbl"><input type="radio" name="q2" value="3"> The NameNode automatically shuts down to protect data integrity.</label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 1. HDFS will safely write the primary block, but it will flag a 'Under-Replicated' warning state because there are no other active DataNodes on the network to receive copies.</div>
+                </div>
+
+                <div class="quiz-card" data-correct="2">
+                    <p><strong>Q3: Which daemon process is responsible for tracking memory references and block storage pointers?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="q3" value="0"> DataNode</label>
+                        <label class="option-lbl"><input type="radio" name="q3" value="1"> NodeManager</label>
+                        <label class="option-lbl"><input type="radio" name="q3" value="2"> NameNode</label>
+                        <label class="option-lbl"><input type="radio" name="q3" value="3"> ResourceManager</label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 3. The NameNode holds the master metadata index directory structure in active memory for fast path resolution.</div>
+                </div>
+            </div>
+
+            <button class="action-btn" id="btn-submit-quiz">Submit Practice Answers</button>
+            <button class="action-btn" id="btn-retry-quiz" style="display:none; background:#718096;">Retry Quiz</button>
+            
+            <div class="result-box" id="quiz-result-display" style="background:#e2e8f0; color:#2d3748;"></div>
+        </section>
+
+        <section id="formal-exam">
+            <h2 class="section-title">12. Formal Entrance Exam Module <label><input type="checkbox" class="prep-checkbox" data-index="12"></label></h2>
+            <p class="subtitle">Timed verification assessment. Click 'Start Test' below to open the questions and start the countdown clock.</p>
+
+            <div class="exam-timer-bar">
+                <span id="exam-timer-label">Status: Locked</span>
+                <span id="exam-time-clock">01:00</span>
+            </div>
+
+            <button class="action-btn" id="btn-start-exam" style="background:#38a169;">Start Test</button>
+
+            <div id="exam-questions-lockout" style="display:none;">
+                <div class="exam-card" data-correct="3">
+                    <p><strong>Q1: What port structure matches the modern default visual administration console dashboard for HDFS NameNodes?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="e1" value="0"> <code>http://localhost:50070</code></label>
+                        <label class="option-lbl"><input type="radio" name="e1" value="1"> <code>http://localhost:8088</code></label>
+                        <label class="option-lbl"><input type="radio" name="e1" value="2"> <code>http://localhost:9000</code></label>
+                        <label class="option-lbl"><input type="radio" name="e1" value="3"> <code>http://localhost:9870</code></label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 4. In Apache Hadoop 3.x frameworks, the default web console port was updated to <code>9870</code> to avoid conflicts.</div>
+                </div>
+
+                <div class="exam-card" data-correct="1">
+                    <p><strong>Q2: If an application needs to run a computation job close to its data blocks, which master system evaluates this constraint?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="e2" value="0"> Secondary NameNode</label>
+                        <label class="option-lbl"><input type="radio" name="e2" value="1"> YARN ResourceManager</label>
+                        <label class="option-lbl"><input type="radio" name="e2" value="2"> Local Operating System Kernel</label>
+                        <label class="option-lbl"><input type="radio" name="e2" value="3"> DataNode Instance</label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 2. The YARN ResourceManager references NameNode metadata locations to schedule task slots right where the data blocks live.</div>
+                </div>
+
+                <div class="exam-card" data-correct="0">
+                    <p><strong>Q3: Why can't you run standard file modifications like updates on an existing HDFS file?</strong></p>
+                    <div class="options-group">
+                        <label class="option-lbl"><input type="radio" name="e3" value="0"> HDFS uses a strict append-only model to prevent complex network file locking bottlenecks.</label>
+                        <label class="option-lbl"><input type="radio" name="e3" value="1"> Java runtimes do not support modifications to remote file fields.</label>
+                        <label class="option-lbl"><input type="radio" name="e3" value="2"> The local operating system blocks cross-network data changes.</label>
+                        <label class="option-lbl"><input type="radio" name="e3" value="3"> DataNodes lack the physical compute layer needed to modify text lines.</label>
+                    </div>
+                    <div class="explanation-box" style="display:none;">Correct Answer: option 1. The append-only design choice simplifies data distribution mechanics across cluster nodes by avoiding distributed write locks.</div>
+                </div>
+
+                <button class="action-btn" id="btn-submit-exam" style="background:#e53e3e;">Submit Formal Exam</button>
+            </div>
+
+            <button class="action-btn" id="btn-restart-exam" style="display:none; background:#718096;">Restart Exam</button>
+
+            <div class="result-box" id="exam-result-display" style="background:#2d3748; color:white;"></div>
+        </section>
+
+        <section id="summary">
+            <h2 class="section-title">13. Practical Blueprint Recap <label><input type="checkbox" class="prep-checkbox" data-index="13"></label></h2>
+            <p>This session focused on establishing a solid foundation for your Big Data training journey, moving away from heavy localized VMs and embracing lightweight, agile sandboxes for learning.</p>
+            <div class="board-note" style="background:#edf2f7; border-left-color: var(--secondary);">
+                <h4>Quick-Revision Cheat List</h4>
+                <ul>
+                    <li><strong>HDFS</strong> manages distributed file storage, while **YARN** handles cluster compute resource allocation.</li>
+                    <li>The **NameNode** serves as the cluster's centralized control deck, tracking file metadata hashes in memory.</li>
+                    <li>The **DataNodes** handle the actual storage work, writing 128MB file blocks across the network farm.</li>
+                    <li>Running your labs inside web-based Unix containers provides a zero-friction environment, helping students master core commands without infrastructure setup bottlenecks.</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Feature-detect browser localStorage stability rules
+        let storageAvailable = false;
+        try {
+            const testKey = "__storage_test__";
+            localStorage.setItem(testKey, "test");
+            localStorage.removeItem(testKey);
+            storageAvailable = true;
+        } catch (e) {
+            storageAvailable = false;
+        }
+
+        // DOM elements cache references
+        const checkBoxes = document.querySelectorAll(".prep-checkbox");
+        const progressBar = document.getElementById("progress-bar");
+        const progressText = document.getElementById("progress-text");
+        const btnResetProgress = document.getElementById("btn-reset-progress");
+        const globalNotesList = document.getElementById("notes-list-target");
+        const btnClearNotes = document.getElementById("btn-clear-notes");
+        const mainContentArea = document.getElementById("main-content-area");
+
+        // UI fallback safeguards if storage access is restricted
+        if (!storageAvailable) {
+            document.getElementById("progress-container").style.display = "none";
+            document.getElementById("global-notes-box").style.display = "none";
+            checkBoxes.forEach(box => box.parentElement.style.display = "none");
+        }
+
+        // ==========================================
+        // TOPIC PROGRESS CHECKLIST IMPLEMENTATION
+        // ==========================================
+        function updateLiveProgressUI() {
+            if (!storageAvailable) return;
+            const checkedCount = document.querySelectorAll(".prep-checkbox:checked").length;
+            const totalCount = checkBoxes.length;
+            const pct = totalCount > 0 ? (checkedCount / totalCount) * 100 : 0;
+            progressBar.style.width = `${pct}%`;
+            progressText.innerText = `${checkedCount} / ${totalCount} Prepared`;
+        }
+
+        function saveProgressToDisk() {
+            if (!storageAvailable) return;
+            const stateArr = [];
+            checkBoxes.forEach(box => {
+                stateArr.push({
+                    idx: box.getAttribute("data-index"),
+                    checked: box.checked
+                });
+            });
+            localStorage.setItem("hadoop_lab_progress", JSON.stringify(stateArr));
+        }
+
+        function loadProgressFromDisk() {
+            if (!storageAvailable) return;
+            const raw = localStorage.getItem("hadoop_lab_progress");
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            parsed.forEach(item => {
+                const targetBox = document.querySelector(`.prep-checkbox[data-index="${item.idx}"]`);
+                if (targetBox) targetBox.checked = item.checked;
+            });
+            updateLiveProgressUI();
+        }
+
+        checkBoxes.forEach(box => {
+            box.addEventListener("change", () => {
+                saveProgressToDisk();
+                updateLiveProgressUI();
+            });
+        });
+
+        btnResetProgress.addEventListener("click", () => {
+            checkBoxes.forEach(box => box.checked = false);
+            saveProgressToDisk();
+            updateLiveProgressUI();
+        });
+
+
+        // ==========================================
+        // DOUBLE-CLICK-WORD LAB NOTES LOGIC SYSTEM
+        // ==========================================
+        let activePopupElement = null;
+
+        mainContentArea.addEventListener("dblclick", (e) => {
+            // Guardrail restriction defense: block notes on form elements
+            if (e.target.closest("button") || e.target.closest("input") || e.target.closest("label") || e.target.closest("pre") || e.target.closest("a")) return;
+            
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+            if (!selectedText || selectedText.includes(" ")) return; // ensure single word selection
+
+            // Clean up any stray popups
+            if (activePopupElement) activePopupElement.remove();
+
+            const wordUID = `note_${Date.now()}`;
+            
+            // Generate a popup container at the cursor coordinates
+            const popup = document.createElement("div");
+            popup.className = "note-popup";
+            popup.style.top = `${e.clientY + window.scrollY + 10}px`;
+            popup.style.left = `${e.clientX + window.scrollX + 10}px`;
+
+            popup.innerHTML = `
+                <strong style="font-size:0.85rem; display:block; margin-bottom:5px; color:var(--primary);">Note for: "${selectedText}"</strong>
+                <textarea id="pop-text-area" placeholder="Type your observation notes..."></textarea>
+                <button class="btn-save" id="pop-save">Save</button>
+                <button class="btn-close" id="pop-close">Cancel</button>
+            `;
+            
+            document.body.appendChild(popup);
+            activePopupElement = popup;
+
+            // Handle word wrapping injection logic to highlight the selection
+            const range = selection.getRangeAt(0);
+            const spanWrapper = document.createElement("span");
+            spanWrapper.className = "has-note";
+            spanWrapper.setAttribute("data-word", selectedText);
+            
+            document.getElementById("pop-save").addEventListener("click", () => {
+                const noteVal = document.getElementById("pop-text-area").value.trim();
+                if (noteVal && storageAvailable) {
+                    spanWrapper.setAttribute("data-note-text", noteVal);
+                    spanWrapper.setAttribute("id", wordUID);
+                    range.surroundContents(spanWrapper);
+                    
+                    saveSingleNoteToLocalStorage(wordUID, selectedText, noteVal);
+                    renderGlobalNotesPanel();
+                }
+                popup.remove();
+                activePopupElement = null;
+            });
+
+            document.getElementById("pop-close").addEventListener("click", () => {
+                popup.remove();
+                activePopupElement = null;
+            });
+        });
+
+        function saveSingleNoteToLocalStorage(id, word, text) {
+            if (!storageAvailable) return;
+            const currentNotes = JSON.parse(localStorage.getItem("hadoop_word_notes") || "[]");
+            currentNotes.push({ id, word, text, ts: new Date().toLocaleTimeString() });
+            localStorage.setItem("hadoop_word_notes", JSON.stringify(currentNotes));
+        }
+
+        function renderGlobalNotesPanel() {
+            if (!storageAvailable) return;
+            const currentNotes = JSON.parse(localStorage.getItem("hadoop_word_notes") || "[]");
+            globalNotesList.innerHTML = "";
+            currentNotes.forEach(n => {
+                const item = document.createElement("div");
+                item.className = "note-item";
+                item.innerHTML = `
+                    <div class="note-item-header"><span><b>${n.word}</b></span> <span>${n.ts}</span></div>
+                    <p style="font-size:0.85rem; margin:0; text-align:left;">${n.text}</p>
+                    <button style="background:none; border:none; color:var(--error); font-size:0.7rem; cursor:pointer; margin-top:3px;" onclick="deleteSpecificNoteByKey('${n.id}')">Remove</button>
+                `;
+                globalNotesList.appendChild(item);
+            });
+        }
+
+        window.deleteSpecificNoteByKey = function(id) {
+            if (!storageAvailable) return;
+            let currentNotes = JSON.parse(localStorage.getItem("hadoop_word_notes") || "[]");
+            currentNotes = currentNotes.filter(item => item.id !== id);
+            localStorage.setItem("hadoop_word_notes", JSON.stringify(currentNotes));
+            
+            const textElement = document.getElementById(id);
+            if (textElement) {
+                // strip the span highlight wrapper safely without loss of content text
+                textElement.replaceWith(document.createTextNode(textElement.textContent));
+            }
+            renderGlobalNotesPanel();
+        };
+
+        btnClearNotes.addEventListener("click", () => {
+            if (!storageAvailable) return;
+            const currentNotes = JSON.parse(localStorage.getItem("hadoop_word_notes") || "[]");
+            currentNotes.forEach(n => {
+                const textElement = document.getElementById(n.id);
+                if (textElement) textElement.replaceWith(document.createTextNode(textElement.textContent));
+            });
+            localStorage.removeItem("hadoop_word_notes");
+            renderGlobalNotesPanel();
+        });
+
+
+        // ==========================================
+        // CORE ASSESSMENT SANDBOX ENGINES (QUIZ & EXAM)
+        // ==========================================
+        
+        // 1. Practice Quiz Engine
+        const btnSubmitQuiz = document.getElementById("btn-submit-quiz");
+        const btnRetryQuiz = document.getElementById("btn-retry-quiz");
+        const quizResultDisplay = document.getElementById("quiz-result-display");
+
+        btnSubmitQuiz.addEventListener("click", () => {
+            const cards = document.querySelectorAll("#practice-quiz .quiz-card");
+            let score = 0;
+            
+            cards.forEach((card, idx) => {
+                const correctOptionIdx = card.getAttribute("data-correct");
+                const chosenRadio = card.querySelector(`input[name="q${idx+1}"]:checked`);
+                const explanations = card.querySelector(".explanation-box");
+                
+                if (explanations) explanations.style.display = "block";
+                
+                const allLabels = card.querySelectorAll(".option-lbl");
+                if (allLabels[correctOptionIdx]) allLabels[correctOptionIdx].classList.add("correct-opt");
+                
+                if (chosenRadio) {
+                    if (chosenRadio.value === correctOptionIdx) {
+                        score++;
+                    } else {
+                        const wrongLabel = chosenRadio.closest(".option-lbl");
+                        if (wrongLabel) wrongLabel.classList.add("wrong-opt");
+                    }
+                }
+            });
+
+            const pct = (score / cards.length) * 100;
+            let feedbackString = "";
+            if (pct >= 80) {
+                feedbackString = `🚀 Excellent! Score: ${score}/${cards.length} (${pct.toFixed(0)}%). You are fully prepared to run this lab session natively!`;
+            } else if (pct >= 60) {
+                feedbackString = `🙂 Good effort! Score: ${score}/${cards.length} (${pct.toFixed(0)}%). Review your incorrect answers before diving into the terminal configurations.`;
+            } else {
+                feedbackString = `🎯 Keep focusing. Score: ${score}/${cards.length} (${pct.toFixed(0)}%). Re-read the technical core definitions and try again.`;
+            }
+
+            quizResultDisplay.innerHTML = `<strong>${feedbackString}</strong>`;
+            quizResultDisplay.style.display = "block";
+            btnSubmitQuiz.style.display = "none";
+            btnRetryQuiz.style.display = "inline-block";
+        });
+
+        btnRetryQuiz.addEventListener("click", () => {
+            const cards = document.querySelectorAll("#practice-quiz .quiz-card");
+            cards.forEach((card, idx) => {
+                const chosenRadio = card.querySelector(`input[name="q${idx+1}"]:checked`);
+                if (chosenRadio) chosenRadio.checked = false;
+                
+                const explanations = card.querySelector(".explanation-box");
+                if (explanations) explanations.style.display = "none";
+                
+                card.querySelectorAll(".option-lbl").forEach(lbl => {
+                    lbl.classList.remove("correct-opt", "wrong-opt");
+                });
+            });
+            
+            quizResultDisplay.style.display = "none";
+            btnRetryQuiz.style.display = "none";
+            btnSubmitQuiz.style.display = "inline-block";
+        });
+
+        // 2. Formal Exam Engine with Countdown Timer
+        const btnStartExam = document.getElementById("btn-start-exam");
+        const btnSubmitExam = document.getElementById("btn-submit-exam");
+        const btnRestartExam = document.getElementById("btn-restart-exam");
+        const examQuestionsArea = document.getElementById("exam-questions-lockout");
+        const timerLabel = document.getElementById("exam-timer-label");
+        const timeClockDisplay = document.getElementById("exam-time-clock");
+        const examResultDisplay = document.getElementById("exam-result-display");
+
+        let countdownIntervalId = null;
+        let timeRemainingSeconds = 60; 
+
+        function runClockTick() {
+            if (timeRemainingSeconds <= 0) {
+                clearInterval(countdownIntervalId);
+                timeClockDisplay.innerText = "00:00";
+                autoSubmitFormalExam();
+            } else {
+                timeRemainingSeconds--;
+                const mins = Math.floor(timeRemainingSeconds / 60);
+                const secs = timeRemainingSeconds % 60;
+                timeClockDisplay.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+
+        btnStartExam.addEventListener("click", () => {
+            btnStartExam.style.display = "none";
+            examQuestionsArea.style.display = "block";
+            timerLabel.innerText = "Status: Live Evaluation";
+            timeRemainingSeconds = 60; 
+            countdownIntervalId = setInterval(runClockTick, 1000);
+        });
+
+        function autoSubmitFormalExam() {
+            clearInterval(countdownIntervalId);
+            timerLabel.innerText = "Status: Evaluated";
+            
+            const cards = document.querySelectorAll("#formal-exam .exam-card");
+            let score = 0;
+            
+            cards.forEach((card, idx) => {
+                const correctOptionIdx = card.getAttribute("data-correct");
+                const chosenRadio = card.querySelector(`input[name="e${idx+1}"]:checked`);
+                const explanations = card.querySelector(".explanation-box");
+                
+                if (explanations) explanations.style.display = "block";
+                
+                const allLabels = card.querySelectorAll(".option-lbl");
+                if (allLabels[correctOptionIdx]) allLabels[correctOptionIdx].classList.add("correct-opt");
+                
+                if (chosenRadio) {
+                    if (chosenRadio.value === correctOptionIdx) {
+                        score++;
+                    } else {
+                        const wrongLabel = chosenRadio.closest(".option-lbl");
+                        if (wrongLabel) wrongLabel.classList.add("wrong-opt");
+                    }
+                }
+            });
+
+            const pct = (score / cards.length) * 100;
+            const finalStatusLine = pct >= 60 ? "RESULT: PASS" : "RESULT: FAIL";
+            
+            let emojiMessage = "";
+            if (pct >= 80) {
+                emojiMessage = "🏆 Excellent! You are ready to manage enterprise data clusters.";
+            } else if (pct >= 60) {
+                emojiMessage = "👍 Good job! You meet the core requirements for lab entry.";
+            } else {
+                emojiMessage = "💪 Review the configuration parameters and try again.";
+            }
+
+            examResultDisplay.innerHTML = `
+                <h3 style="color:white; margin-bottom:5px;">${finalStatusLine}</h3>
+                <p style="margin:0;">Final Mark Calculation: ${score} / ${cards.length} Marks (${pct.toFixed(0)}%)</p>
+                <p style="font-style:italic; font-size:0.9rem; color:#cbd5e0; margin-top:5px;">${emojiMessage}</p>
+            `;
+            examResultDisplay.style.display = "block";
+            examQuestionsArea.querySelectorAll("input").forEach(i => i.disabled = true);
+            btnSubmitExam.style.display = "none";
+            btnRestartExam.style.display = "inline-block";
+        }
+
+        btnSubmitExam.addEventListener("click", autoSubmitFormalExam);
+
+        btnRestartExam.addEventListener("click", () => {
+            clearInterval(countdownIntervalId);
+            examQuestionsArea.querySelectorAll("input").forEach(i => {
+                i.disabled = false;
+                i.checked = false;
+            });
+            examQuestionsArea.querySelectorAll(".option-lbl").forEach(lbl => {
+                lbl.classList.remove("correct-opt", "wrong-opt");
+            });
+            examQuestionsArea.querySelectorAll(".explanation-box").forEach(box => box.style.display = "none");
+            
+            examResultDisplay.style.display = "none";
+            examQuestionsArea.style.display = "none";
+            btnRestartExam.style.display = "none";
+            btnStartExam.style.display = "inline-block";
+            timeClockDisplay.innerText = "01:00";
+            timerLabel.innerText = "Status: Locked";
+        });
+
+
+        // ==========================================
+        // VANILLA JS LIGHTWEIGHT SPARKLE TRAIL
+        // ==========================================
+        const trailContainer = document.getElementById("sparkle-layer");
+        let queryMotionState = window.matchMedia("(prefers-reduced-motion: reduce)");
+        let interactionCounter = 0;
+
+        window.addEventListener("mousemove", (e) => {
+            if (queryMotionState.matches) return;
+            
+            // Performance throttling control loop
+            interactionCounter++;
+            if (interactionCounter % 3 !== 0) return;
+
+            const element = document.createElement("div");
+            element.className = "sparkle";
+            element.style.top = `${e.pageY}px`;
+            element.style.left = `${e.pageX}px`;
+            trailContainer.appendChild(element);
+
+            setTimeout(() => {
+                element.style.transform = "scale(2.5)";
+                element.style.opacity = "0";
+            }, 50);
+
+            setTimeout(() => {
+                element.remove();
+            }, 550);
+        });
+
+
+        // Initialization execution hooks
+        window.addEventListener("DOMContentLoaded", () => {
+            loadProgressFromDisk();
+            renderGlobalNotesPanel();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Apache Hive Database Tutorial - Classroom Notes</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --ink:#1f2937;
+    --muted:#6b7280;
+    --line:#dbe3ef;
+    --brand:#23395d;
+    --brand2:#3b82f6;
+    --accent:#f59e0b;
+    --good:#16a34a;
+    --bad:#dc2626;
+    --soft:#eef4ff;
+    --code:#0f172a;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.65;
+  }
+  header{
+    background:linear-gradient(120deg,var(--brand),#0f172a);
+    color:white;
+    padding:34px 24px 28px;
+    position:relative;
+    overflow:hidden;
+  }
+  header:after{
+    content:"";
+    position:absolute;
+    right:-80px;top:-80px;
+    width:260px;height:260px;border-radius:50%;
+    background:rgba(255,255,255,.08);
+  }
+  .header-inner{max-width:1180px;margin:auto;position:relative;z-index:1;}
+  .badge{
+    display:inline-block;
+    background:rgba(245,158,11,.18);
+    border:1px solid rgba(245,158,11,.45);
+    color:#ffe8b3;
+    padding:5px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:.2px;
+  }
+  h1{font-size:38px;line-height:1.15;margin:14px 0 8px;}
+  .subtitle{font-size:18px;color:#dbeafe;max-width:860px;}
+  .layout{
+    max-width:1180px;
+    margin:auto;
+    display:grid;
+    grid-template-columns:290px 1fr;
+    gap:22px;
+    padding:22px;
+  }
+  nav{
+    position:sticky;
+    top:14px;
+    align-self:start;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:16px;
+    box-shadow:0 8px 22px rgba(15,23,42,.06);
+  }
+  nav h3{margin:0 0 10px;color:var(--brand);}
+  nav a{
+    display:block;
+    padding:8px 10px;
+    color:#334155;
+    text-decoration:none;
+    border-radius:10px;
+    font-size:14px;
+  }
+  nav a:hover{background:var(--soft);color:var(--brand2);}
+  .progress-panel{
+    margin-top:14px;
+    border-top:1px dashed var(--line);
+    padding-top:12px;
+    font-size:13px;
+  }
+  .progress-bar{
+    height:9px;
+    background:#e5e7eb;
+    border-radius:999px;
+    overflow:hidden;
+    margin:8px 0;
+  }
+  .progress-fill{
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg,var(--brand2),var(--good));
+  }
+  main{min-width:0;}
+  section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:24px;
+    margin-bottom:20px;
+    box-shadow:0 10px 24px rgba(15,23,42,.05);
+    transition:.2s ease;
+  }
+  section:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 30px rgba(15,23,42,.09);
+    border-color:#b9cdf5;
+  }
+  section.done{
+    border-left:8px solid var(--good);
+  }
+  .section-title{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  h2{
+    margin:0;
+    color:var(--brand);
+    font-size:26px;
+  }
+  h3{color:#1e3a8a;margin-top:20px;}
+  .mark{
+    display:flex;
+    gap:7px;
+    align-items:center;
+    background:#f8fafc;
+    border:1px solid var(--line);
+    padding:6px 10px;
+    border-radius:999px;
+    white-space:nowrap;
+    font-size:13px;
+  }
+  .objective{
+    background:#fff7ed;
+    border-left:5px solid var(--accent);
+    padding:12px 14px;
+    border-radius:12px;
+    margin:14px 0;
+  }
+  .trainer-note{
+    background:#eefbf3;
+    border-left:5px solid var(--good);
+    padding:12px 14px;
+    border-radius:12px;
+    margin:14px 0;
+  }
+  .warning{
+    background:#fef2f2;
+    border-left:5px solid var(--bad);
+    padding:12px 14px;
+    border-radius:12px;
+    margin:14px 0;
+  }
+  .grid-2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+  }
+  .grid-3{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:14px;
+  }
+  .mini-card{
+    background:#f8fafc;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:15px;
+  }
+  .mini-card h4{margin:0 0 8px;color:#0f3460;}
+  code{
+    background:#eaf0fb;
+    color:#0f3460;
+    padding:2px 6px;
+    border-radius:6px;
+    font-family:Consolas, Monaco, monospace;
+    font-size:.94em;
+  }
+  pre{
+    background:var(--code);
+    color:#e5e7eb;
+    padding:16px;
+    border-radius:14px;
+    overflow:auto;
+    border:1px solid #1e293b;
+  }
+  pre code{
+    background:transparent;
+    color:inherit;
+    padding:0;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    margin:14px 0;
+    background:white;
+    overflow:hidden;
+    border-radius:14px;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+  }
+  th{background:#edf4ff;color:#1e3a8a;}
+  .diagram{
+    background:#f8fafc;
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:14px;
+    overflow:auto;
+  }
+  .diagram svg{max-width:100%;height:auto;display:block;margin:auto;}
+  .tag{
+    display:inline-block;
+    background:#dbeafe;
+    color:#1e40af;
+    padding:3px 9px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:700;
+    margin:2px;
+  }
+  details{
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:10px 12px;
+    margin:10px 0;
+    background:#fbfdff;
+  }
+  summary{font-weight:700;cursor:pointer;color:#1e3a8a;}
+  .question{
+    border:1px solid var(--line);
+    background:#f8fafc;
+    border-radius:14px;
+    padding:14px;
+    margin:12px 0;
+  }
+  .question p{margin-top:0;font-weight:700;}
+  .question label{display:block;margin:7px 0;cursor:pointer;}
+  button{
+    border:0;
+    background:var(--brand2);
+    color:white;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    margin:8px 5px 8px 0;
+  }
+  button:hover{filter:brightness(.93);}
+  .ghost{
+    background:#475569;
+  }
+  .score{
+    font-weight:800;
+    padding:10px 12px;
+    border-radius:12px;
+    background:#fefce8;
+    display:none;
+    margin-top:10px;
+  }
+  .notes-box{
+    width:100%;
+    min-height:110px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px;
+    font-family:inherit;
+    line-height:1.5;
+  }
+  .dbl-note{
+    font-size:13px;
+    color:var(--muted);
+  }
+  .footer{
+    text-align:center;
+    color:var(--muted);
+    padding:28px 20px 42px;
+  }
+  .sparkle{
+    position:fixed;
+    pointer-events:none;
+    font-size:14px;
+    z-index:9999;
+    animation:fly .8s ease-out forwards;
+  }
+  @keyframes fly{
+    from{transform:translateY(0) scale(1);opacity:1;}
+    to{transform:translateY(-25px) scale(.4);opacity:0;}
+  }
+  .callout-title{font-weight:800;color:#0f3460;}
+  .kbd{
+    background:#111827;color:#fff;border-radius:5px;padding:2px 6px;font-size:12px;
+  }
+  @media(max-width:900px){
+    .layout{grid-template-columns:1fr;padding:12px;}
+    nav{position:relative;top:0;}
+    .grid-2,.grid-3{grid-template-columns:1fr;}
+    h1{font-size:30px;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <span class="badge">Corporate Trainer Notes • Apache Hive • Database Concepts</span>
+    <h1>Apache Hive Database Tutorial</h1>
+    <p class="subtitle">A classroom-style guide to Hive databases, warehouse directories, DDL commands, managed/external tables, loading data, performance concepts, interview questions, and hands-on practice.</p>
+  </div>
+</header>
+
+<div class="layout">
+  <nav>
+    <h3>📚 13-Section Index</h3>
+    <a href="#s1">1. Introduction & Outcomes</a>
+    <a href="#s2">2. Why Hive Database?</a>
+    <a href="#s3">3. Hive Architecture</a>
+    <a href="#s4">4. Database & Warehouse Concepts</a>
+    <a href="#s5">5. Starting Hive & Checks</a>
+    <a href="#s6">6. Database DDL Commands</a>
+    <a href="#s7">7. Managed vs External Tables</a>
+    <a href="#s8">8. Data Types & File Formats</a>
+    <a href="#s9">9. Loading Data & Querying</a>
+    <a href="#s10">10. Partitions, Bucketing & Performance</a>
+    <a href="#s11">11. Retail Analytics Use Case</a>
+    <a href="#s12">12. Best Practices & Troubleshooting</a>
+    <a href="#s13">13. Assessment & Interview Prep</a>
+
+    <div class="progress-panel">
+      <strong>Preparation Tracking</strong>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span id="progressText">0% completed</span>
+      <p class="dbl-note">Tick each section after finishing. Progress is saved in your browser using localStorage.</p>
+    </div>
+  </nav>
+
+  <main>
+    <section id="s1">
+      <div class="section-title">
+        <h2>1. Introduction & Learning Outcomes</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s1"> Mark complete</label>
+      </div>
+      <p><strong>Apache Hive</strong> is a data warehouse system built on top of Hadoop-style distributed storage. It allows users to read, manage, and analyze large datasets using an SQL-like language called <strong>HiveQL</strong>.</p>
+      <div class="objective">
+        <div class="callout-title">Learning Outcomes</div>
+        By the end of this tutorial, learners should be able to create Hive databases, understand the warehouse directory, create managed and external tables, load data, query data, use partitions, and answer interview questions confidently.
+      </div>
+      <h3>Simple Meaning</h3>
+      <p>Hive is like SQL for big data. Instead of writing complex Java MapReduce programs, we can write SQL-like queries such as <code>SELECT</code>, <code>CREATE TABLE</code>, and <code>GROUP BY</code>.</p>
+      <h3>Where Hive Fits</h3>
+      <div class="grid-3">
+        <div class="mini-card"><h4>Storage</h4><p>Data is usually stored in HDFS or cloud/object storage.</p></div>
+        <div class="mini-card"><h4>Metadata</h4><p>Hive stores table and database definitions in the Hive Metastore.</p></div>
+        <div class="mini-card"><h4>Query</h4><p>Users write HiveQL; execution may run through engines such as Tez, MapReduce, or Spark depending on setup.</p></div>
+      </div>
+    </section>
+
+    <section id="s2">
+      <div class="section-title">
+        <h2>2. Why Hive Database?</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s2"> Mark complete</label>
+      </div>
+      <p>A Hive database is a logical namespace used to organize related tables. It is similar to a database or schema in relational database systems, but the actual data is stored as files in distributed storage.</p>
+      <h3>Real-Time Explanation</h3>
+      <p>Imagine a company has sales, customer, product, and clickstream files. Without Hive, each file may be difficult to manage. With Hive, we can create a database such as <code>retail_db</code> and create tables like <code>sales</code>, <code>customers</code>, and <code>products</code>.</p>
+      <table>
+        <thead><tr><th>Need</th><th>Hive Helps By</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Organizing big data</td><td>Grouping tables under databases</td><td><code>CREATE DATABASE retail_db;</code></td></tr>
+          <tr><td>SQL-style access</td><td>Using HiveQL instead of low-level code</td><td><code>SELECT category, SUM(amount)</code></td></tr>
+          <tr><td>Metadata management</td><td>Maintaining schemas in Metastore</td><td>Table columns, file location, table type</td></tr>
+          <tr><td>Batch analytics</td><td>Processing large files efficiently</td><td>Monthly sales report</td></tr>
+        </tbody>
+      </table>
+      <div class="warning">
+        <strong>Important:</strong> Hive is generally used for analytics and batch processing, not for high-speed OLTP applications such as banking transaction inserts every millisecond.
+      </div>
+    </section>
+
+    <section id="s3">
+      <div class="section-title">
+        <h2>3. Hive Architecture</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s3"> Mark complete</label>
+      </div>
+      <p>Hive architecture separates the SQL interface, metadata, query planning, execution engine, and storage layer.</p>
+      <div class="diagram">
+        <svg width="880" height="430" viewBox="0 0 880 430" role="img" aria-label="Hive architecture diagram">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0%" stop-color="#dbeafe"/>
+              <stop offset="100%" stop-color="#bfdbfe"/>
+            </linearGradient>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+            </marker>
+          </defs>
+          <rect x="335" y="20" width="210" height="55" rx="12" fill="#23395d"/>
+          <text x="440" y="53" fill="white" text-anchor="middle" font-size="16" font-weight="700">User / BI Tool / CLI</text>
+
+          <rect x="320" y="110" width="240" height="60" rx="12" fill="url(#g1)" stroke="#60a5fa"/>
+          <text x="440" y="145" fill="#0f3460" text-anchor="middle" font-size="16" font-weight="700">HiveQL Parser & Compiler</text>
+
+          <rect x="55" y="210" width="220" height="70" rx="12" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="165" y="240" fill="#78350f" text-anchor="middle" font-size="16" font-weight="700">Hive Metastore</text>
+          <text x="165" y="263" fill="#78350f" text-anchor="middle" font-size="12">DB, Table, Columns, Location</text>
+
+          <rect x="330" y="220" width="220" height="60" rx="12" fill="#dcfce7" stroke="#22c55e"/>
+          <text x="440" y="255" fill="#14532d" text-anchor="middle" font-size="16" font-weight="700">Execution Engine</text>
+
+          <rect x="610" y="210" width="220" height="70" rx="12" fill="#fee2e2" stroke="#ef4444"/>
+          <text x="720" y="240" fill="#7f1d1d" text-anchor="middle" font-size="16" font-weight="700">Optimizer</text>
+          <text x="720" y="263" fill="#7f1d1d" text-anchor="middle" font-size="12">Plan, Cost, Partitions</text>
+
+          <rect x="320" y="335" width="240" height="60" rx="12" fill="#e0e7ff" stroke="#6366f1"/>
+          <text x="440" y="370" fill="#312e81" text-anchor="middle" font-size="16" font-weight="700">HDFS / Cloud Storage</text>
+
+          <line x1="440" y1="75" x2="440" y2="110" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="440" y1="170" x2="440" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="320" y1="145" x2="275" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="560" y1="145" x2="610" y2="220" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+          <line x1="440" y1="280" x2="440" y2="335" stroke="#334155" stroke-width="2" marker-end="url(#arrow)"/>
+        </svg>
+      </div>
+      <h3>Key Components</h3>
+      <ul>
+        <li><strong>Hive CLI / Beeline:</strong> Interface where users run HiveQL commands.</li>
+        <li><strong>Driver:</strong> Receives queries and manages execution lifecycle.</li>
+        <li><strong>Compiler:</strong> Converts HiveQL into an execution plan.</li>
+        <li><strong>Metastore:</strong> Stores database, table, column, partition, and location metadata.</li>
+        <li><strong>Execution Engine:</strong> Runs the physical job.</li>
+        <li><strong>Storage:</strong> Actual data files live in HDFS or compatible storage.</li>
+      </ul>
+    </section>
+
+    <section id="s4">
+      <div class="section-title">
+        <h2>4. Hive Database & Warehouse Concepts</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s4"> Mark complete</label>
+      </div>
+      <p>A Hive database is a logical folder-like structure. By default, Hive stores managed table data under the warehouse directory.</p>
+      <div class="trainer-note">
+        <strong>Trainer Point:</strong> In many Hadoop lab setups, the default warehouse path is <code>/user/hive/warehouse</code>. A database named <code>sales_db</code> may create a directory like <code>/user/hive/warehouse/sales_db.db</code>.
+      </div>
+      <h3>Important Terms</h3>
+      <table>
+        <thead><tr><th>Term</th><th>Meaning</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Database / Schema</td><td>Logical namespace for tables</td><td><code>training_db</code></td></tr>
+          <tr><td>Warehouse Directory</td><td>Default location where Hive stores managed table data</td><td><code>/user/hive/warehouse</code></td></tr>
+          <tr><td>Metastore</td><td>RDBMS-backed metadata repository</td><td>Stores table schema and location</td></tr>
+          <tr><td>Managed Table</td><td>Hive manages metadata and data lifecycle</td><td><code>CREATE TABLE employee (...)</code></td></tr>
+          <tr><td>External Table</td><td>Hive manages metadata; data remains in external location</td><td><code>CREATE EXTERNAL TABLE ... LOCATION ...</code></td></tr>
+        </tbody>
+      </table>
+      <h3>Check Warehouse Directory in HDFS</h3>
+      <pre><code>hdfs dfs -ls /user/hive
+hdfs dfs -ls /user/hive/warehouse</code></pre>
+      <p>If the warehouse directory exists, Hive can create database and table directories under it, depending on configuration and table type.</p>
+    </section>
+
+    <section id="s5">
+      <div class="section-title">
+        <h2>5. Starting Hive & Basic Checks</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s5"> Mark complete</label>
+      </div>
+      <p>Before creating databases, confirm Hadoop services are running and the warehouse path is available.</p>
+      <h3>Step 1: Check Hadoop Services</h3>
+      <pre><code>jps</code></pre>
+      <p>Common expected services in a basic Hadoop setup:</p>
+      <span class="tag">NameNode</span>
+      <span class="tag">DataNode</span>
+      <span class="tag">ResourceManager</span>
+      <span class="tag">NodeManager</span>
+      <span class="tag">SecondaryNameNode</span>
+
+      <h3>Step 2: Check HDFS</h3>
+      <pre><code>hdfs dfs -ls /
+hdfs dfs -ls /user/hive/warehouse</code></pre>
+
+      <h3>Step 3: Start Hive Shell</h3>
+      <pre><code>hive</code></pre>
+
+      <h3>Step 4: Alternative - Beeline</h3>
+      <pre><code>beeline
+!connect jdbc:hive2://localhost:10000</code></pre>
+      <div class="warning">
+        If HiveServer2 is not running, Beeline connection may fail. In that case, start HiveServer2 or use the basic Hive shell depending on your lab setup.
+      </div>
+    </section>
+
+    <section id="s6">
+      <div class="section-title">
+        <h2>6. Hive Database DDL Commands</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s6"> Mark complete</label>
+      </div>
+      <p>DDL stands for <strong>Data Definition Language</strong>. These commands define database and table structures.</p>
+
+      <h3>6.1 Show Existing Databases</h3>
+      <pre><code>SHOW DATABASES;</code></pre>
+
+      <h3>6.2 Create Database</h3>
+      <pre><code>CREATE DATABASE training_db;</code></pre>
+
+      <h3>6.3 Safe Create with IF NOT EXISTS</h3>
+      <pre><code>CREATE DATABASE IF NOT EXISTS training_db;</code></pre>
+
+      <h3>6.4 Create Database with Comment and Properties</h3>
+      <pre><code>CREATE DATABASE IF NOT EXISTS retail_db
+COMMENT 'Retail analytics database for sales and customer reports'
+WITH DBPROPERTIES (
+  'created_by'='trainer',
+  'purpose'='classroom practice'
+);</code></pre>
+
+      <h3>6.5 Use Database</h3>
+      <pre><code>USE retail_db;</code></pre>
+
+      <h3>6.6 Describe Database</h3>
+      <pre><code>DESCRIBE DATABASE retail_db;
+DESCRIBE DATABASE EXTENDED retail_db;</code></pre>
+
+      <h3>6.7 Alter Database Properties</h3>
+      <pre><code>ALTER DATABASE retail_db SET DBPROPERTIES (
+  'owner'='data_engineering_team',
+  'environment'='training'
+);</code></pre>
+
+      <h3>6.8 Drop Database</h3>
+      <pre><code>DROP DATABASE retail_db;</code></pre>
+
+      <h3>6.9 Drop Database with Tables</h3>
+      <pre><code>DROP DATABASE retail_db CASCADE;</code></pre>
+
+      <div class="warning">
+        <strong>Careful:</strong> <code>CASCADE</code> can remove tables inside the database. Use it only in practice environments or when you are fully sure.
+      </div>
+
+      <h3>Classroom Exercise</h3>
+      <pre><code>CREATE DATABASE IF NOT EXISTS student_db;
+SHOW DATABASES;
+USE student_db;
+DESCRIBE DATABASE EXTENDED student_db;
+DROP DATABASE student_db;</code></pre>
+    </section>
+
+    <section id="s7">
+      <div class="section-title">
+        <h2>7. Managed vs External Tables</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s7"> Mark complete</label>
+      </div>
+      <p>Understanding managed and external tables is one of the most important Hive interview topics.</p>
+      <table>
+        <thead><tr><th>Feature</th><th>Managed Table</th><th>External Table</th></tr></thead>
+        <tbody>
+          <tr><td>Ownership</td><td>Hive owns metadata and table data lifecycle.</td><td>Hive owns metadata only; data is kept in specified external path.</td></tr>
+          <tr><td>Create Syntax</td><td><code>CREATE TABLE</code></td><td><code>CREATE EXTERNAL TABLE</code></td></tr>
+          <tr><td>Default Location</td><td>Warehouse directory</td><td>Given <code>LOCATION</code> path</td></tr>
+          <tr><td>Drop Behavior</td><td>Usually drops metadata and managed data.</td><td>Drops metadata; external data is intended to remain.</td></tr>
+          <tr><td>Best Use</td><td>Hive-controlled temporary or processed datasets</td><td>Shared data, raw lake data, files used by multiple tools</td></tr>
+        </tbody>
+      </table>
+      <h3>Managed Table Example</h3>
+      <pre><code>USE retail_db;
+
+CREATE TABLE customers (
+  customer_id INT,
+  customer_name STRING,
+  city STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;</code></pre>
+
+      <h3>External Table Example</h3>
+      <pre><code>CREATE EXTERNAL TABLE ext_customers (
+  customer_id INT,
+  customer_name STRING,
+  city STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+LOCATION '/data/retail/customers';</code></pre>
+
+      <h3>How to Check Table Type</h3>
+      <pre><code>DESCRIBE FORMATTED customers;
+DESCRIBE FORMATTED ext_customers;</code></pre>
+      <p>Look for <code>Table Type</code> in the output. It may show values such as <code>MANAGED_TABLE</code> or <code>EXTERNAL_TABLE</code>.</p>
+    </section>
+
+    <section id="s8">
+      <div class="section-title">
+        <h2>8. Data Types, File Formats & Storage</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s8"> Mark complete</label>
+      </div>
+      <h3>Common Hive Data Types</h3>
+      <table>
+        <thead><tr><th>Category</th><th>Data Types</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Numeric</td><td><code>TINYINT</code>, <code>SMALLINT</code>, <code>INT</code>, <code>BIGINT</code>, <code>FLOAT</code>, <code>DOUBLE</code>, <code>DECIMAL</code></td><td><code>amount DECIMAL(10,2)</code></td></tr>
+          <tr><td>String</td><td><code>STRING</code>, <code>VARCHAR</code>, <code>CHAR</code></td><td><code>customer_name STRING</code></td></tr>
+          <tr><td>Date/Time</td><td><code>DATE</code>, <code>TIMESTAMP</code></td><td><code>order_date DATE</code></td></tr>
+          <tr><td>Complex</td><td><code>ARRAY</code>, <code>MAP</code>, <code>STRUCT</code></td><td><code>items ARRAY&lt;STRING&gt;</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Common File Formats</h3>
+      <table>
+        <thead><tr><th>Format</th><th>Good For</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>TEXTFILE</td><td>Learning and simple CSV-style input</td><td>Easy to inspect; not storage efficient.</td></tr>
+          <tr><td>ORC</td><td>Hive analytics</td><td>Columnar format; compression and performance benefits.</td></tr>
+          <tr><td>PARQUET</td><td>Analytics across Hive/Spark/Presto</td><td>Columnar and widely used in data lakes.</td></tr>
+          <tr><td>AVRO</td><td>Schema evolution use cases</td><td>Common in streaming/data interchange scenarios.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>ORC Table Example</h3>
+      <pre><code>CREATE TABLE sales_orc (
+  order_id INT,
+  customer_id INT,
+  amount DECIMAL(10,2),
+  order_date DATE
+)
+STORED AS ORC;</code></pre>
+    </section>
+
+    <section id="s9">
+      <div class="section-title">
+        <h2>9. Loading Data & Querying</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s9"> Mark complete</label>
+      </div>
+      <h3>Sample Local CSV</h3>
+      <p>Create a file named <code>customers.csv</code>:</p>
+      <pre><code>1,Ravi,Chennai
+2,Meena,Bangalore
+3,Kumar,Hyderabad
+4,Anita,Pune</code></pre>
+
+      <h3>Create Table</h3>
+      <pre><code>CREATE DATABASE IF NOT EXISTS retail_db;
+USE retail_db;
+
+CREATE TABLE customers (
+  customer_id INT,
+  customer_name STRING,
+  city STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;</code></pre>
+
+      <h3>Load Local Data</h3>
+      <pre><code>LOAD DATA LOCAL INPATH '/home/vmuser/customers.csv'
+INTO TABLE customers;</code></pre>
+
+      <h3>Query Data</h3>
+      <pre><code>SELECT * FROM customers;
+
+SELECT city, COUNT(*) AS total_customers
+FROM customers
+GROUP BY city;</code></pre>
+
+      <h3>Load Data from HDFS</h3>
+      <pre><code>hdfs dfs -mkdir -p /data/retail
+hdfs dfs -put customers.csv /data/retail/
+
+LOAD DATA INPATH '/data/retail/customers.csv'
+INTO TABLE customers;</code></pre>
+
+      <div class="trainer-note">
+        <strong>Trainer Tip:</strong> <code>LOAD DATA</code> is mainly a file move/copy operation into the table location. It does not transform the file like an ETL mapping tool.
+      </div>
+    </section>
+
+    <section id="s10">
+      <div class="section-title">
+        <h2>10. Partitions, Bucketing & Performance</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s10"> Mark complete</label>
+      </div>
+      <p>Hive performance often depends on how data is physically organized.</p>
+      <h3>Partitioning</h3>
+      <p>Partitioning divides table data into folders based on one or more columns. It is useful when queries frequently filter by that column.</p>
+      <pre><code>CREATE TABLE sales_partitioned (
+  order_id INT,
+  customer_id INT,
+  amount DECIMAL(10,2)
+)
+PARTITIONED BY (order_date DATE)
+STORED AS ORC;</code></pre>
+      <h3>Insert into Partition</h3>
+      <pre><code>INSERT INTO TABLE sales_partitioned
+PARTITION (order_date='2026-07-07')
+SELECT order_id, customer_id, amount
+FROM sales_raw
+WHERE order_date='2026-07-07';</code></pre>
+
+      <h3>Bucketing</h3>
+      <p>Bucketing distributes data into a fixed number of files based on hash of a column. It can help joins and sampling in selected scenarios.</p>
+      <pre><code>CREATE TABLE customer_bucketed (
+  customer_id INT,
+  customer_name STRING,
+  city STRING
+)
+CLUSTERED BY (customer_id) INTO 4 BUCKETS
+STORED AS ORC;</code></pre>
+
+      <h3>Performance Checklist</h3>
+      <ul>
+        <li>Use columnar formats like ORC or Parquet for analytics.</li>
+        <li>Partition on frequently filtered columns such as date, region, or country.</li>
+        <li>Avoid too many tiny partitions.</li>
+        <li>Run statistics when required for optimizer support.</li>
+        <li>Select only required columns instead of <code>SELECT *</code>.</li>
+      </ul>
+    </section>
+
+    <section id="s11">
+      <div class="section-title">
+        <h2>11. Real-Time Use Case: Retail Analytics Hive Database</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s11"> Mark complete</label>
+      </div>
+      <p>This use case is suitable for classroom training and interview explanation.</p>
+      <h3>Business Scenario</h3>
+      <p>A retail company receives daily sales files from multiple stores. The data engineering team wants to store the files in HDFS and analyze sales by city, product, and date using Hive.</p>
+
+      <h3>Database Design</h3>
+      <div class="diagram">
+        <svg width="860" height="330" viewBox="0 0 860 330" role="img" aria-label="Retail hive database design">
+          <rect x="30" y="35" width="210" height="75" rx="12" fill="#dbeafe" stroke="#3b82f6"/>
+          <text x="135" y="65" text-anchor="middle" fill="#1e3a8a" font-size="16" font-weight="700">customers</text>
+          <text x="135" y="90" text-anchor="middle" fill="#334155" font-size="12">customer_id, name, city</text>
+
+          <rect x="325" y="35" width="210" height="75" rx="12" fill="#dcfce7" stroke="#22c55e"/>
+          <text x="430" y="65" text-anchor="middle" fill="#14532d" font-size="16" font-weight="700">sales</text>
+          <text x="430" y="90" text-anchor="middle" fill="#334155" font-size="12">order_id, customer_id, product_id</text>
+
+          <rect x="620" y="35" width="210" height="75" rx="12" fill="#fef3c7" stroke="#f59e0b"/>
+          <text x="725" y="65" text-anchor="middle" fill="#78350f" font-size="16" font-weight="700">products</text>
+          <text x="725" y="90" text-anchor="middle" fill="#334155" font-size="12">product_id, product_name, category</text>
+
+          <rect x="240" y="190" width="380" height="90" rx="12" fill="#e0e7ff" stroke="#6366f1"/>
+          <text x="430" y="225" text-anchor="middle" fill="#312e81" font-size="18" font-weight="700">retail_db Hive Database</text>
+          <text x="430" y="252" text-anchor="middle" fill="#334155" font-size="13">Used for daily sales analytics and reports</text>
+
+          <line x1="135" y1="110" x2="330" y2="190" stroke="#334155" stroke-width="2"/>
+          <line x1="430" y1="110" x2="430" y2="190" stroke="#334155" stroke-width="2"/>
+          <line x1="725" y1="110" x2="530" y2="190" stroke="#334155" stroke-width="2"/>
+        </svg>
+      </div>
+
+      <h3>Complete Practice Script</h3>
+      <pre><code>CREATE DATABASE IF NOT EXISTS retail_db
+COMMENT 'Retail analytics classroom database';
+
+USE retail_db;
+
+CREATE TABLE customers (
+  customer_id INT,
+  customer_name STRING,
+  city STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+CREATE TABLE products (
+  product_id INT,
+  product_name STRING,
+  category STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;
+
+CREATE TABLE sales (
+  order_id INT,
+  customer_id INT,
+  product_id INT,
+  quantity INT,
+  amount DECIMAL(10,2)
+)
+PARTITIONED BY (order_date DATE)
+STORED AS ORC;</code></pre>
+
+      <h3>Business Query</h3>
+      <pre><code>SELECT c.city, p.category, SUM(s.amount) AS total_sales
+FROM sales s
+JOIN customers c ON s.customer_id = c.customer_id
+JOIN products p ON s.product_id = p.product_id
+WHERE s.order_date = '2026-07-07'
+GROUP BY c.city, p.category;</code></pre>
+    </section>
+
+    <section id="s12">
+      <div class="section-title">
+        <h2>12. Best Practices & Troubleshooting</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s12"> Mark complete</label>
+      </div>
+
+      <h3>Best Practices</h3>
+      <ul>
+        <li>Use meaningful database names such as <code>retail_db</code>, <code>finance_dw</code>, or <code>training_db</code>.</li>
+        <li>Use <code>IF NOT EXISTS</code> for repeatable classroom/demo scripts.</li>
+        <li>Keep raw data in external tables and curated data in managed/ORC/Parquet tables.</li>
+        <li>Use partitioning for large date-based datasets.</li>
+        <li>Document databases using <code>COMMENT</code> and <code>DBPROPERTIES</code>.</li>
+        <li>Do not run <code>DROP DATABASE ... CASCADE</code> in production unless approved.</li>
+        <li>Use <code>DESCRIBE FORMATTED</code> to inspect table type, location, and storage format.</li>
+      </ul>
+
+      <h3>Common Issues</h3>
+      <table>
+        <thead><tr><th>Issue</th><th>Possible Reason</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td>Hive shell not opening</td><td>Hive not installed or environment variables missing</td><td>Check <code>HIVE_HOME</code>, <code>PATH</code>, and installation directory.</td></tr>
+          <tr><td>Warehouse path error</td><td>HDFS directory does not exist or permission issue</td><td>Create path and give correct permissions.</td></tr>
+          <tr><td>Permission denied</td><td>User does not have HDFS write permission</td><td>Use <code>hdfs dfs -chmod</code> carefully in lab setup.</td></tr>
+          <tr><td>Beeline connection failed</td><td>HiveServer2 not started</td><td>Start HiveServer2 and retry JDBC connection.</td></tr>
+          <tr><td>Data showing NULL</td><td>Delimiter or schema mismatch</td><td>Verify file delimiter, column order, and data type.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Useful Troubleshooting Commands</h3>
+      <pre><code>hdfs dfs -ls /user/hive/warehouse
+hdfs dfs -chmod -R 777 /tmp
+hdfs dfs -chmod -R 777 /user/hive/warehouse
+
+SHOW DATABASES;
+SHOW TABLES;
+DESCRIBE FORMATTED table_name;</code></pre>
+
+      <div class="warning">
+        <strong>Production Note:</strong> Do not use broad <code>chmod 777</code> permissions in production. It is acceptable only for simple learning labs when security is not the focus.
+      </div>
+    </section>
+
+    <section id="s13">
+      <div class="section-title">
+        <h2>13. Assessment & Interview Prep</h2>
+        <label class="mark"><input type="checkbox" class="section-check" data-section="s13"> Mark complete</label>
+      </div>
+
+      <h3>15+ Interview Questions and Answers</h3>
+      <details open><summary>1. What is Hive?</summary><p>Hive is a data warehouse system used to query and manage large datasets stored in distributed storage using HiveQL, an SQL-like language.</p></details>
+      <details><summary>2. What is a Hive database?</summary><p>A Hive database is a namespace that groups related tables. It is also called a schema in HiveQL syntax.</p></details>
+      <details><summary>3. What is the default database in Hive?</summary><p>The default database is named <code>default</code>. If you do not run <code>USE database_name</code>, objects may be created under the default database.</p></details>
+      <details><summary>4. What is the Hive warehouse directory?</summary><p>It is the default storage location where Hive stores managed database and table data, commonly <code>/user/hive/warehouse</code> in lab environments.</p></details>
+      <details><summary>5. What is Hive Metastore?</summary><p>Hive Metastore is the metadata repository that stores information about databases, tables, columns, partitions, table type, and data location.</p></details>
+      <details><summary>6. Difference between database and table in Hive?</summary><p>A database organizes tables. A table defines the schema and storage mapping for actual data files.</p></details>
+      <details><summary>7. How do you create a Hive database?</summary><p>Use <code>CREATE DATABASE database_name;</code> or <code>CREATE DATABASE IF NOT EXISTS database_name;</code>.</p></details>
+      <details><summary>8. How do you switch to a database?</summary><p>Use <code>USE database_name;</code>.</p></details>
+      <details><summary>9. How do you list databases?</summary><p>Use <code>SHOW DATABASES;</code>.</p></details>
+      <details><summary>10. How do you see database details?</summary><p>Use <code>DESCRIBE DATABASE database_name;</code> or <code>DESCRIBE DATABASE EXTENDED database_name;</code>.</p></details>
+      <details><summary>11. What is a managed table?</summary><p>A managed table is a table where Hive manages both metadata and the table data lifecycle.</p></details>
+      <details><summary>12. What is an external table?</summary><p>An external table is a table where Hive manages metadata, but the actual data remains in an external location.</p></details>
+      <details><summary>13. When should we use an external table?</summary><p>Use external tables for shared/raw files or when data is used by multiple tools and should not be deleted when Hive metadata is dropped.</p></details>
+      <details><summary>14. What is partitioning?</summary><p>Partitioning stores table data in separate folders based on partition columns such as date, region, or country to improve query pruning.</p></details>
+      <details><summary>15. What is bucketing?</summary><p>Bucketing splits data into a fixed number of files based on a hash of selected columns, useful in selected join and sampling scenarios.</p></details>
+      <details><summary>16. Why is Hive not suitable for OLTP?</summary><p>Hive is optimized for large-scale analytical queries, not for frequent small row-level transactions like traditional OLTP systems.</p></details>
+      <details><summary>17. What command checks table type?</summary><p>Use <code>DESCRIBE FORMATTED table_name;</code> and inspect the table type field.</p></details>
+      <details><summary>18. What happens when you drop a database with CASCADE?</summary><p>Hive drops the database and the objects inside it. This must be used carefully, especially outside practice environments.</p></details>
+
+      <h3>Practice MCQ Quiz</h3>
+      <div id="practiceQuiz"></div>
+      <button onclick="submitQuiz('practice')">Submit Practice Quiz</button>
+      <button class="ghost" onclick="resetQuiz('practice')">Reset Practice Quiz</button>
+      <div id="practiceScore" class="score"></div>
+
+      <h3>Formal Timed Exam - 10 Questions / 10 Minutes</h3>
+      <p><strong>Timer:</strong> <span id="timer">10:00</span></p>
+      <button onclick="startExam()">Start Exam</button>
+      <div id="examQuiz"></div>
+      <button onclick="submitQuiz('exam')">Submit Exam</button>
+      <button class="ghost" onclick="resetQuiz('exam')">Reset Exam</button>
+      <div id="examScore" class="score"></div>
+
+      <h3>Your Double-Click Notes</h3>
+      <p class="dbl-note">Double-click any section heading to copy it into the notes box. Your notes are saved locally.</p>
+      <textarea id="personalNotes" class="notes-box" placeholder="Write your Hive database notes here..."></textarea>
+      <br/>
+      <button onclick="saveNotes()">Save Notes</button>
+      <button class="ghost" onclick="clearNotes()">Clear Notes</button>
+
+      <h3>Source References</h3>
+      <ul>
+        <li>Apache Hive LanguageManual DDL documentation for CREATE/DROP/ALTER database and table commands.</li>
+        <li>Apache Hive managed vs external tables documentation for identifying table type using <code>DESCRIBE FORMATTED</code>.</li>
+        <li>Apache Hive LanguageManual DML documentation for <code>LOAD DATA</code> behavior.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<div class="footer">
+  Prepared as classroom-style Hive Database notes for beginner to intermediate learners. Use this file offline in any modern browser.
+</div>
+
+<script>
+const practiceQuestions = [
+  {q:"Which command lists Hive databases?", opts:["LIST DATABASES;","SHOW DATABASES;","DISPLAY SCHEMAS;","GET DATABASES;"], ans:1, exp:"SHOW DATABASES lists available Hive databases."},
+  {q:"Which command changes the current database?", opts:["CHANGE retail_db;","USE retail_db;","OPEN retail_db;","SET retail_db;"], ans:1, exp:"USE database_name switches the current database."},
+  {q:"What does Hive Metastore store?", opts:["Only actual data files","Only logs","Metadata such as databases, tables, schemas and locations","Only user passwords"], ans:2, exp:"Metastore stores metadata, not the actual data files."},
+  {q:"What is a managed table?", opts:["A table managed only by HDFS","A table where Hive manages metadata and data lifecycle","A table without schema","A table stored only in memory"], ans:1, exp:"Managed table data lifecycle is handled by Hive."},
+  {q:"Which keyword creates an external table?", opts:["OUTSIDE","EXTERNAL","REMOTE","FOREIGN"], ans:1, exp:"CREATE EXTERNAL TABLE creates an external table."},
+  {q:"Which command shows table type and location details?", opts:["SHOW TYPE table;","DESCRIBE FORMATTED table_name;","PRINT TABLE table_name;","LIST INFO table_name;"], ans:1, exp:"DESCRIBE FORMATTED shows detailed metadata including table type and location."},
+  {q:"What is the common warehouse path in many Hive labs?", opts:["/user/hive/warehouse","/var/sql/data","/home/hive/db","/tmp/mysql"], ans:0, exp:"Many Hadoop learning setups use /user/hive/warehouse."},
+  {q:"Hive is best suited for which workload?", opts:["OLTP banking transactions","Large-scale analytics and batch queries","Real-time gaming physics","Mobile UI rendering"], ans:1, exp:"Hive is mostly used for analytical/batch workloads."},
+  {q:"What does partitioning help with?", opts:["Reducing query scan by folder pruning","Encrypting passwords","Increasing monitor size","Replacing the metastore"], ans:0, exp:"Partitioning allows Hive to scan only relevant partition folders."},
+  {q:"Which command can remove a database and its tables?", opts:["DROP DATABASE db CASCADE;","DELETE DATABASE db FORCE;","REMOVE ALL db;","CLEAR DATABASE db;"], ans:0, exp:"DROP DATABASE ... CASCADE removes the database and contained objects."}
+];
+
+const examQuestions = [
+  {q:"A Hive database is also commonly referred to as:", opts:["Index","Schema","Reducer","Daemon"], ans:1, exp:"Hive database and schema are commonly used as similar terms."},
+  {q:"Which DDL is safest for repeatable scripts?", opts:["CREATE DATABASE db;","CREATE DATABASE IF NOT EXISTS db;","MAKE DATABASE ALWAYS db;","CREATE FORCE DATABASE db;"], ans:1, exp:"IF NOT EXISTS avoids error if the database is already present."},
+  {q:"The actual data for Hive tables is commonly stored in:", opts:["Browser cache","HDFS or compatible storage","PowerPoint files","JVM heap only"], ans:1, exp:"Hive maps table metadata to files in HDFS or compatible storage."},
+  {q:"External tables are preferred when:", opts:["Data should be shared and not owned fully by Hive","You want to delete all raw files automatically","You do not need schema","You want only in-memory data"], ans:0, exp:"External tables are useful for shared/raw data locations."},
+  {q:"Which table format is columnar and commonly used for analytics?", opts:["ORC","TXT only","JPEG","XML UI"], ans:0, exp:"ORC is a columnar format used with Hive analytics."},
+  {q:"Which command describes database details?", opts:["SHOW FILES db;","DESCRIBE DATABASE db;","OPEN DATABASE db;","LIST DETAILS db;"], ans:1, exp:"DESCRIBE DATABASE shows database metadata."},
+  {q:"What does LOAD DATA primarily do in Hive?", opts:["Transforms every row using Python","Copies/moves files into table location","Creates a dashboard","Starts NameNode"], ans:1, exp:"LOAD DATA is primarily a copy/move operation."},
+  {q:"What should you avoid in production without approval?", opts:["SHOW DATABASES","SELECT city","DROP DATABASE db CASCADE","DESCRIBE DATABASE"], ans:2, exp:"CASCADE can remove contained objects and must be used carefully."},
+  {q:"Which column is a good partition candidate for daily sales queries?", opts:["order_date","customer_name only","amount only","random_id"], ans:0, exp:"Date is commonly used for time-based partition pruning."},
+  {q:"Which command checks HDFS warehouse directory?", opts:["hdfs dfs -ls /user/hive/warehouse","show local warehouse","hive warehouse open","hadoop sql check"], ans:0, exp:"hdfs dfs -ls checks HDFS directories."}
+];
+
+function renderQuiz(type){
+  const target = document.getElementById(type === 'practice' ? 'practiceQuiz' : 'examQuiz');
+  const questions = type === 'practice' ? practiceQuestions : examQuestions;
+  target.innerHTML = questions.map((item, i) => `
+    <div class="question">
+      <p>${i+1}. ${item.q}</p>
+      ${item.opts.map((opt, j) => `
+        <label><input type="radio" name="${type}_q${i}" value="${j}"> ${opt}</label>
+      `).join('')}
+      <div id="${type}_exp${i}" style="display:none;margin-top:8px;"></div>
+    </div>
+  `).join('');
+}
+
+function submitQuiz(type){
+  const questions = type === 'practice' ? practiceQuestions : examQuestions;
+  let score = 0;
+  questions.forEach((item, i) => {
+    const selected = document.querySelector(`input[name="${type}_q${i}"]:checked`);
+    const exp = document.getElementById(`${type}_exp${i}`);
+    if(selected && Number(selected.value) === item.ans){
+      score++;
+      exp.innerHTML = `<strong style="color:var(--good)">Correct.</strong> ${item.exp}`;
+    } else {
+      exp.innerHTML = `<strong style="color:var(--bad)">Incorrect.</strong> Correct answer: <strong>${item.opts[item.ans]}</strong>. ${item.exp}`;
+    }
+    exp.style.display = "block";
+  });
+  const percent = Math.round(score / questions.length * 100);
+  const mood = percent >= 80 ? "Excellent preparation 😊" : percent >= 60 ? "Good, revise weak topics 🙂" : "Needs more practice. Re-read sections 4 to 10 💪";
+  const box = document.getElementById(type === 'practice' ? 'practiceScore' : 'examScore');
+  box.innerHTML = `Score: ${score}/${questions.length} (${percent}%). ${mood}`;
+  box.style.display = "block";
+  if(type === 'exam') stopTimer();
+}
+
+function resetQuiz(type){
+  renderQuiz(type);
+  const box = document.getElementById(type === 'practice' ? 'practiceScore' : 'examScore');
+  box.style.display = "none";
+  if(type === 'exam'){
+    stopTimer();
+    document.getElementById("timer").textContent = "10:00";
+    examRemaining = 600;
+  }
+}
+
+let examTimer = null;
+let examRemaining = 600;
+
+function startExam(){
+  if(examTimer) return;
+  examRemaining = 600;
+  document.getElementById("timer").textContent = "10:00";
+  examTimer = setInterval(() => {
+    examRemaining--;
+    const min = String(Math.floor(examRemaining / 60)).padStart(2,'0');
+    const sec = String(examRemaining % 60).padStart(2,'0');
+    document.getElementById("timer").textContent = `${min}:${sec}`;
+    if(examRemaining <= 0){
+      submitQuiz('exam');
+      stopTimer();
+      alert("Time is over. Exam submitted automatically.");
+    }
+  }, 1000);
+}
+
+function stopTimer(){
+  if(examTimer){
+    clearInterval(examTimer);
+    examTimer = null;
+  }
+}
+
+function updateProgress(){
+  const checks = [...document.querySelectorAll(".section-check")];
+  const done = checks.filter(c => c.checked).length;
+  const percent = Math.round(done / checks.length * 100);
+  document.getElementById("progressFill").style.width = percent + "%";
+  document.getElementById("progressText").textContent = percent + "% completed";
+  checks.forEach(c => {
+    const section = document.getElementById(c.dataset.section);
+    if(c.checked) section.classList.add("done");
+    else section.classList.remove("done");
+  });
+  localStorage.setItem("hiveDbProgress", JSON.stringify(checks.map(c => ({id:c.dataset.section, checked:c.checked}))));
+}
+
+function loadProgress(){
+  const saved = JSON.parse(localStorage.getItem("hiveDbProgress") || "[]");
+  saved.forEach(item => {
+    const c = document.querySelector(`.section-check[data-section="${item.id}"]`);
+    if(c) c.checked = item.checked;
+  });
+  updateProgress();
+}
+
+function saveNotes(){
+  localStorage.setItem("hiveDbPersonalNotes", document.getElementById("personalNotes").value);
+  alert("Notes saved locally.");
+}
+
+function clearNotes(){
+  document.getElementById("personalNotes").value = "";
+  localStorage.removeItem("hiveDbPersonalNotes");
+}
+
+function loadNotes(){
+  document.getElementById("personalNotes").value = localStorage.getItem("hiveDbPersonalNotes") || "";
+}
+
+document.addEventListener("change", e => {
+  if(e.target.classList.contains("section-check")) updateProgress();
+});
+
+document.querySelectorAll("h2").forEach(h => {
+  h.addEventListener("dblclick", () => {
+    const box = document.getElementById("personalNotes");
+    box.value += (box.value ? "\n" : "") + "Topic: " + h.textContent.trim();
+    saveNotes();
+  });
+});
+
+let sparkleTick = 0;
+document.addEventListener("mousemove", e => {
+  sparkleTick++;
+  if(sparkleTick % 10 !== 0) return;
+  const s = document.createElement("div");
+  s.className = "sparkle";
+  s.textContent = "✨";
+  s.style.left = e.clientX + "px";
+  s.style.top = e.clientY + "px";
+  document.body.appendChild(s);
+  setTimeout(() => s.remove(), 800);
+});
+
+renderQuiz("practice");
+renderQuiz("exam");
+loadProgress();
+loadNotes();
+</script>
+</body>
+</html>

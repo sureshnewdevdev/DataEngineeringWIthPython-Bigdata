@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL Window Functions - Corporate Trainer Tutorial</title>
+<style>
+:root {
+  --primary:#1f4e79;
+  --secondary:#0f766e;
+  --dark:#172033;
+  --light:#f5f8fc;
+  --card:#ffffff;
+  --border:#d9e2ec;
+  --code:#0f172a;
+  --success:#15803d;
+  --danger:#b91c1c;
+}
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  margin:0;
+  font-family:"Segoe UI", Arial, sans-serif;
+  background:linear-gradient(135deg,#eef6ff,#f8fbff);
+  color:#1f2937;
+  line-height:1.65;
+}
+header {
+  background:linear-gradient(135deg,var(--primary),#12344f);
+  color:white;
+  padding:34px 28px;
+  position:sticky;
+  top:0;
+  z-index:10;
+  box-shadow:0 8px 22px rgba(0,0,0,.18);
+}
+header h1 { margin:0; font-size:32px; }
+header p { margin:8px 0 0; opacity:.92; }
+.layout {
+  max-width:1450px;
+  margin:24px auto;
+  padding:0 18px;
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:22px;
+}
+aside {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:18px;
+  position:sticky;
+  top:145px;
+  align-self:start;
+  max-height:calc(100vh - 165px);
+  overflow:auto;
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+aside h3 { margin:0 0 10px; color:var(--primary); }
+aside a { color:#243447; text-decoration:none; }
+aside a:hover { color:var(--primary); text-decoration:underline; }
+aside li { margin:9px 0; font-size:14px; }
+.card {
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:26px;
+  margin-bottom:22px;
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+.card:hover {
+  border-color:#a8c7e6;
+  box-shadow:0 12px 28px rgba(15,23,42,.11);
+}
+h2 { margin-top:0; color:var(--primary); font-size:26px; }
+h3 { color:#155e75; margin-top:24px; }
+.badge {
+  display:inline-block;
+  background:#ecfeff;
+  color:#155e75;
+  border:1px solid #a5f3fc;
+  padding:5px 12px;
+  border-radius:999px;
+  font-weight:700;
+  font-size:13px;
+  margin-bottom:10px;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+.mini {
+  padding:16px;
+  border-radius:14px;
+  background:#f8fafc;
+  border:1px solid var(--border);
+}
+.mini strong { color:var(--primary); display:block; font-size:18px; margin-bottom:5px; }
+pre {
+  background:var(--code);
+  color:#e5e7eb;
+  padding:18px;
+  border-radius:14px;
+  overflow:auto;
+  border:1px solid #334155;
+  position:relative;
+}
+code { font-family:Consolas, Monaco, monospace; font-size:14px; }
+.explain {
+  background:#f0fdf4;
+  border-left:5px solid var(--secondary);
+  padding:14px 16px;
+  border-radius:12px;
+  margin:14px 0;
+}
+.warning {
+  background:#fff7ed;
+  border-left:5px solid #f97316;
+  padding:14px 16px;
+  border-radius:12px;
+  margin:14px 0;
+}
+table {
+  border-collapse:collapse;
+  width:100%;
+  margin:14px 0;
+  font-size:14px;
+}
+th, td {
+  border:1px solid var(--border);
+  padding:10px;
+  text-align:left;
+}
+th { background:var(--primary); color:white; }
+tr:nth-child(even) td { background:#f8fafc; }
+.question {
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:16px;
+  margin:14px 0;
+  background:#fbfdff;
+}
+.question:hover { background:#f8fbff; border-color:#9ec5e6; }
+.question h4 { margin:0 0 10px; color:#1f2937; }
+.options {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+}
+.option {
+  display:block;
+  padding:10px 12px;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  background:white;
+  cursor:pointer;
+}
+.option:hover { background:#eef6ff; }
+.option span { font-weight:700; color:var(--primary); margin:0 6px; }
+.correct { background:#f0fdf4 !important; border-color:#86efac !important; }
+.wrong { background:#fef2f2 !important; border-color:#fecaca !important; }
+button {
+  border:0;
+  background:var(--primary);
+  color:white;
+  padding:12px 18px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+  margin-right:10px;
+}
+button:hover { background:#12344f; }
+.score {
+  display:inline-block;
+  margin-top:10px;
+  background:#eef6ff;
+  border:1px solid #bfdbfe;
+  padding:11px 14px;
+  border-radius:10px;
+  color:var(--primary);
+  font-weight:700;
+}
+.kbd {
+  font-family:Consolas, monospace;
+  background:#e2e8f0;
+  border:1px solid #cbd5e1;
+  border-radius:6px;
+  padding:2px 6px;
+}
+.sparkle {
+  position:fixed;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  pointer-events:none;
+  background:radial-gradient(circle,#facc15 0%,#fb7185 45%,transparent 70%);
+  z-index:9999;
+  animation:sparkleFade .7s linear forwards;
+}
+@keyframes sparkleFade {
+  from { transform:translateY(0) scale(1); opacity:1; }
+  to { transform:translateY(-16px) scale(.2); opacity:0; }
+}
+@media(max-width:1000px) {
+  header { position:static; }
+  .layout { grid-template-columns:1fr; }
+  aside { position:static; max-height:none; }
+  .grid { grid-template-columns:1fr; }
+  .options { grid-template-columns:1fr; }
+}
+@media print {
+  header, aside, button { position:static; box-shadow:none; }
+  aside { display:none; }
+  .layout { display:block; }
+  .card { break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>SQL Window Functions Tutorial</h1>
+  <p>Corporate trainer style notes with detailed examples, real-time use cases, SQL scripts, MCQs, and interview questions.</p>
+</header>
+
+<div class="layout">
+<aside>
+  <h3>Learning Path</h3>
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#why">Why Window Functions?</a></li>
+    <li><a href="#syntax">Basic Syntax</a></li>
+    <li><a href="#sample">Sample Database</a></li>
+    <li><a href="#aggregate">Aggregate Window Functions</a></li>
+    <li><a href="#ranking">Ranking Functions</a></li>
+    <li><a href="#topn">Top N per Group</a></li>
+    <li><a href="#laglead">LAG and LEAD</a></li>
+    <li><a href="#firstlast">FIRST_VALUE and LAST_VALUE</a></li>
+    <li><a href="#frames">Window Frames</a></li>
+    <li><a href="#realtime">Real-Time Scenarios</a></li>
+    <li><a href="#performance">Performance Tips</a></li>
+    <li><a href="#interview">Interview Q&A</a></li>
+    <li><a href="#mcq">MCQ Assessment</a></li>
+    <li><a href="#answers">Answer Key</a></li>
+  </ol>
+</aside>
+
+<main>
+<section class="card" id="intro">
+  <span class="badge">Module 1</span>
+  <h2>1. Introduction to SQL Window Functions</h2>
+  <p>
+    A <strong>SQL Window Function</strong> performs a calculation across a set of rows that are related to the current row.
+    The important point is: <strong>window functions do not collapse rows</strong>.
+  </p>
+  <div class="explain">
+    <strong>Simple meaning:</strong> GROUP BY gives one row per group, but window functions can show both row-level details and group-level calculations in the same result.
+  </div>
+  <h3>Example Business Question</h3>
+  <p>
+    “Show every order, its order amount, and also show the total sales of that salesperson.”
+    This is a perfect use case for window functions because we need row details and summary values together.
+  </p>
+</section>
+
+<section class="card" id="why">
+  <span class="badge">Module 2</span>
+  <h2>2. Why Do We Need Window Functions?</h2>
+  <div class="grid">
+    <div class="mini"><strong>Analytics</strong>Rank customers, products, students, employees, and salespeople.</div>
+    <div class="mini"><strong>Comparisons</strong>Compare current row with previous or next row using LAG and LEAD.</div>
+    <div class="mini"><strong>Running Calculations</strong>Create running totals, moving averages, and cumulative reports.</div>
+  </div>
+  <h3>GROUP BY vs Window Function</h3>
+  <table>
+    <tr><th>Feature</th><th>GROUP BY</th><th>Window Function</th></tr>
+    <tr><td>Rows returned</td><td>Collapses rows</td><td>Keeps original rows</td></tr>
+    <tr><td>Best for</td><td>Summary report</td><td>Row-level analytics</td></tr>
+    <tr><td>Example</td><td>Total sales by region</td><td>Each order with region total</td></tr>
+  </table>
+</section>
+
+<section class="card" id="syntax">
+  <span class="badge">Module 3</span>
+  <h2>3. Basic Syntax</h2>
+  <pre><code>function_name(column_name) OVER (
+    PARTITION BY column_name
+    ORDER BY column_name
+    ROWS BETWEEN start_point AND end_point
+)</code></pre>
+  <table>
+    <tr><th>Part</th><th>Meaning</th></tr>
+    <tr><td><span class="kbd">function_name</span></td><td>SUM, AVG, ROW_NUMBER, RANK, LAG, LEAD, etc.</td></tr>
+    <tr><td><span class="kbd">OVER()</span></td><td>Identifies the function as a window function.</td></tr>
+    <tr><td><span class="kbd">PARTITION BY</span></td><td>Divides rows into groups for calculation.</td></tr>
+    <tr><td><span class="kbd">ORDER BY</span></td><td>Defines sequence inside each partition.</td></tr>
+    <tr><td><span class="kbd">ROWS BETWEEN</span></td><td>Defines the calculation frame.</td></tr>
+  </table>
+</section>
+
+<section class="card" id="sample">
+  <span class="badge">Module 4</span>
+  <h2>4. Sample Database</h2>
+  <p>Use the attached SQL script: <strong>sample_database_window_functions.sql</strong>.</p>
+  <pre><code>CREATE TABLE sales_orders (
+    order_id INT PRIMARY KEY,
+    order_date DATE,
+    region VARCHAR(50),
+    city VARCHAR(50),
+    salesperson VARCHAR(100),
+    product VARCHAR(100),
+    category VARCHAR(50),
+    quantity INT,
+    unit_price DECIMAL(10,2),
+    order_amount DECIMAL(10,2)
+);</code></pre>
+  <p>The table contains sales data for regions, cities, products, categories, salespeople, dates, and order amounts.</p>
+</section>
+
+<section class="card" id="aggregate">
+  <span class="badge">Module 5</span>
+  <h2>5. Aggregate Window Functions</h2>
+  <p>Aggregate window functions calculate totals, averages, counts, minimums, and maximums while keeping each row in the output.</p>
+
+  <h3>Example 1: Grand Total with Every Row</h3>
+  <pre><code>SELECT
+    order_id,
+    region,
+    salesperson,
+    order_amount,
+    SUM(order_amount) OVER() AS grand_total
+FROM sales_orders;</code></pre>
+  <div class="explain">
+    <strong>Explanation:</strong> <span class="kbd">SUM(order_amount) OVER()</span> calculates the total of all orders and repeats that value beside every row.
+  </div>
+
+  <h3>Example 2: Region-wise Total with Every Order</h3>
+  <pre><code>SELECT
+    order_id,
+    region,
+    salesperson,
+    order_amount,
+    SUM(order_amount) OVER(PARTITION BY region) AS region_total
+FROM sales_orders;</code></pre>
+  <div class="explain">
+    <strong>Explanation:</strong> <span class="kbd">PARTITION BY region</span> means the total is calculated separately for South, North, East, and West.
+  </div>
+
+  <h3>Example 3: Percentage Contribution to Region Sales</h3>
+  <pre><code>SELECT
+    order_id,
+    region,
+    salesperson,
+    order_amount,
+    ROUND(
+      order_amount * 100.0 /
+      SUM(order_amount) OVER(PARTITION BY region), 2
+    ) AS percentage_of_region_sales
+FROM sales_orders;</code></pre>
+  <div class="explain">
+    <strong>Real-time use:</strong> This is used in dashboards to show how much each order contributes to regional revenue.
+  </div>
+</section>
+
+<section class="card" id="ranking">
+  <span class="badge">Module 6</span>
+  <h2>6. Ranking Window Functions</h2>
+  <p>Ranking functions assign position numbers based on order.</p>
+
+  <table>
+    <tr><th>Function</th><th>Meaning</th><th>Tie Handling</th></tr>
+    <tr><td>ROW_NUMBER()</td><td>Unique sequence number</td><td>No tie handling; every row gets unique number</td></tr>
+    <tr><td>RANK()</td><td>Rank with gaps</td><td>Same rank for ties, skips next rank</td></tr>
+    <tr><td>DENSE_RANK()</td><td>Rank without gaps</td><td>Same rank for ties, no skipped rank</td></tr>
+    <tr><td>NTILE(n)</td><td>Divides rows into n buckets</td><td>Useful for quartiles/percentiles</td></tr>
+  </table>
+
+  <h3>Example: Rank Orders by Amount Within Each Region</h3>
+  <pre><code>SELECT
+    order_id,
+    region,
+    salesperson,
+    order_amount,
+    ROW_NUMBER() OVER(PARTITION BY region ORDER BY order_amount DESC) AS row_num,
+    RANK() OVER(PARTITION BY region ORDER BY order_amount DESC) AS sales_rank,
+    DENSE_RANK() OVER(PARTITION BY region ORDER BY order_amount DESC) AS dense_sales_rank
+FROM sales_orders;</code></pre>
+
+  <div class="warning">
+    <strong>Trainer Note:</strong> Always use <span class="kbd">ORDER BY</span> with ranking functions. Without order, ranking has no business meaning.
+  </div>
+</section>
+
+<section class="card" id="topn">
+  <span class="badge">Module 7</span>
+  <h2>7. Top N Records Per Group</h2>
+  <p>This is one of the most important interview and real-time use cases.</p>
+
+  <h3>Requirement</h3>
+  <p>Find top 2 highest value orders from each region.</p>
+
+  <pre><code>WITH ranked_orders AS (
+    SELECT
+        order_id,
+        region,
+        salesperson,
+        order_amount,
+        ROW_NUMBER() OVER(
+            PARTITION BY region
+            ORDER BY order_amount DESC
+        ) AS rn
+    FROM sales_orders
+)
+SELECT *
+FROM ranked_orders
+WHERE rn &lt;= 2;</code></pre>
+
+  <div class="explain">
+    <strong>Step-by-step:</strong>
+    <ol>
+      <li>Partition rows by region.</li>
+      <li>Sort each region by order amount descending.</li>
+      <li>Assign row number inside each region.</li>
+      <li>Filter only row numbers 1 and 2.</li>
+    </ol>
+  </div>
+</section>
+
+<section class="card" id="laglead">
+  <span class="badge">Module 8</span>
+  <h2>8. LAG and LEAD Functions</h2>
+  <p>
+    <strong>LAG</strong> gets data from the previous row. <strong>LEAD</strong> gets data from the next row.
+    These functions are very useful for trend analysis.
+  </p>
+
+  <h3>Example: Previous and Next Order Amount by Salesperson</h3>
+  <pre><code>SELECT
+    order_id,
+    order_date,
+    salesperson,
+    order_amount,
+    LAG(order_amount) OVER(
+        PARTITION BY salesperson
+        ORDER BY order_date
+    ) AS previous_order_amount,
+    LEAD(order_amount) OVER(
+        PARTITION BY salesperson
+        ORDER BY order_date
+    ) AS next_order_amount
+FROM sales_orders;</code></pre>
+
+  <h3>Example: Difference From Previous Order</h3>
+  <pre><code>SELECT
+    order_id,
+    order_date,
+    salesperson,
+    order_amount,
+    order_amount -
+    LAG(order_amount) OVER(
+        PARTITION BY salesperson
+        ORDER BY order_date
+    ) AS difference_from_previous_order
+FROM sales_orders;</code></pre>
+
+  <div class="explain">
+    <strong>Real-time use:</strong> Month-over-month sales comparison, stock price comparison, attendance trend, customer purchase trend.
+  </div>
+</section>
+
+<section class="card" id="firstlast">
+  <span class="badge">Module 9</span>
+  <h2>9. FIRST_VALUE and LAST_VALUE</h2>
+  <p>These functions return the first or last value in an ordered window.</p>
+
+  <pre><code>SELECT
+    order_id,
+    salesperson,
+    order_date,
+    order_amount,
+    FIRST_VALUE(order_amount) OVER(
+        PARTITION BY salesperson
+        ORDER BY order_date
+    ) AS first_order_amount,
+    LAST_VALUE(order_amount) OVER(
+        PARTITION BY salesperson
+        ORDER BY order_date
+        ROWS BETWEEN UNBOUNDED PRECEDING
+             AND UNBOUNDED FOLLOWING
+    ) AS last_order_amount
+FROM sales_orders;</code></pre>
+
+  <div class="warning">
+    <strong>Important:</strong> For <span class="kbd">LAST_VALUE</span>, use an explicit frame like
+    <span class="kbd">ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING</span>.
+    Otherwise, many databases return the current row as the last value because of the default frame.
+  </div>
+</section>
+
+<section class="card" id="frames">
+  <span class="badge">Module 10</span>
+  <h2>10. Window Frames</h2>
+  <p>A window frame controls exactly which rows participate in the calculation for the current row.</p>
+
+  <h3>Running Total</h3>
+  <pre><code>SELECT
+    order_id,
+    order_date,
+    order_amount,
+    SUM(order_amount) OVER(
+        ORDER BY order_date
+        ROWS BETWEEN UNBOUNDED PRECEDING
+             AND CURRENT ROW
+    ) AS running_total
+FROM sales_orders;</code></pre>
+
+  <h3>Moving Average of Last 3 Orders</h3>
+  <pre><code>SELECT
+    order_id,
+    order_date,
+    order_amount,
+    AVG(order_amount) OVER(
+        ORDER BY order_date
+        ROWS BETWEEN 2 PRECEDING
+             AND CURRENT ROW
+    ) AS moving_average_last_3_orders
+FROM sales_orders;</code></pre>
+
+  <table>
+    <tr><th>Frame</th><th>Meaning</th></tr>
+    <tr><td>UNBOUNDED PRECEDING</td><td>Start from the first row of the partition</td></tr>
+    <tr><td>CURRENT ROW</td><td>Current row being calculated</td></tr>
+    <tr><td>2 PRECEDING</td><td>Two rows before the current row</td></tr>
+    <tr><td>UNBOUNDED FOLLOWING</td><td>Go until the last row of the partition</td></tr>
+  </table>
+</section>
+
+<section class="card" id="realtime">
+  <span class="badge">Module 11</span>
+  <h2>11. Real-Time Business Scenarios</h2>
+  <table>
+    <tr><th>Scenario</th><th>Window Function Usage</th><th>Example Function</th></tr>
+    <tr><td>Top 3 salespeople per region</td><td>Rank salespeople region-wise</td><td>ROW_NUMBER / RANK</td></tr>
+    <tr><td>Month-over-month sales growth</td><td>Compare current month with previous month</td><td>LAG</td></tr>
+    <tr><td>Customer purchase journey</td><td>Find previous and next purchase</td><td>LAG / LEAD</td></tr>
+    <tr><td>Running revenue dashboard</td><td>Cumulative total by date</td><td>SUM OVER</td></tr>
+    <tr><td>Sales quartile analysis</td><td>Divide salespeople into 4 groups</td><td>NTILE(4)</td></tr>
+    <tr><td>First and latest transaction</td><td>Find first/latest order per customer</td><td>FIRST_VALUE / LAST_VALUE</td></tr>
+  </table>
+</section>
+
+<section class="card" id="performance">
+  <span class="badge">Module 12</span>
+  <h2>12. Performance and Best Practices</h2>
+  <ul>
+    <li>Use window functions only when row-level details and analytics are both required.</li>
+    <li>Index columns used in <span class="kbd">PARTITION BY</span> and <span class="kbd">ORDER BY</span> when appropriate.</li>
+    <li>Filter unnecessary data before applying window functions.</li>
+    <li>Avoid <span class="kbd">SELECT *</span> in production queries.</li>
+    <li>Use CTEs to make complex window queries readable.</li>
+    <li>Be careful with <span class="kbd">LAST_VALUE</span>; define the frame explicitly.</li>
+    <li>Use <span class="kbd">ROW_NUMBER</span> for deduplication and Top N filtering.</li>
+  </ul>
+</section>
+
+<section class="card" id="interview">
+  <span class="badge">Module 13</span>
+  <h2>13. Interview Questions and Answers</h2>
+
+  <h3>1. What is a window function?</h3>
+  <p>A window function performs calculations across a set of rows related to the current row without collapsing the output rows.</p>
+
+  <h3>2. Difference between GROUP BY and window function?</h3>
+  <p>GROUP BY reduces rows into summary rows. Window functions preserve row-level data and add analytical values beside each row.</p>
+
+  <h3>3. Difference between ROW_NUMBER, RANK, and DENSE_RANK?</h3>
+  <ul>
+    <li><strong>ROW_NUMBER:</strong> unique number for every row.</li>
+    <li><strong>RANK:</strong> same rank for ties but skips next rank.</li>
+    <li><strong>DENSE_RANK:</strong> same rank for ties and does not skip rank.</li>
+  </ul>
+
+  <h3>4. When do we use LAG?</h3>
+  <p>Use LAG when you need previous row value, such as previous month sales, previous salary, previous order, or previous transaction amount.</p>
+
+  <h3>5. How do you get Top 2 employees by salary in each department?</h3>
+  <pre><code>WITH ranked_employees AS (
+  SELECT
+      employee_id,
+      department_id,
+      salary,
+      ROW_NUMBER() OVER(
+          PARTITION BY department_id
+          ORDER BY salary DESC
+      ) AS rn
+  FROM employees
+)
+SELECT *
+FROM ranked_employees
+WHERE rn &lt;= 2;</code></pre>
+
+  <h3>6. Why is ORDER BY important in window functions?</h3>
+  <p>ORDER BY defines the sequence of rows. Ranking, running totals, LAG, LEAD, FIRST_VALUE, and LAST_VALUE depend on correct ordering.</p>
+</section>
+
+<section class="card" id="mcq">
+  <span class="badge">Assessment</span>
+  <h2>14. MCQ Assessment</h2>
+  <p>Choose one answer for each question, then click submit to calculate marks.</p>
+  
+    <div class="question" id="q1">
+      <h4>Q1. What is the main purpose of a SQL window function?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q1" value="A"><span>A.</span> To calculate results across related rows without collapsing rows</label><label class="option"><input type="radio" name="q1" value="B"><span>B.</span> To delete duplicate rows permanently</label><label class="option"><input type="radio" name="q1" value="C"><span>C.</span> To create a database window on screen</label><label class="option"><input type="radio" name="q1" value="D"><span>D.</span> To replace all joins</label></div>
+    </div>
+    
+    <div class="question" id="q2">
+      <h4>Q2. Which clause is used inside window functions to divide data into groups?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q2" value="A"><span>A.</span> GROUP BY ONLY</label><label class="option"><input type="radio" name="q2" value="B"><span>B.</span> PARTITION BY</label><label class="option"><input type="radio" name="q2" value="C"><span>C.</span> WHERE</label><label class="option"><input type="radio" name="q2" value="D"><span>D.</span> HAVING</label></div>
+    </div>
+    
+    <div class="question" id="q3">
+      <h4>Q3. Which clause defines the order of rows inside a window?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q3" value="A"><span>A.</span> GROUP BY</label><label class="option"><input type="radio" name="q3" value="B"><span>B.</span> SELECT</label><label class="option"><input type="radio" name="q3" value="C"><span>C.</span> ORDER BY</label><label class="option"><input type="radio" name="q3" value="D"><span>D.</span> INSERT</label></div>
+    </div>
+    
+    <div class="question" id="q4">
+      <h4>Q4. What does ROW_NUMBER() return?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q4" value="A"><span>A.</span> Same rank for duplicate values</label><label class="option"><input type="radio" name="q4" value="B"><span>B.</span> Only total rows in table</label><label class="option"><input type="radio" name="q4" value="C"><span>C.</span> A random number</label><label class="option"><input type="radio" name="q4" value="D"><span>D.</span> A unique sequential number for each row in the partition</label></div>
+    </div>
+    
+    <div class="question" id="q5">
+      <h4>Q5. What is the difference between RANK() and DENSE_RANK()?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q5" value="A"><span>A.</span> RANK skips numbers after ties, DENSE_RANK does not</label><label class="option"><input type="radio" name="q5" value="B"><span>B.</span> DENSE_RANK skips numbers after ties, RANK does not</label><label class="option"><input type="radio" name="q5" value="C"><span>C.</span> Both always return same output</label><label class="option"><input type="radio" name="q5" value="D"><span>D.</span> Both are aggregate functions only</label></div>
+    </div>
+    
+    <div class="question" id="q6">
+      <h4>Q6. Which function is used to access previous row data?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q6" value="A"><span>A.</span> LEAD</label><label class="option"><input type="radio" name="q6" value="B"><span>B.</span> LAG</label><label class="option"><input type="radio" name="q6" value="C"><span>C.</span> FIRST_VALUE</label><label class="option"><input type="radio" name="q6" value="D"><span>D.</span> NTILE</label></div>
+    </div>
+    
+    <div class="question" id="q7">
+      <h4>Q7. Which function is used to access next row data?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q7" value="A"><span>A.</span> LAG</label><label class="option"><input type="radio" name="q7" value="B"><span>B.</span> LAST_VALUE</label><label class="option"><input type="radio" name="q7" value="C"><span>C.</span> LEAD</label><label class="option"><input type="radio" name="q7" value="D"><span>D.</span> ROW_NUMBER</label></div>
+    </div>
+    
+    <div class="question" id="q8">
+      <h4>Q8. Which function divides rows into buckets?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q8" value="A"><span>A.</span> RANK</label><label class="option"><input type="radio" name="q8" value="B"><span>B.</span> SUM</label><label class="option"><input type="radio" name="q8" value="C"><span>C.</span> COUNT</label><label class="option"><input type="radio" name="q8" value="D"><span>D.</span> NTILE</label></div>
+    </div>
+    
+    <div class="question" id="q9">
+      <h4>Q9. What is a running total?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q9" value="A"><span>A.</span> Cumulative total calculated row by row</label><label class="option"><input type="radio" name="q9" value="B"><span>B.</span> Total of only the first row</label><label class="option"><input type="radio" name="q9" value="C"><span>C.</span> Total after deleting rows</label><label class="option"><input type="radio" name="q9" value="D"><span>D.</span> Average of all rows</label></div>
+    </div>
+    
+    <div class="question" id="q10">
+      <h4>Q10. Which frame means from the first row up to the current row?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q10" value="A"><span>A.</span> ROWS BETWEEN CURRENT ROW AND CURRENT ROW</label><label class="option"><input type="radio" name="q10" value="B"><span>B.</span> ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW</label><label class="option"><input type="radio" name="q10" value="C"><span>C.</span> ROWS BETWEEN 1 FOLLOWING AND 2 FOLLOWING</label><label class="option"><input type="radio" name="q10" value="D"><span>D.</span> ROWS BETWEEN UNBOUNDED FOLLOWING AND CURRENT ROW</label></div>
+    </div>
+    
+    <div class="question" id="q11">
+      <h4>Q11. Which function is best for top N records per category?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q11" value="A"><span>A.</span> DELETE</label><label class="option"><input type="radio" name="q11" value="B"><span>B.</span> CREATE VIEW only</label><label class="option"><input type="radio" name="q11" value="C"><span>C.</span> ROW_NUMBER with PARTITION BY and ORDER BY</label><label class="option"><input type="radio" name="q11" value="D"><span>D.</span> COMMIT</label></div>
+    </div>
+    
+    <div class="question" id="q12">
+      <h4>Q12. Window functions are different from GROUP BY because:</h4>
+      <div class="options"><label class="option"><input type="radio" name="q12" value="A"><span>A.</span> They always delete rows</label><label class="option"><input type="radio" name="q12" value="B"><span>B.</span> They cannot calculate totals</label><label class="option"><input type="radio" name="q12" value="C"><span>C.</span> They work only on text columns</label><label class="option"><input type="radio" name="q12" value="D"><span>D.</span> They do not collapse rows into one row per group</label></div>
+    </div>
+    
+    <div class="question" id="q13">
+      <h4>Q13. Which example is suitable for LAG?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q13" value="A"><span>A.</span> Comparing current month sales with previous month sales</label><label class="option"><input type="radio" name="q13" value="B"><span>B.</span> Creating a primary key</label><label class="option"><input type="radio" name="q13" value="C"><span>C.</span> Dropping a table</label><label class="option"><input type="radio" name="q13" value="D"><span>D.</span> Changing column data type</label></div>
+    </div>
+    
+    <div class="question" id="q14">
+      <h4>Q14. Which function gives the first value within a window?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q14" value="A"><span>A.</span> LAST_VALUE</label><label class="option"><input type="radio" name="q14" value="B"><span>B.</span> FIRST_VALUE</label><label class="option"><input type="radio" name="q14" value="C"><span>C.</span> LEAD</label><label class="option"><input type="radio" name="q14" value="D"><span>D.</span> MOD</label></div>
+    </div>
+    
+    <div class="question" id="q15">
+      <h4>Q15. Why should LAST_VALUE often use an explicit frame?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q15" value="A"><span>A.</span> It cannot work with ORDER BY</label><label class="option"><input type="radio" name="q15" value="B"><span>B.</span> It deletes last row</label><label class="option"><input type="radio" name="q15" value="C"><span>C.</span> Default frame may return current row value instead of true last row</label><label class="option"><input type="radio" name="q15" value="D"><span>D.</span> It works only with strings</label></div>
+    </div>
+    
+    <div class="question" id="q16">
+      <h4>Q16. Which function calculates total sales while still showing each order row?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q16" value="A"><span>A.</span> SUM() GROUP ONLY</label><label class="option"><input type="radio" name="q16" value="B"><span>B.</span> DELETE OVER()</label><label class="option"><input type="radio" name="q16" value="C"><span>C.</span> CREATE TOTAL</label><label class="option"><input type="radio" name="q16" value="D"><span>D.</span> SUM() OVER()</label></div>
+    </div>
+    
+    <div class="question" id="q17">
+      <h4>Q17. Which keyword is mandatory for ranking functions to produce meaningful ranking?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q17" value="A"><span>A.</span> ORDER BY</label><label class="option"><input type="radio" name="q17" value="B"><span>B.</span> INSERT</label><label class="option"><input type="radio" name="q17" value="C"><span>C.</span> DROP</label><label class="option"><input type="radio" name="q17" value="D"><span>D.</span> COMMIT</label></div>
+    </div>
+    
+    <div class="question" id="q18">
+      <h4>Q18. What does PARTITION BY region do?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q18" value="A"><span>A.</span> Deletes region column</label><label class="option"><input type="radio" name="q18" value="B"><span>B.</span> Creates separate calculation groups for each region</label><label class="option"><input type="radio" name="q18" value="C"><span>C.</span> Sorts only alphabetically</label><label class="option"><input type="radio" name="q18" value="D"><span>D.</span> Creates a table named region</label></div>
+    </div>
+    
+    <div class="question" id="q19">
+      <h4>Q19. Which SQL feature improves analytics reports like top performers and running totals?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q19" value="A"><span>A.</span> DROP TABLE</label><label class="option"><input type="radio" name="q19" value="B"><span>B.</span> TRUNCATE</label><label class="option"><input type="radio" name="q19" value="C"><span>C.</span> Window functions</label><label class="option"><input type="radio" name="q19" value="D"><span>D.</span> GRANT only</label></div>
+    </div>
+    
+    <div class="question" id="q20">
+      <h4>Q20. Which is a performance tip for window functions?</h4>
+      <div class="options"><label class="option"><input type="radio" name="q20" value="A"><span>A.</span> Always use SELECT *</label><label class="option"><input type="radio" name="q20" value="B"><span>B.</span> Avoid filtering data before window functions</label><label class="option"><input type="radio" name="q20" value="C"><span>C.</span> Use window functions for every simple query</label><label class="option"><input type="radio" name="q20" value="D"><span>D.</span> Index columns used in PARTITION BY and ORDER BY when useful</label></div>
+    </div>
+    
+  <button onclick="calculateScore()">Submit & Calculate Score</button>
+  <button onclick="resetQuiz()">Reset</button>
+  <div class="score" id="scoreBox">Score: Not submitted</div>
+</section>
+
+<section class="card" id="answers">
+  <span class="badge">Answer Key</span>
+  <h2>15. Answer Key</h2>
+  <table>
+    <tr><th>Question</th><th>Answer</th></tr>
+    <tr><td>1</td><td>A</td></tr><tr><td>2</td><td>B</td></tr><tr><td>3</td><td>C</td></tr><tr><td>4</td><td>D</td></tr><tr><td>5</td><td>A</td></tr><tr><td>6</td><td>B</td></tr><tr><td>7</td><td>C</td></tr><tr><td>8</td><td>D</td></tr><tr><td>9</td><td>A</td></tr><tr><td>10</td><td>B</td></tr><tr><td>11</td><td>C</td></tr><tr><td>12</td><td>D</td></tr><tr><td>13</td><td>A</td></tr><tr><td>14</td><td>B</td></tr><tr><td>15</td><td>C</td></tr><tr><td>16</td><td>D</td></tr><tr><td>17</td><td>A</td></tr><tr><td>18</td><td>B</td></tr><tr><td>19</td><td>C</td></tr><tr><td>20</td><td>D</td></tr>
+  </table>
+</section>
+
+</main>
+</div>
+
+<script>
+const answers = {"q1":"A","q2":"B","q3":"C","q4":"D","q5":"A","q6":"B","q7":"C","q8":"D","q9":"A","q10":"B","q11":"C","q12":"D","q13":"A","q14":"B","q15":"C","q16":"D","q17":"A","q18":"B","q19":"C","q20":"D"};
+
+function calculateScore() {
+  let score = 0;
+  let attempted = 0;
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('correct','wrong'));
+
+  for (const [q, ans] of Object.entries(answers)) {
+    const selected = document.querySelector(`input[name="${q}"]:checked`);
+    const options = document.querySelectorAll(`input[name="${q}"]`);
+    options.forEach(input => {
+      if (input.value === ans) input.closest('.option').classList.add('correct');
+    });
+    if (selected) {
+      attempted++;
+      if (selected.value === ans) {
+        score++;
+      } else {
+        selected.closest('.option').classList.add('wrong');
+      }
+    }
+  }
+  const total = Object.keys(answers).length;
+  const percent = ((score / total) * 100).toFixed(2);
+  document.getElementById('scoreBox').innerHTML = `Score: ${score} / ${total} (${percent}%) | Attempted: ${attempted}`;
+}
+
+function resetQuiz() {
+  document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = false);
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('correct','wrong'));
+  document.getElementById('scoreBox').innerHTML = 'Score: Not submitted';
+}
+
+document.addEventListener('mousemove', e => {
+  if (Math.random() > 0.82) {
+    const s = document.createElement('span');
+    s.className = 'sparkle';
+    s.style.left = e.clientX + 'px';
+    s.style.top = e.clientY + 'px';
+    document.body.appendChild(s);
+    setTimeout(() => s.remove(), 700);
+  }
+});
+</script>
+</body>
+</html>

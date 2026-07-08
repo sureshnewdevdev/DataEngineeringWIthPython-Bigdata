@@ -1,0 +1,11 @@
+trip_id,city,driver_id,status,fare
+T001,Chennai,D101,completed,350
+T002,Bangalore,D102,completed,220
+T003,Chennai,D101,completed,420
+T004,Hyderabad,D103,cancelled,0
+T005,Bangalore,D104,completed,300
+T006,Chennai,D105,completed,180
+T007,Hyderabad,D103,completed,540
+T008,Mumbai,D106,completed,750
+T009,Chennai,D107,completed,260
+T010,Bangalore,D108,cancelled,0
