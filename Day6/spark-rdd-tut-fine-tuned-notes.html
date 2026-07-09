@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TUT: Spark RDD Creation and Spark Shell - Fine Tuned Notes</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --ink: #172033;
+      --muted: #5b6475;
+      --primary: #1f4e79;
+      --primary-dark: #0f2742;
+      --accent: #f59e0b;
+      --good: #15803d;
+      --bad: #b91c1c;
+      --info: #0369a1;
+      --violet: #6d28d9;
+      --line: #d9e2ef;
+      --soft-blue: #eff6ff;
+      --soft-yellow: #fffbeb;
+      --soft-green: #f0fdf4;
+      --soft-red: #fff1f2;
+      --soft-violet: #f5f3ff;
+      --code-bg: #101827;
+      --code-text: #e6edf3;
+      --shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.68;
+    }
+    .topbar {
+      background: linear-gradient(135deg, #0f172a, #1f4e79 60%, #0369a1);
+      color: white;
+      padding: 28px 24px 22px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: var(--shadow);
+    }
+    .topbar h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -0.3px; }
+    .topbar p { margin: 0; color: #dbeafe; max-width: 1200px; }
+    .hero-tags { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.22);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .layout {
+      max-width: 1480px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 290px minmax(0, 1fr) 250px;
+      gap: 20px;
+      padding: 22px;
+    }
+    nav, aside {
+      position: sticky;
+      top: 132px;
+      align-self: start;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      max-height: calc(100vh - 154px);
+      overflow: auto;
+    }
+    nav strong, aside strong { color: var(--primary-dark); display: block; margin-bottom: 10px; }
+    nav a {
+      display: block;
+      color: var(--primary);
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 14px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    nav a:hover, nav a.active { background: var(--soft-blue); font-weight: 700; }
+    main { min-width: 0; }
+    .breadcrumb {
+      color: var(--muted);
+      font-size: 13px;
+      margin: 0 0 12px;
+    }
+    section {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    section:hover {
+      transform: translateY(-2px);
+      border-color: #93c5fd;
+      box-shadow: 0 18px 36px rgba(15,23,42,0.11);
+    }
+    h2 {
+      color: var(--primary);
+      margin: 0 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e5edf8;
+      font-size: 25px;
+    }
+    h3 { color: #0f3b63; margin: 22px 0 10px; }
+    h4 { color: #334155; margin: 16px 0 8px; }
+    p { margin: 8px 0 12px; }
+    ul, ol { padding-left: 23px; }
+    li { margin: 6px 0; }
+    .badge {
+      display: inline-block;
+      background: #e0f2fe;
+      color: #075985;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      margin: 0 6px 8px 0;
+    }
+    .badge.orange { background: #fef3c7; color: #92400e; }
+    .badge.green { background: #dcfce7; color: #166534; }
+    .badge.violet { background: #ede9fe; color: #5b21b6; }
+    .trainer-note, .activity, .warning, .output, .interview, .memory, .labbox {
+      border-left: 5px solid var(--primary);
+      background: #f8fbff;
+      padding: 14px 16px;
+      border-radius: 14px;
+      margin: 14px 0;
+    }
+    .activity { border-left-color: var(--accent); background: var(--soft-yellow); }
+    .warning { border-left-color: var(--bad); background: var(--soft-red); }
+    .output { border-left-color: var(--good); background: var(--soft-green); }
+    .interview { border-left-color: var(--violet); background: var(--soft-violet); }
+    .memory { border-left-color: #0ea5e9; background: #f0f9ff; }
+    .labbox { border-left-color: #64748b; background: #f8fafc; }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px;
+      border-radius: 15px;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.5;
+      position: relative;
+      margin: 12px 0 18px;
+      border: 1px solid #25334a;
+    }
+    code { font-family: Consolas, Monaco, "Courier New", monospace; }
+    .code-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: #0b1220;
+      color: #dbeafe;
+      border-radius: 14px 14px 0 0;
+      padding: 8px 12px;
+      font-size: 13px;
+      margin-top: 14px;
+      border: 1px solid #25334a;
+      border-bottom: 0;
+    }
+    .code-title + pre { border-radius: 0 0 14px 14px; margin-top: 0; }
+    .copy-btn {
+      background: #334155;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 9px;
+      cursor: pointer;
+      font-size: 12px;
+      margin: 0;
+    }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; border-radius: 14px; overflow: hidden; }
+    th, td { border: 1px solid var(--line); padding: 10px; vertical-align: top; }
+    th { background: #eaf3ff; color: #123d63; }
+    tr:nth-child(even) td { background: #fbfdff; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .card strong { color: var(--primary-dark); }
+    .diagram {
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px;
+      margin: 14px 0;
+      overflow-x: auto;
+    }
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .flow .box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      color: #0f3b63;
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-width: 145px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .arrow { align-self: center; font-weight: 900; color: var(--primary); font-size: 22px; }
+    .partition-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .partition {
+      border: 1px dashed #60a5fa;
+      background: #eff6ff;
+      border-radius: 14px;
+      padding: 12px;
+      text-align: center;
+      font-weight: 700;
+    }
+    .steps { counter-reset: step; }
+    .step {
+      counter-increment: step;
+      position: relative;
+      padding-left: 52px;
+      margin: 14px 0;
+    }
+    .step::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      line-height: 34px;
+      text-align: center;
+      font-weight: 900;
+      background: var(--primary);
+      color: white;
+    }
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 800;
+      margin: 6px 6px 6px 0;
+    }
+    button:hover { filter: brightness(1.08); }
+    .secondary-btn { background: #475569; }
+    .success-btn { background: var(--good); }
+    .danger-btn { background: var(--bad); }
+    .small-btn { padding: 7px 10px; font-size: 12px; }
+    .progress-box { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+    .check-item {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      min-width: 230px;
+    }
+    .quiz-question, .exam-question {
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      padding: 14px;
+      margin: 12px 0;
+      background: #fbfdff;
+    }
+    label { display: block; margin: 7px 0; cursor: pointer; }
+    .score { font-weight: 900; font-size: 18px; margin-top: 12px; color: var(--primary-dark); }
+    .explain { color: var(--muted); font-size: 14px; margin-top: 6px; }
+    .notes-box {
+      width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-family: inherit;
+    }
+    .flash-card {
+      border: 1px solid #c7d2fe;
+      background: #eef2ff;
+      border-radius: 16px;
+      padding: 14px;
+      min-height: 110px;
+    }
+    .right-box {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .right-box .num { font-size: 22px; color: var(--primary); font-weight: 900; }
+    .kbd {
+      display: inline-block;
+      font-family: Consolas, monospace;
+      padding: 1px 6px;
+      border-radius: 6px;
+      background: #e5e7eb;
+      border: 1px solid #cbd5e1;
+      font-size: 90%;
+    }
+    .sparkle {
+      position: fixed;
+      width: 8px;
+      height: 8px;
+      background: #facc15;
+      border-radius: 50%;
+      pointer-events: none;
+      animation: sparkle 0.8s linear forwards;
+      z-index: 9999;
+    }
+    @keyframes sparkle { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(0); opacity: 0; } }
+    .footer { text-align: center; color: var(--muted); padding: 34px 10px; }
+    .mini-result { margin-top: 8px; font-weight: 800; }
+    @media (max-width: 1180px) { .layout { grid-template-columns: 260px 1fr; } aside { display: none; } }
+    @media (max-width: 860px) {
+      .topbar { position: static; }
+      .layout { grid-template-columns: 1fr; padding: 14px; }
+      nav { position: static; max-height: none; }
+      .grid-2, .grid-3, .partition-grid { grid-template-columns: 1fr; }
+      section { padding: 18px; }
+      .flow { display: block; }
+      .arrow { display: block; text-align: center; margin: 5px 0; }
+    }
+    @media print {
+      .topbar, nav, aside, button { position: static; box-shadow: none; }
+      .layout { display: block; max-width: 100%; }
+      nav, aside { display: none; }
+      section { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>TUT: Spark RDD Creation and Spark Shell</h1>
+    <p>Fine-tuned classroom notes for Resilient Distributed Dataset, RDD creation methods, Spark Shell practice, count/filter/take/partitions/cache/saveAsTextFile, interview preparation and hands-on exercises.</p>
+    <div class="hero-tags">
+      <span class="tag">Corporate Trainer Notes</span>
+      <span class="tag">Spoon-feeding Explanation</span>
+      <span class="tag">Spark Shell Commands</span>
+      <span class="tag">RDD Hands-on Lab</span>
+      <span class="tag">Quiz + Formal Exam</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav id="nav">
+      <strong>Course Navigation</strong>
+      <a href="#s1">1. Course Overview</a>
+      <a href="#s2">2. Business Story</a>
+      <a href="#s3">3. What is RDD?</a>
+      <a href="#s4">4. RDD Mental Model</a>
+      <a href="#s5">5. Spark Execution Diagram</a>
+      <a href="#s6">6. Ways to Create RDD</a>
+      <a href="#s7">7. Parallelized Collections</a>
+      <a href="#s8">8. External Datasets</a>
+      <a href="#s9">9. Existing RDDs</a>
+      <a href="#s10">10. Spark Shell Lab</a>
+      <a href="#s11">11. RDD Operations</a>
+      <a href="#s12">12. Full Practical Lab</a>
+      <a href="#s13">13. Transformations vs Actions</a>
+      <a href="#s14">14. Best Practices</a>
+      <a href="#s15">15. Troubleshooting</a>
+      <a href="#s16">16. Interview Q&A</a>
+      <a href="#s17">17. Exercises</a>
+      <a href="#s18">18. Quiz + Exam + Notes</a>
+    </nav>
+
+    <main>
+      <p class="breadcrumb">Home / Big Data / Apache Spark / RDD Creation</p>
+
+      <section id="s1">
+        <h2>1. Course Overview</h2>
+        <span class="badge">RDD</span><span class="badge orange">Spark Shell</span><span class="badge green">Hands-on</span><span class="badge violet">Interview Ready</span>
+        <p>This tutorial explains <strong>RDD creation in Apache Spark</strong> from absolute basics to practical Spark Shell commands. The topic is taught in a trainer-led style, so every concept starts with a simple meaning, then a technical explanation, then a practical example.</p>
+        <div class="trainer-note"><strong>Trainer Goal:</strong> Learners should be able to open Spark Shell, create RDDs using different methods, apply basic transformations/actions, understand partitions and caching, and save RDD output to files.</div>
+        <h3>Topics Covered</h3>
+        <ul>
+          <li>What is RDD?</li>
+          <li>Why RDD is called <strong>Resilient Distributed Dataset</strong></li>
+          <li>Different ways to create RDDs</li>
+          <li>Parallelized Collections using <code>sc.parallelize()</code></li>
+          <li>External Datasets using <code>sc.textFile()</code></li>
+          <li>Existing RDDs using transformations such as <code>map</code>, <code>filter</code>, <code>flatMap</code></li>
+          <li>Spark Shell examples: read file, create RDD, count, filter, take, partitions, cache, saveAsTextFile</li>
+          <li>Best practices, common errors, interview Q&A and exercises</li>
+        </ul>
+        <div class="memory"><strong>One-line Memory:</strong> RDD is Spark's basic distributed data structure. It stores data as partitions across machines and allows parallel processing.</div>
+      </section>
+
+      <section id="s2">
+        <h2>2. Business Story: SmartRide Trip Analysis</h2>
+        <p>Assume we work for <strong>SmartRide</strong>, an Ola/Uber-like company. Every ride creates one line of trip data.</p>
+        <div class="code-title"><span>sample input: trips.txt</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>T001,D101,Chennai,12,350,UPI,4.5
+T002,D102,Bangalore,8,220,Cash,4.0
+T003,D101,Chennai,15,420,Card,4.8
+T004,D103,Hyderabad,20,600,UPI,4.7
+T005,D104,Chennai,5,150,UPI,4.1
+T006,D105,Bangalore,18,520,Card,4.9</code></pre>
+        <h3>Business Questions</h3>
+        <div class="grid-2">
+          <div class="card"><strong>Trip Count:</strong><br>How many trips are present in the file?</div>
+          <div class="card"><strong>City Filter:</strong><br>How many trips happened in Chennai?</div>
+          <div class="card"><strong>Preview:</strong><br>Show first 3 trip records to validate data.</div>
+          <div class="card"><strong>Output:</strong><br>Save filtered Chennai trips into a new folder.</div>
+        </div>
+        <div class="activity"><strong>Classroom Hook:</strong> First ask learners to count 6 records manually. Then ask how they will count 60 crore trip records. This creates the need for distributed data processing using RDD partitions.</div>
+      </section>
+
+      <section id="s3">
+        <h2>3. What is RDD?</h2>
+        <h3>Simple Definition</h3>
+        <p><strong>RDD stands for Resilient Distributed Dataset.</strong> It is the basic data structure in Spark used to store and process data in distributed form.</p>
+        <h3>Technical Definition</h3>
+        <p>An RDD is an immutable, distributed collection of objects partitioned across a cluster. Spark can process these partitions in parallel, and if one partition is lost, Spark can recreate it using lineage information.</p>
+        <table>
+          <tr><th>Letter</th><th>Meaning</th><th>Spoon-feeding Explanation</th></tr>
+          <tr><td><strong>R</strong></td><td>Resilient</td><td>Fault tolerant. If data is lost, Spark can recompute it from previous steps.</td></tr>
+          <tr><td><strong>D</strong></td><td>Distributed</td><td>Data is split into partitions and kept across worker machines.</td></tr>
+          <tr><td><strong>D</strong></td><td>Dataset</td><td>A collection of records such as numbers, strings, rows or objects.</td></tr>
+        </table>
+        <div class="diagram">
+          <h3>RDD Partition Diagram</h3>
+          <div class="flow">
+            <div class="box">Input Data</div><div class="arrow">→</div><div class="box">RDD</div><div class="arrow">→</div><div class="box">Partitions</div><div class="arrow">→</div><div class="box">Parallel Tasks</div>
+          </div>
+          <div class="partition-grid">
+            <div class="partition">Partition 1<br>Rows 1-2</div>
+            <div class="partition">Partition 2<br>Rows 3-4</div>
+            <div class="partition">Partition 3<br>Rows 5-6</div>
+            <div class="partition">Partition 4<br>Rows 7-8</div>
+          </div>
+        </div>
+        <div class="memory"><strong>Memory Trick:</strong> RDD = <strong>Recoverable + Divided + Data</strong>.</div>
+      </section>
+
+      <section id="s4">
+        <h2>4. RDD Mental Model</h2>
+        <p>Before writing commands, understand how Spark thinks about data.</p>
+        <div class="grid-3">
+          <div class="card"><strong>Immutable</strong><br>An RDD cannot be modified directly. Every transformation creates a new RDD.</div>
+          <div class="card"><strong>Lazy</strong><br>Transformations are remembered but not executed immediately.</div>
+          <div class="card"><strong>Partitioned</strong><br>RDD data is split into partitions for parallel processing.</div>
+          <div class="card"><strong>Fault Tolerant</strong><br>RDD can be recreated using lineage if any partition is lost.</div>
+          <div class="card"><strong>In-memory Friendly</strong><br>Repeated RDDs can be cached to improve performance.</div>
+          <div class="card"><strong>Low-level API</strong><br>RDD gives more control but less automatic optimization than DataFrames.</div>
+        </div>
+        <h3>RDD Lineage Example</h3>
+        <div class="diagram">
+          <div class="flow">
+            <div class="box">Raw RDD</div><div class="arrow">→</div><div class="box">filter city</div><div class="arrow">→</div><div class="box">map fare</div><div class="arrow">→</div><div class="box">count / collect</div>
+          </div>
+        </div>
+        <p>Spark remembers the relationship between RDDs. This relationship is called <strong>lineage</strong>. If an executor fails, Spark can use lineage to recompute the missing partition.</p>
+        <div class="warning"><strong>Important:</strong> In modern Spark projects, DataFrame/Dataset APIs are usually preferred for structured data. But RDD is still important for understanding Spark internals and interview questions.</div>
+      </section>
+
+      <section id="s5">
+        <h2>5. Spark Execution Diagram for RDD</h2>
+        <p>RDD code runs as a Spark application. The Driver creates the plan and Executors run tasks on partitions.</p>
+        <div class="diagram">
+          <pre><code>                 Spark Application
+                        |
+                        v
+                +----------------+
+                | Driver Program |
+                | SparkContext   |
+                +----------------+
+                        |
+                        v
+                +----------------+
+                | Cluster Manager|
+                +----------------+
+                  /        |        \
+                 v         v         v
+          +----------+ +----------+ +----------+
+          |Executor 1| |Executor 2| |Executor 3|
+          |Task P1   | |Task P2   | |Task P3   |
+          +----------+ +----------+ +----------+</code></pre>
+        </div>
+        <table>
+          <tr><th>Component</th><th>Role in RDD Processing</th></tr>
+          <tr><td>Driver</td><td>Runs your main program and creates SparkContext.</td></tr>
+          <tr><td>SparkContext</td><td>Entry point for RDD operations. In Spark Shell it is available as <code>sc</code>.</td></tr>
+          <tr><td>Cluster Manager</td><td>Allocates resources. Examples: local, Standalone, YARN, Kubernetes.</td></tr>
+          <tr><td>Executor</td><td>Runs tasks and stores cached RDD partitions.</td></tr>
+          <tr><td>Task</td><td>Smallest unit of execution, usually working on one partition.</td></tr>
+        </table>
+      </section>
+
+      <section id="s6">
+        <h2>6. Different Ways to Create RDD</h2>
+        <p>There are three common ways to create an RDD.</p>
+        <div class="diagram">
+          <div class="flow">
+            <div class="box">1. Parallelized Collection</div><div class="arrow">→</div><div class="box">sc.parallelize()</div>
+          </div>
+          <br>
+          <div class="flow">
+            <div class="box">2. External Dataset</div><div class="arrow">→</div><div class="box">sc.textFile()</div>
+          </div>
+          <br>
+          <div class="flow">
+            <div class="box">3. Existing RDD</div><div class="arrow">→</div><div class="box">map/filter/flatMap</div>
+          </div>
+        </div>
+        <table>
+          <tr><th>Creation Method</th><th>When to Use</th><th>Example</th></tr>
+          <tr><td>Parallelized Collection</td><td>Small sample/demo data already available in program memory</td><td><code>sc.parallelize(List(10,20,30))</code></td></tr>
+          <tr><td>External Dataset</td><td>Data is available in a file system like local, HDFS, S3 or ADLS</td><td><code>sc.textFile("/data/trips.txt")</code></td></tr>
+          <tr><td>Existing RDD</td><td>You want to derive a new RDD from an old RDD</td><td><code>rdd.filter(...)</code></td></tr>
+        </table>
+        <div class="trainer-note"><strong>Trainer Tip:</strong> Do not start directly with code. First ask: “Where is my data?” If data is in memory, use <code>parallelize</code>. If data is in file, use <code>textFile</code>. If data is already in RDD, use transformation.</div>
+      </section>
+
+      <section id="s7">
+        <h2>7. Method 1: Create RDD using Parallelized Collections</h2>
+        <h3>Meaning</h3>
+        <p>A parallelized collection means an existing collection from the driver program is distributed into Spark partitions.</p>
+        <h3>Syntax</h3>
+        <div class="code-title"><span>Scala Spark Shell syntax</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val rdd = sc.parallelize(Seq(10, 20, 30, 40), 2)</code></pre>
+        <p>Here, <code>2</code> means we request 2 partitions.</p>
+        <h3>Example 1: Number RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val numbers = sc.parallelize(Seq(10, 20, 30, 40, 50), 2)
+numbers.collect()
+numbers.count()
+numbers.getNumPartitions</code></pre>
+        <div class="output"><strong>Expected Output:</strong><br><code>Array(10, 20, 30, 40, 50)</code><br><code>5</code><br><code>2</code></div>
+        <h3>Example 2: SmartRide City RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val cities = sc.parallelize(Seq("Chennai", "Bangalore", "Hyderabad", "Chennai"))
+val chennaiOnly = cities.filter(city => city == "Chennai")
+chennaiOnly.collect()</code></pre>
+        <div class="memory"><strong>Memory Point:</strong> <code>parallelize</code> is best for learning, testing and small demo datasets. It is not the usual way to load production big data.</div>
+        <h3>PySpark Equivalent</h3>
+        <div class="code-title"><span>pyspark shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>numbers = sc.parallelize([10, 20, 30, 40, 50], 2)
+numbers.collect()
+numbers.count()
+numbers.getNumPartitions()</code></pre>
+      </section>
+
+      <section id="s8">
+        <h2>8. Method 2: Create RDD using External Datasets</h2>
+        <h3>Meaning</h3>
+        <p>An external dataset means data stored outside your program, usually in a file system. Spark can read files from local disk, HDFS, S3-compatible storage and other Hadoop-supported file systems.</p>
+        <h3>Common Syntax</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val lines = sc.textFile("/path/to/file.txt")</code></pre>
+        <table>
+          <tr><th>Storage</th><th>Example Path</th></tr>
+          <tr><td>Local file</td><td><code>file:///home/vmuser/data/trips.txt</code></td></tr>
+          <tr><td>HDFS</td><td><code>hdfs:///user/vmuser/trips.txt</code></td></tr>
+          <tr><td>Relative path</td><td><code>data/trips.txt</code></td></tr>
+        </table>
+        <h3>Read File and Create RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val trips = sc.textFile("data/trips.txt")
+trips.count()
+trips.take(3)</code></pre>
+        <h3>Read HDFS File</h3>
+        <div class="code-title"><span>HDFS + spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>// First upload the file to HDFS from Linux terminal
+// hdfs dfs -mkdir -p /user/vmuser/spark-rdd
+// hdfs dfs -put trips.txt /user/vmuser/spark-rdd/
+
+val trips = sc.textFile("/user/vmuser/spark-rdd/trips.txt")
+trips.count()
+trips.first()</code></pre>
+        <div class="warning"><strong>Common Mistake:</strong> In Spark, output path should not already exist when using <code>saveAsTextFile</code>. Delete old output path before saving again.</div>
+      </section>
+
+      <section id="s9">
+        <h2>9. Method 3: Create RDD from Existing RDDs</h2>
+        <h3>Meaning</h3>
+        <p>Once you already have one RDD, you can create new RDDs by applying transformations. Since RDDs are immutable, Spark does not change the original RDD. It creates a new RDD.</p>
+        <div class="diagram">
+          <div class="flow">
+            <div class="box">trips RDD</div><div class="arrow">→</div><div class="box">filter Chennai</div><div class="arrow">→</div><div class="box">chennaiTrips RDD</div>
+          </div>
+        </div>
+        <h3>Example: Filter RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val trips = sc.textFile("data/trips.txt")
+val chennaiTrips = trips.filter(line => line.contains("Chennai"))
+chennaiTrips.collect()</code></pre>
+        <h3>Example: Map RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val cities = trips.map(line => line.split(",")(2))
+cities.collect()</code></pre>
+        <h3>Example: FlatMap RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val words = trips.flatMap(line => line.split(","))
+words.take(10)</code></pre>
+        <table>
+          <tr><th>Transformation</th><th>Purpose</th><th>Example Use</th></tr>
+          <tr><td><code>map</code></td><td>One input record becomes one output record</td><td>Extract city from each trip line</td></tr>
+          <tr><td><code>filter</code></td><td>Keep only matching records</td><td>Keep Chennai trips only</td></tr>
+          <tr><td><code>flatMap</code></td><td>One input record can become many output records</td><td>Split lines into words/columns</td></tr>
+          <tr><td><code>union</code></td><td>Combine two RDDs</td><td>Combine weekday and weekend trips</td></tr>
+          <tr><td><code>distinct</code></td><td>Remove duplicates</td><td>Get unique cities</td></tr>
+        </table>
+      </section>
+
+      <section id="s10">
+        <h2>10. Spark Shell Practice</h2>
+        <h3>What is Spark Shell?</h3>
+        <p><strong>Spark Shell</strong> is an interactive command-line environment for running Spark Scala code quickly. It is useful for learning, testing, debugging and data exploration.</p>
+        <div class="memory"><strong>Important:</strong> In Spark Shell, SparkContext is already created and available as <code>sc</code>. You do not need to create it manually.</div>
+        <h3>Start Spark Shell</h3>
+        <div class="code-title"><span>Linux terminal</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>spark-shell</code></pre>
+        <h3>Start Spark Shell in Local Mode</h3>
+        <div class="code-title"><span>Linux terminal</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>spark-shell --master local[*]</code></pre>
+        <table>
+          <tr><th>Command</th><th>Meaning</th></tr>
+          <tr><td><code>local</code></td><td>Use one worker thread locally.</td></tr>
+          <tr><td><code>local[2]</code></td><td>Use 2 local threads.</td></tr>
+          <tr><td><code>local[*]</code></td><td>Use all available CPU cores in local machine.</td></tr>
+        </table>
+        <h3>Check SparkContext</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>sc
+sc.master
+sc.appName</code></pre>
+        <h3>Exit Spark Shell</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>:quit</code></pre>
+      </section>
+
+      <section id="s11">
+        <h2>11. Important RDD Operations</h2>
+        <h3>1. count()</h3>
+        <p>Returns the number of records in the RDD. It is an <strong>action</strong>, so it triggers Spark execution.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val numbers = sc.parallelize(Seq(10, 20, 30, 40))
+numbers.count()</code></pre>
+        <h3>2. filter()</h3>
+        <p>Creates a new RDD by keeping only records that match a condition. It is a <strong>transformation</strong>.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val highValues = numbers.filter(x => x > 20)
+highValues.collect()</code></pre>
+        <h3>3. take()</h3>
+        <p>Returns the first N records. It is useful for safely previewing data.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>numbers.take(2)</code></pre>
+        <h3>4. partitions / getNumPartitions</h3>
+        <p>Partitions are data chunks. Spark creates tasks based on partitions.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>numbers.getNumPartitions
+numbers.partitions.length</code></pre>
+        <h3>5. cache()</h3>
+        <p><code>cache()</code> stores an RDD in memory after the first action. Use it when the same RDD is reused multiple times.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val trips = sc.textFile("data/trips.txt")
+val chennaiTrips = trips.filter(line => line.contains("Chennai"))
+chennaiTrips.cache()
+chennaiTrips.count()
+chennaiTrips.take(2)</code></pre>
+        <h3>6. saveAsTextFile()</h3>
+        <p>Saves the RDD as text files inside an output directory. Spark writes one output part file per partition.</p>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>chennaiTrips.saveAsTextFile("output/chennai-trips")</code></pre>
+        <div class="warning"><strong>Output Folder Rule:</strong> <code>output/chennai-trips</code> must not already exist. Spark fails if the output directory already exists.</div>
+      </section>
+
+      <section id="s12">
+        <h2>12. Full Practical Lab: Read, Filter, Count, Cache and Save</h2>
+        <h3>Lab Objective</h3>
+        <p>Create a trip file, load it as RDD, filter Chennai records, count records, preview records, check partitions, cache reused RDD and save output.</p>
+        <h3>Step 1: Create Local Data File</h3>
+        <div class="code-title"><span>Linux terminal</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>mkdir -p ~/spark-rdd-lab
+cd ~/spark-rdd-lab
+cat > trips.txt <<'EOF'
+T001,D101,Chennai,12,350,UPI,4.5
+T002,D102,Bangalore,8,220,Cash,4.0
+T003,D101,Chennai,15,420,Card,4.8
+T004,D103,Hyderabad,20,600,UPI,4.7
+T005,D104,Chennai,5,150,UPI,4.1
+T006,D105,Bangalore,18,520,Card,4.9
+EOF</code></pre>
+        <h3>Step 2: Start Spark Shell from the Same Folder</h3>
+        <div class="code-title"><span>Linux terminal</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>spark-shell --master local[*]</code></pre>
+        <h3>Step 3: Read File and Create RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val trips = sc.textFile("trips.txt")
+trips.count()
+trips.take(3)
+trips.getNumPartitions</code></pre>
+        <h3>Step 4: Create RDD from Existing RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val chennaiTrips = trips.filter(line => line.contains("Chennai"))
+chennaiTrips.count()
+chennaiTrips.collect()</code></pre>
+        <h3>Step 5: Extract City Column using map()</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val cities = trips.map(line => line.split(",")(2))
+cities.collect()
+cities.distinct().collect()</code></pre>
+        <h3>Step 6: Cache Reused RDD</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>chennaiTrips.cache()
+chennaiTrips.count()
+chennaiTrips.take(2)</code></pre>
+        <h3>Step 7: Save Output</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>chennaiTrips.saveAsTextFile("chennai-output")</code></pre>
+        <h3>Step 8: Check Output from Linux Terminal</h3>
+        <div class="code-title"><span>Linux terminal</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>ls -R chennai-output
+cat chennai-output/part-*</code></pre>
+        <div class="output"><strong>Learning Outcome:</strong> You have used all required RDD basics: file RDD, parallel collection RDD, existing RDD, count, filter, take, partitions, cache and saveAsTextFile.</div>
+      </section>
+
+      <section id="s13">
+        <h2>13. Transformations vs Actions</h2>
+        <p>Spark uses <strong>lazy evaluation</strong>. Transformations create a plan. Actions trigger actual execution.</p>
+        <table>
+          <tr><th>Type</th><th>Meaning</th><th>RDD Examples</th><th>Triggers Job?</th></tr>
+          <tr><td>Transformation</td><td>Creates a new RDD</td><td><code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>distinct</code>, <code>union</code></td><td>No</td></tr>
+          <tr><td>Action</td><td>Returns result or saves data</td><td><code>count</code>, <code>collect</code>, <code>take</code>, <code>first</code>, <code>saveAsTextFile</code></td><td>Yes</td></tr>
+        </table>
+        <h3>Lazy Evaluation Example</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val trips = sc.textFile("trips.txt")
+// No job yet
+
+val chennaiTrips = trips.filter(line => line.contains("Chennai"))
+// Still no job yet
+
+chennaiTrips.count()
+// Job starts now</code></pre>
+        <div class="memory"><strong>Interview Line:</strong> Transformations are lazy. Actions are eager because they trigger Spark jobs.</div>
+      </section>
+
+      <section id="s14">
+        <h2>14. Best Practices and Performance Tips</h2>
+        <table>
+          <tr><th>Best Practice</th><th>Why It Matters</th></tr>
+          <tr><td>Use <code>take()</code> instead of <code>collect()</code> for preview</td><td><code>collect()</code> brings all data to the Driver and can crash it.</td></tr>
+          <tr><td>Cache only reused RDDs</td><td>Caching unnecessary RDDs wastes executor memory.</td></tr>
+          <tr><td>Control partitions wisely</td><td>Too few partitions underutilize CPU. Too many partitions increase overhead.</td></tr>
+          <tr><td>Use DataFrame for structured production data</td><td>DataFrames get Catalyst optimization and better SQL support.</td></tr>
+          <tr><td>Delete output folder before rerun</td><td><code>saveAsTextFile</code> fails if folder already exists.</td></tr>
+          <tr><td>Avoid parsing errors</td><td>Check split indexes carefully when reading CSV-like text.</td></tr>
+        </table>
+        <h3>Good vs Risky Commands</h3>
+        <table>
+          <tr><th>Situation</th><th>Better Command</th><th>Risky Command</th></tr>
+          <tr><td>Preview data</td><td><code>rdd.take(5)</code></td><td><code>rdd.collect()</code> on huge data</td></tr>
+          <tr><td>Repeated analysis</td><td><code>filtered.cache()</code></td><td>Recomputing same filter many times</td></tr>
+          <tr><td>Save result</td><td><code>saveAsTextFile("new-folder")</code></td><td>Saving to an existing folder</td></tr>
+        </table>
+      </section>
+
+      <section id="s15">
+        <h2>15. Troubleshooting Guide</h2>
+        <table>
+          <tr><th>Error / Symptom</th><th>Possible Cause</th><th>Solution</th></tr>
+          <tr><td><code>Input path does not exist</code></td><td>Wrong file path</td><td>Check current folder using <code>pwd</code> and file using <code>ls</code>.</td></tr>
+          <tr><td><code>FileAlreadyExistsException</code></td><td>Output folder already exists</td><td>Delete output folder or use a new folder name.</td></tr>
+          <tr><td><code>ArrayIndexOutOfBoundsException</code></td><td><code>split(",")(2)</code> used on malformed line</td><td>Filter bad records before accessing columns.</td></tr>
+          <tr><td>Shell hangs or system slows</td><td><code>collect()</code> called on huge RDD</td><td>Use <code>take()</code> or write result to storage.</td></tr>
+          <tr><td>Cache not improving speed</td><td>No action executed after cache or RDD not reused</td><td>Call an action and reuse the RDD multiple times.</td></tr>
+          <tr><td>Too many part files</td><td>Too many partitions</td><td>Use <code>coalesce()</code> carefully for small output.</td></tr>
+        </table>
+        <h3>Safe Parsing Example</h3>
+        <div class="code-title"><span>spark-shell</span><button class="copy-btn" onclick="copyPreviousCode(this)">Copy</button></div>
+        <pre><code>val cleanTrips = trips.filter(line => line.split(",").length >= 7)
+val cities = cleanTrips.map(line => line.split(",")(2))
+cities.collect()</code></pre>
+      </section>
+
+      <section id="s16">
+        <h2>16. Interview Questions and Answers</h2>
+        <div class="interview"><strong>Q1. What is RDD?</strong><br>RDD stands for Resilient Distributed Dataset. It is Spark's fundamental distributed collection that is immutable, partitioned and fault tolerant.</div>
+        <div class="interview"><strong>Q2. Why is RDD called resilient?</strong><br>RDD is called resilient because Spark can recover lost partitions using lineage information.</div>
+        <div class="interview"><strong>Q3. Why is RDD called distributed?</strong><br>RDD data is split into partitions and stored across workers, allowing parallel processing.</div>
+        <div class="interview"><strong>Q4. Is RDD mutable?</strong><br>No. RDD is immutable. Every transformation creates a new RDD.</div>
+        <div class="interview"><strong>Q5. What are the ways to create RDD?</strong><br>RDD can be created from parallelized collections, external datasets and existing RDDs.</div>
+        <div class="interview"><strong>Q6. How do you create RDD from a Scala collection?</strong><br>Use <code>sc.parallelize(Seq(...))</code>.</div>
+        <div class="interview"><strong>Q7. How do you create RDD from a file?</strong><br>Use <code>sc.textFile("path")</code>.</div>
+        <div class="interview"><strong>Q8. How do you create RDD from an existing RDD?</strong><br>Apply transformations such as <code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>union</code> or <code>distinct</code>.</div>
+        <div class="interview"><strong>Q9. What is SparkContext?</strong><br>SparkContext is the entry point for Spark Core and RDD operations. In Spark Shell it is available as <code>sc</code>.</div>
+        <div class="interview"><strong>Q10. What is a partition?</strong><br>A partition is a logical chunk of RDD data. Spark processes partitions in parallel using tasks.</div>
+        <div class="interview"><strong>Q11. How do you check number of partitions?</strong><br>Use <code>rdd.getNumPartitions</code> in Scala Spark Shell or <code>rdd.getNumPartitions()</code> in PySpark.</div>
+        <div class="interview"><strong>Q12. What is the difference between transformation and action?</strong><br>Transformation creates a new RDD lazily. Action triggers execution and returns result or writes output.</div>
+        <div class="interview"><strong>Q13. Give examples of transformations.</strong><br><code>map</code>, <code>filter</code>, <code>flatMap</code>, <code>distinct</code>, <code>union</code>.</div>
+        <div class="interview"><strong>Q14. Give examples of actions.</strong><br><code>count</code>, <code>collect</code>, <code>take</code>, <code>first</code>, <code>saveAsTextFile</code>.</div>
+        <div class="interview"><strong>Q15. What is lazy evaluation?</strong><br>Spark does not execute transformations immediately. It waits until an action is called.</div>
+        <div class="interview"><strong>Q16. What is lineage?</strong><br>Lineage is the record of transformations used to build an RDD. Spark uses it for fault recovery.</div>
+        <div class="interview"><strong>Q17. What does cache() do?</strong><br><code>cache()</code> stores the RDD in memory after the first action so repeated actions can run faster.</div>
+        <div class="interview"><strong>Q18. What is saveAsTextFile?</strong><br>It saves an RDD as text files inside an output directory, generally one part file per partition.</div>
+        <div class="interview"><strong>Q19. Why should collect() be avoided on huge data?</strong><br>Because it brings all RDD records to the Driver and can cause out-of-memory errors.</div>
+        <div class="interview"><strong>Q20. RDD vs DataFrame?</strong><br>RDD is lower-level and gives more control. DataFrame is higher-level, structured and optimized by Spark SQL Catalyst optimizer.</div>
+      </section>
+
+      <section id="s17">
+        <h2>17. Active Exercises</h2>
+        <h3>Exercise 1: Create RDD using parallelize</h3>
+        <div class="activity">Create an RDD from marks <code>Seq(45, 67, 89, 34, 90)</code>, filter marks greater than 60 and count them.</div>
+        <button onclick="toggleSolution('sol1')" class="secondary-btn small-btn">Show / Hide Solution</button>
+        <div id="sol1" class="labbox" style="display:none;">
+          <pre><code>val marks = sc.parallelize(Seq(45, 67, 89, 34, 90))
+val passed = marks.filter(m => m > 60)
+passed.collect()
+passed.count()</code></pre>
+        </div>
+        <h3>Exercise 2: Read file and filter records</h3>
+        <div class="activity">Read <code>trips.txt</code> and display only Bangalore records.</div>
+        <button onclick="toggleSolution('sol2')" class="secondary-btn small-btn">Show / Hide Solution</button>
+        <div id="sol2" class="labbox" style="display:none;">
+          <pre><code>val trips = sc.textFile("trips.txt")
+val bangaloreTrips = trips.filter(line => line.contains("Bangalore"))
+bangaloreTrips.collect()</code></pre>
+        </div>
+        <h3>Exercise 3: Extract payment modes</h3>
+        <div class="activity">From each trip line, extract payment mode column and show distinct payment modes.</div>
+        <button onclick="toggleSolution('sol3')" class="secondary-btn small-btn">Show / Hide Solution</button>
+        <div id="sol3" class="labbox" style="display:none;">
+          <pre><code>val payments = trips.map(line => line.split(",")(5))
+payments.distinct().collect()</code></pre>
+        </div>
+        <h3>Exercise 4: Save filtered result</h3>
+        <div class="activity">Save UPI trips into output folder <code>upi-output</code>.</div>
+        <button onclick="toggleSolution('sol4')" class="secondary-btn small-btn">Show / Hide Solution</button>
+        <div id="sol4" class="labbox" style="display:none;">
+          <pre><code>val upiTrips = trips.filter(line => line.contains("UPI"))
+upiTrips.saveAsTextFile("upi-output")</code></pre>
+        </div>
+      </section>
+
+      <section id="s18">
+        <h2>18. Quiz, Formal Exam, Notes and Checklist</h2>
+        <h3>Learning Progress Checklist</h3>
+        <div class="progress-box" id="progressBox"></div>
+        <button onclick="resetProgress()" class="secondary-btn">Reset Progress</button>
+
+        <h3>Practice MCQ Quiz</h3>
+        <p>Submit to see score and explanations.</p>
+        <div id="quiz"></div>
+        <button onclick="submitQuiz()">Submit Practice Quiz</button>
+        <button onclick="resetQuiz()" class="secondary-btn">Reset Quiz</button>
+        <div id="quizScore" class="score"></div>
+
+        <h3>Formal Timed Exam</h3>
+        <p><strong>Duration:</strong> 7 minutes | <strong>Total Questions:</strong> 15</p>
+        <button onclick="startExam()" class="success-btn">Start Exam</button>
+        <button onclick="submitExam()" class="danger-btn">Submit Exam</button>
+        <div id="timer" class="score"></div>
+        <div id="exam"></div>
+        <div id="examScore" class="score"></div>
+
+        <h3>Double-click Notes</h3>
+        <p>Double-click any paragraph, heading, list item or table cell to add it into your notes area. Notes are stored locally in this browser.</p>
+        <textarea id="notes" class="notes-box" placeholder="Your notes will appear here. You can also type your own notes."></textarea>
+        <br>
+        <button onclick="saveNotes()">Save Notes</button>
+        <button onclick="clearNotes()" class="secondary-btn">Clear Notes</button>
+
+        <h3>Flash Revision Cards</h3>
+        <div class="grid-3">
+          <div class="flash-card"><strong>RDD</strong><br>Resilient Distributed Dataset: immutable, partitioned and fault tolerant.</div>
+          <div class="flash-card"><strong>parallelize</strong><br>Creates RDD from driver-side collection.</div>
+          <div class="flash-card"><strong>textFile</strong><br>Creates RDD from external text file.</div>
+          <div class="flash-card"><strong>filter</strong><br>Transformation that keeps matching records.</div>
+          <div class="flash-card"><strong>count</strong><br>Action that returns number of records.</div>
+          <div class="flash-card"><strong>cache</strong><br>Stores reused RDD partitions in memory.</div>
+        </div>
+      </section>
+
+      <div class="footer">Generated in TUT style for classroom technical training | Spark RDD Creation and Spark Shell</div>
+    </main>
+
+    <aside>
+      <strong>Quick Trainer Board</strong>
+      <div class="right-box"><div class="num">3</div>RDD creation methods: parallelize, external dataset, existing RDD.</div>
+      <div class="right-box"><div class="num">2</div>Operation types: transformation and action.</div>
+      <div class="right-box"><div class="num">1</div>Most important warning: avoid <code>collect()</code> on huge data.</div>
+      <div class="right-box"><strong>Command Recall</strong><br><code>sc.parallelize()</code><br><code>sc.textFile()</code><br><code>rdd.filter()</code><br><code>rdd.count()</code><br><code>rdd.take()</code><br><code>rdd.cache()</code><br><code>rdd.saveAsTextFile()</code></div>
+      <div class="right-box"><strong>Reference Baseline</strong><br>Apache Spark RDD Programming Guide and PySpark API documentation.</div>
+      <button onclick="window.print()" class="secondary-btn">Print / Save PDF</button>
+    </aside>
+  </div>
+
+<script>
+  const checklist = [
+    "I can define RDD",
+    "I can explain Resilient, Distributed and Dataset",
+    "I can create RDD using sc.parallelize",
+    "I can create RDD using sc.textFile",
+    "I can create RDD from existing RDD using filter/map",
+    "I can run basic Spark Shell commands",
+    "I can use count and take safely",
+    "I can check number of partitions",
+    "I can explain cache",
+    "I can save output using saveAsTextFile",
+    "I can explain transformation vs action",
+    "I can answer RDD interview questions"
+  ];
+
+  const quizQuestions = [
+    {q:"What is the full form of RDD?", o:["Reliable Data Directory", "Resilient Distributed Dataset", "Runtime Distributed Database", "Reusable Data Driver"], a:1, e:"RDD stands for Resilient Distributed Dataset."},
+    {q:"Which method creates an RDD from a local collection?", o:["sc.textFile", "sc.parallelize", "rdd.save", "spark.sql"], a:1, e:"sc.parallelize creates RDD from an existing driver-side collection."},
+    {q:"Which method creates RDD from a text file?", o:["sc.textFile", "sc.parallelize", "rdd.cache", "rdd.take"], a:0, e:"sc.textFile reads text files and creates an RDD of lines."},
+    {q:"filter() is what type of operation?", o:["Action", "Transformation", "Cluster manager", "Storage command"], a:1, e:"filter creates a new RDD and is lazily evaluated."},
+    {q:"count() is what type of operation?", o:["Action", "Transformation", "Partition", "Executor"], a:0, e:"count triggers execution and returns the number of records."},
+    {q:"What does getNumPartitions return?", o:["Number of lines", "Number of columns", "Number of RDD partitions", "Number of executors only"], a:2, e:"It returns how many partitions the RDD has."},
+    {q:"Why should collect() be avoided on huge data?", o:["It saves to HDFS", "It brings all data to Driver", "It creates partitions", "It deletes data"], a:1, e:"collect brings all records to Driver memory."},
+    {q:"What does cache() do?", o:["Deletes RDD", "Stores reused RDD in memory", "Creates SparkContext", "Saves as CSV"], a:1, e:"cache stores RDD partitions in memory after an action."},
+    {q:"saveAsTextFile writes output as", o:["A single Excel file", "A directory with part files", "Only a database table", "A Python object"], a:1, e:"Spark writes a folder containing part files."},
+    {q:"In Spark Shell, SparkContext is available as", o:["sparkSessionOnly", "driver", "sc", "ctxRDD"], a:2, e:"The pre-created SparkContext variable is sc."},
+    {q:"RDDs are", o:["Mutable", "Immutable", "Always relational tables", "Always one partition"], a:1, e:"RDDs are immutable; transformations create new RDDs."},
+    {q:"Which operation is safest for previewing first few records?", o:["take(5)", "collect() always", "delete()", "stop()"], a:0, e:"take returns only limited records."}
+  ];
+
+  const examQuestions = [
+    {q:"RDD is immutable.", o:["True", "False"], a:0},
+    {q:"sc.parallelize is used to create RDD from external file.", o:["True", "False"], a:1},
+    {q:"sc.textFile creates an RDD of lines from a text file.", o:["True", "False"], a:0},
+    {q:"filter is an action.", o:["True", "False"], a:1},
+    {q:"count is an action.", o:["True", "False"], a:0},
+    {q:"cache should be used mainly when an RDD is reused.", o:["True", "False"], a:0},
+    {q:"saveAsTextFile can safely overwrite an existing folder by default.", o:["True", "False"], a:1},
+    {q:"SparkContext is available as sc in Spark Shell.", o:["True", "False"], a:0},
+    {q:"A task usually processes one partition.", o:["True", "False"], a:0},
+    {q:"RDD lineage helps fault recovery.", o:["True", "False"], a:0},
+    {q:"collect is always safe on huge production data.", o:["True", "False"], a:1},
+    {q:"map can create a new RDD from an existing RDD.", o:["True", "False"], a:0},
+    {q:"Lazy evaluation means Spark executes every transformation immediately.", o:["True", "False"], a:1},
+    {q:"getNumPartitions shows how many logical partitions are present.", o:["True", "False"], a:0},
+    {q:"RDD is lower-level than DataFrame API.", o:["True", "False"], a:0}
+  ];
+
+  function initProgress() {
+    const box = document.getElementById("progressBox");
+    box.innerHTML = "";
+    checklist.forEach((item, i) => {
+      const saved = localStorage.getItem("sparkRDDTutCheck" + i) === "true";
+      const div = document.createElement("div");
+      div.className = "check-item";
+      div.innerHTML = `<label><input type="checkbox" ${saved ? "checked" : ""} onchange="saveProgress(${i}, this.checked)"> ${item}</label>`;
+      box.appendChild(div);
+    });
+  }
+  function saveProgress(i, checked) { localStorage.setItem("sparkRDDTutCheck" + i, checked); }
+  function resetProgress() {
+    checklist.forEach((_, i) => localStorage.removeItem("sparkRDDTutCheck" + i));
+    initProgress();
+  }
+
+  function renderQuiz() {
+    const quiz = document.getElementById("quiz");
+    quiz.innerHTML = "";
+    quizQuestions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "quiz-question";
+      div.innerHTML = `<strong>Q${i+1}. ${q.q}</strong>` + q.o.map((op, j) => `<label><input type="radio" name="quiz${i}" value="${j}"> ${op}</label>`).join("") + `<div class="explain" id="exp${i}"></div>`;
+      quiz.appendChild(div);
+    });
+  }
+  function submitQuiz() {
+    let score = 0;
+    quizQuestions.forEach((q, i) => {
+      const selected = document.querySelector(`input[name="quiz${i}"]:checked`);
+      const exp = document.getElementById("exp" + i);
+      if (selected && Number(selected.value) === q.a) {
+        score++;
+        exp.innerHTML = `✅ Correct. ${q.e}`;
+      } else {
+        exp.innerHTML = `❌ Correct answer: <strong>${q.o[q.a]}</strong>. ${q.e}`;
+      }
+    });
+    const mood = score >= 10 ? "Excellent 😊 RDD basics are strong." : score >= 7 ? "Good 🙂 Revise transformations/actions once." : "Needs more practice 💪 Repeat Spark Shell lab.";
+    document.getElementById("quizScore").innerText = `Practice Quiz Score: ${score}/${quizQuestions.length} - ${mood}`;
+  }
+  function resetQuiz() {
+    document.querySelectorAll('#quiz input[type="radio"]').forEach(x => x.checked = false);
+    quizQuestions.forEach((_, i) => document.getElementById("exp" + i).innerHTML = "");
+    document.getElementById("quizScore").innerText = "";
+  }
+
+  let examStarted = false;
+  let examTimer = null;
+  let secondsLeft = 420;
+  function renderExam() {
+    const exam = document.getElementById("exam");
+    exam.innerHTML = "";
+    examQuestions.forEach((q, i) => {
+      const div = document.createElement("div");
+      div.className = "exam-question";
+      div.innerHTML = `<strong>Q${i+1}. ${q.q}</strong>` + q.o.map((op, j) => `<label><input type="radio" name="exam${i}" value="${j}"> ${op}</label>`).join("");
+      exam.appendChild(div);
+    });
+  }
+  function startExam() {
+    if (examStarted) return;
+    examStarted = true;
+    secondsLeft = 420;
+    renderExam();
+    document.getElementById("examScore").innerText = "";
+    if (examTimer) clearInterval(examTimer);
+    examTimer = setInterval(() => {
+      secondsLeft--;
+      const min = Math.floor(secondsLeft / 60);
+      const sec = secondsLeft % 60;
+      document.getElementById("timer").innerText = `Time Left: ${min}:${sec.toString().padStart(2, "0")}`;
+      if (secondsLeft <= 0) submitExam();
+    }, 1000);
+  }
+  function submitExam() {
+    if (!document.getElementById("exam").children.length) renderExam();
+    clearInterval(examTimer);
+    examStarted = false;
+    let score = 0;
+    examQuestions.forEach((q, i) => {
+      const selected = document.querySelector(`input[name="exam${i}"]:checked`);
+      if (selected && Number(selected.value) === q.a) score++;
+    });
+    const mood = score >= 12 ? "Ready for interview 🚀" : score >= 8 ? "Good, revise commands once 🙂" : "Repeat the practical lab 💪";
+    document.getElementById("examScore").innerText = `Formal Exam Score: ${score}/${examQuestions.length} - ${mood}`;
+  }
+
+  function saveNotes() {
+    localStorage.setItem("sparkRDDTutNotes", document.getElementById("notes").value);
+    alert("Notes saved locally in this browser.");
+  }
+  function clearNotes() {
+    document.getElementById("notes").value = "";
+    localStorage.removeItem("sparkRDDTutNotes");
+  }
+
+  function toggleSolution(id) {
+    const el = document.getElementById(id);
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  function copyPreviousCode(btn) {
+    const pre = btn.parentElement.nextElementSibling;
+    const text = pre.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const old = btn.innerText;
+      btn.innerText = "Copied";
+      setTimeout(() => btn.innerText = old, 900);
+    }).catch(() => alert("Copy failed. Please select and copy manually."));
+  }
+
+  document.addEventListener("dblclick", function(e) {
+    const tag = e.target.tagName.toLowerCase();
+    if (["p", "h2", "h3", "h4", "li", "td", "th"].includes(tag)) {
+      const notes = document.getElementById("notes");
+      if (notes) {
+        notes.value += (notes.value ? "\n" : "") + e.target.innerText;
+        localStorage.setItem("sparkRDDTutNotes", notes.value);
+      }
+    }
+  });
+
+  document.addEventListener("mousemove", function(e) {
+    if (Math.random() > 0.88) {
+      const s = document.createElement("div");
+      s.className = "sparkle";
+      s.style.left = e.clientX + "px";
+      s.style.top = e.clientY + "px";
+      document.body.appendChild(s);
+      setTimeout(() => s.remove(), 800);
+    }
+  });
+
+  const sections = Array.from(document.querySelectorAll("main section"));
+  const navLinks = Array.from(document.querySelectorAll("nav a"));
+  window.addEventListener("scroll", () => {
+    let current = "";
+    sections.forEach(sec => {
+      const top = sec.offsetTop - 160;
+      if (window.scrollY >= top) current = sec.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle("active", a.getAttribute("href") === "#" + current);
+    });
+  });
+
+  window.onload = function() {
+    initProgress();
+    renderQuiz();
+    const savedNotes = localStorage.getItem("sparkRDDTutNotes");
+    if (savedNotes) document.getElementById("notes").value = savedNotes;
+  };
+</script>
+</body>
+</html>
