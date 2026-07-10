@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RDD Operations - Classroom Tutorial</title>
+<style>
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1a2232; --muted:#5a6478;
+    --brand:#4f46e5; --brand2:#0f766e; --line:#dde5f1; --good:#15803d; --bad:#b91c1c;
+    --mark:#fde68a; --mark-line:#d97706; --shadow:0 10px 24px rgba(20,30,60,.08);
+  }
+  body.dark{
+    --bg:#0f1526; --card:#161d31; --ink:#e7ecf6; --muted:#9aa6bd; --line:#26314b;
+    --shadow:0 10px 24px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);
+    color:var(--ink);line-height:1.65}
+  header{background:linear-gradient(135deg,#312e81,#4f46e5 60%,#0f766e);color:#fff;
+    padding:26px 22px;position:sticky;top:0;z-index:30;box-shadow:var(--shadow)}
+  header h1{margin:0 0 6px;font-size:clamp(21px,3vw,32px)}
+  header p{margin:0;color:#dbe4ff}
+  .topbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .topbar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
+    padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  .topbar button:hover{background:rgba(255,255,255,.28)}
+  .layout{max-width:1320px;margin:0 auto;display:grid;
+    grid-template-columns:250px minmax(0,1fr) 260px;gap:16px;padding:16px}
+  nav,aside{position:sticky;top:120px;align-self:start;max-height:calc(100vh - 140px);
+    overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;box-shadow:var(--shadow)}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:5px 8px;border-radius:8px;
+    font-size:13.5px}
+  nav a:hover,nav a.active{background:var(--brand);color:#fff}
+  main{min-width:0}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);transition:transform .15s}
+  section:hover{transform:translateY(-2px)}
+  h2{margin-top:0;color:var(--brand);font-size:21px}
+  h3{color:var(--brand2)}
+  code,pre{font-family:"Fira Code",Consolas,monospace}
+  pre{background:#0f172a;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:13px}
+  .codewrap{position:relative}
+  .copybtn{position:absolute;top:8px;right:8px;background:#1e293b;color:#fff;border:1px solid #334155;
+    border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .callout{border-left:5px solid var(--brand);background:rgba(79,70,229,.07);padding:10px 14px;
+    border-radius:8px;margin:12px 0}
+  .callout.key{border-color:#4f46e5;background:rgba(79,70,229,.08)}
+  .callout.remember{border-color:#0f766e;background:rgba(15,118,110,.08)}
+  .callout.confusion{border-color:#b45309;background:rgba(217,119,6,.09)}
+  .callout.pro{border-color:#7c3aed;background:rgba(124,58,237,.08)}
+  .callout.watch{border-color:#b91c1c;background:rgba(185,28,28,.08)}
+  .callout.hook{border-color:#db2777;background:rgba(219,39,119,.08)}
+  .callout b{display:block;margin-bottom:2px;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{background:rgba(79,70,229,.1)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px}
+  .tag.b{background:#dcfce7;color:#166534}.tag.i{background:#fef9c3;color:#854d0e}.tag.a{background:#fee2e2;color:#991b1b}
+  .qa{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+  /* diagram */
+  .diagram{border:1px dashed var(--line);border-radius:12px;padding:16px;margin:12px 0;background:rgba(79,70,229,.03)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center}
+  .node{background:var(--brand);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;min-width:96px}
+  .node.alt{background:var(--brand2)}
+  .node.warn{background:#b45309}
+  .arrow{font-size:22px;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  /* quiz/exam */
+  .q{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+  .q label{display:block;padding:4px 6px;border-radius:6px;cursor:pointer}
+  .q label:hover{background:rgba(79,70,229,.06)}
+  .q.correct{border-color:var(--good);background:rgba(21,128,61,.06)}
+  .q.wrong{border-color:var(--bad);background:rgba(185,28,28,.06)}
+  .expl{font-size:13px;margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(0,0,0,.03)}
+  .primary{background:var(--brand);color:#fff;border:none;padding:10px 18px;border-radius:9px;cursor:pointer;font-weight:600}
+  .ghost{background:transparent;color:var(--brand);border:1px solid var(--brand);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .result{font-size:17px;font-weight:700;margin:10px 0;padding:12px;border-radius:10px;background:rgba(79,70,229,.08)}
+  .timer{font-weight:700;color:var(--brand)}
+  .timer.warn{color:var(--bad)}
+  .hidden{display:none!important}
+  /* progress */
+  .checkrow{font-size:13px;margin:4px 0}
+  .bar{height:10px;background:var(--line);border-radius:20px;overflow:hidden;margin:8px 0}
+  .bar>div{height:100%;width:0;background:var(--brand);transition:width .25s}
+  /* notes */
+  .noted-word{background:var(--mark);border-bottom:2px solid var(--mark-line);border-radius:3px;
+    cursor:pointer;padding:0 1px}
+  body.dark .noted-word{color:#1a2232}
+  #notePopup{position:fixed;z-index:100;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;box-shadow:var(--shadow);padding:12px;width:250px}
+  #notePopup textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:8px;
+    padding:6px;font-family:inherit;background:var(--bg);color:var(--ink)}
+  #notePopup .row{display:flex;gap:6px;margin-top:8px}
+  #notePopup button{flex:1;font-size:12px;padding:6px;border-radius:6px;cursor:pointer;border:1px solid var(--line)}
+  #notePopup .save{background:var(--brand);color:#fff;border:none}
+  #notePopup .del{background:#fee2e2;color:#991b1b;border:none}
+  .noteItem{border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0;font-size:12.5px}
+  .noteItem .w{font-weight:700;color:var(--brand)}
+  .noteItem .meta{color:var(--muted);font-size:11px;margin-top:3px}
+  .noteItem .acts{display:flex;gap:6px;margin-top:6px}
+  .noteItem button{font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .sparkle{position:fixed;width:7px;height:7px;border-radius:50%;
+    background:radial-gradient(circle,#a78bfa,#4f46e5);pointer-events:none;z-index:200;opacity:.9}
+  .progress-top{position:fixed;top:0;left:0;height:4px;background:var(--brand2);z-index:40;width:0}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand2)}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}nav,aside{position:static;max-height:none}}
+  @media print{
+    header,nav,aside,.topbar,.copybtn,.sparkle,#notePopup,.primary,.ghost,#soundToggle,.progress-top{display:none!important}
+    section{box-shadow:none;break-inside:avoid}
+    .expl,.q.correct,.q.wrong{display:block!important}
+  }
+</style>
+</head>
+<body>
+<div class="progress-top" id="readbar"></div>
+<header>
+  <h1>RDD Operations in Apache Spark</h1>
+  <p>Transformations vs Actions, Narrow vs Wide - explained simply, then technically, with every operation covered.</p>
+  <div class="topbar">
+    <button onclick="toggleTheme()">🌓 Theme</button>
+    <button onclick="changeFont(1)">A+</button>
+    <button onclick="changeFont(-1)">A−</button>
+    <button id="soundToggle" onclick="toggleMute()">🔊 Sound: On</button>
+    <button onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="toc">
+    <strong>Contents</strong>
+    <a href="#s1">1. Title & Objectives</a>
+    <a href="#s2">2. Introduction</a>
+    <a href="#s3">3. Beginner Explanation</a>
+    <a href="#s4">4. Technical Explanation</a>
+    <a href="#s5">5. Simple Example</a>
+    <a href="#s6">6. Industry Example</a>
+    <a href="#s7">7. Code Examples</a>
+    <a href="#s8">8. Comparison</a>
+    <a href="#s9">9. Best Practices</a>
+    <a href="#s10">10. Edge Cases</a>
+    <a href="#s11">11. Troubleshooting</a>
+    <a href="#s12">12. Interview Q&A</a>
+    <a href="#s13">13. Practice Quiz</a>
+    <a href="#s14">14. Formal Exam</a>
+    <a href="#s15">15. Glossary</a>
+    <a href="#s16">16. Summary</a>
+  </nav>
+
+  <main class="tutorial">
+    <section id="s1">
+      <h2>1. RDD Operations</h2>
+      <p>An RDD (Resilient Distributed Dataset) is Spark's core data structure - a collection of records split across many machines. "RDD operations" are the two kinds of things you can do to that collection: reshape it (Transformations) or pull a result out of it (Actions).</p>
+      <p><b>Learning objectives:</b></p>
+      <ul>
+        <li>Tell a Transformation apart from an Action, and explain why it matters.</li>
+        <li>Explain Narrow vs Wide transformations and what a "shuffle" is.</li>
+        <li>Use map, flatMap, filter, mapPartitions, distinct, intersection, groupByKey, reduceByKey, sortByKey, join, repartition and coalesce correctly.</li>
+        <li>Use the common actions: count, collect, take, top, reduce, countByValue, countByKey.</li>
+        <li>Choose the efficient operation (e.g. reduceByKey over groupByKey) and justify it in an interview.</li>
+      </ul>
+      <div class="callout key"><b>Before you start</b>Prerequisites: you know what an RDD is and can write a lambda in Python. Estimated time: 50-70 min. After this you can read a Spark job, predict where it will shuffle, and pick the right operation.</div>
+    </section>
+
+    <section id="s2">
+      <h2>2. Introduction</h2>
+      <p>Every Spark program is really just a chain of RDD operations. You start with some data, apply a series of steps to reshape it, and finally ask for a result. Understanding the two categories of operation - Transformations and Actions - is the single most important idea in Spark, because it explains <i>when</i> your code actually runs and <i>where</i> it will be slow.</p>
+      <p><b>Why it matters.</b> A Transformation (a "transformation" simply means a step that produces a new RDD from an existing one, such as map or filter) does not run immediately - Spark just remembers it. Only an Action (a step that returns a value to your program, such as count or collect) forces all the remembered steps to run. If you do not know this, your program will behave in confusing ways: an error written on line 3 might only appear on line 30 where the action lives.</p>
+      <p><b>Where it is used.</b> Real data pipelines use these operations constantly: filter out bad rows, map raw text into structured records, reduceByKey to total revenue per product, join two datasets, then collect or write the small result. Picking the right operation is the difference between a job that finishes in one minute and one that runs for an hour.</p>
+      <div class="callout hook"><b>Memory hook</b>Transformations are a <b>to-do list</b> Spark writes down. An Action is you finally saying <b>"go do it".</b> Remember it as: <b>plan lazily, run on action.</b></div>
+    </section>
+
+    <section id="s3">
+      <h2>3. Beginner-Friendly Explanation</h2>
+      <p>Imagine you run a large mail-sorting room. Trucks drop off millions of letters, and the letters are already spread across many sorting tables (these tables are the <b>partitions</b> - each holds one chunk of the data).</p>
+      <p>You give the workers a list of instructions:</p>
+      <ol>
+        <li>"Throw away any letter with no stamp" - each worker does this at their own table, touching only their own pile. Nobody needs to walk to another table. This is a <b>narrow</b> step (like filter).</li>
+        <li>"Write the city name in the corner of every letter" - again done in place, one letter at a time. Narrow (like map).</li>
+        <li>"Now gather ALL letters going to the same city into one bag" - this forces workers to carry letters across the room to whichever table owns that city. Letters travel. This walking-around is the expensive part, called a <b>shuffle</b>, and it makes the step a <b>wide</b> one (like groupByKey).</li>
+      </ol>
+      <p>Here is the key twist: the workers do not lift a finger while you are just reading out instructions. They only start when you say the magic word - <b>"Give me the final count of bags"</b>. That magic word is the <b>Action</b>. Everything before it was just planning.</p>
+      <p><b>Where the analogy breaks down:</b> real workers might start early out of habit, but Spark is strict - it truly does nothing until an action is called, which lets it optimise the whole plan first.</p>
+      <div class="callout remember"><b>Remember it as</b>Narrow = work stays at your own table. Wide = letters travel across the room (a shuffle). Action = the magic word that makes work actually happen.</div>
+      <details><summary>Check yourself: is "gather all letters for the same city" narrow or wide?</summary><p>Wide - it forces letters to move between tables (a shuffle), exactly like groupByKey or reduceByKey.</p></details>
+    </section>
+
+    <section id="s4">
+      <h2>4. Technical Explanation</h2>
+      <p><b>Definition.</b> An RDD operation is either a <b>Transformation</b> (a lazy operation that takes one or more RDDs and returns a new RDD) or an <b>Action</b> (an operation that runs the computation and returns a value to the driver, or writes to storage).</p>
+      <h3>Key terms</h3>
+      <ul>
+        <li><b>Transformation</b> - builds a new RDD; lazy (recorded, not run).</li>
+        <li><b>Action</b> - triggers execution and produces a result (a number, a list, or a file).</li>
+        <li><b>Lazy evaluation</b> - Spark delays running transformations until an action asks for a result, so it can optimise the whole chain.</li>
+        <li><b>Lineage / DAG</b> - the recorded chain of transformations; Spark uses it to rebuild lost data and to plan execution.</li>
+        <li><b>Narrow transformation</b> - each output partition depends on ONE input partition; no data moves between partitions (e.g. map, filter, flatMap, mapPartitions).</li>
+        <li><b>Wide transformation</b> - output partitions depend on MANY input partitions, so data is redistributed - a <b>shuffle</b> (e.g. groupByKey, reduceByKey, sortByKey, join, distinct, intersection, repartition).</li>
+        <li><b>Shuffle</b> - moving data across the network so records with the same key land together; the most expensive thing in Spark.</li>
+      </ul>
+
+      <div class="diagram">
+        <p><b>Diagram 1: Transformations (lazy) build a plan; the Action runs it.</b></p>
+        <div class="flow">
+          <div class="node alt">RDD<br>(source)</div>
+          <div class="arrow">→</div>
+          <div class="node">map<br>(narrow)</div>
+          <div class="arrow">→</div>
+          <div class="node">filter<br>(narrow)</div>
+          <div class="arrow">→</div>
+          <div class="node warn">reduceByKey<br>(WIDE - shuffle)</div>
+          <div class="arrow">⇒</div>
+          <div class="node alt">collect<br>(ACTION)</div>
+        </div>
+        <p class="legend"><b>How to read this:</b> left to right = the order you wrote the steps. Purple = narrow (cheap), orange = wide (a shuffle happens here), teal = the source and the final action. The thin arrows are lazy links; the thick arrow (⇒) is where execution is finally triggered.</p>
+        <p><b>Components:</b> The <b>source RDD</b> is your starting data. <b>map</b> and <b>filter</b> are narrow - each worker processes its own partition with no data movement. <b>reduceByKey</b> is wide - records with the same key must be brought together, which triggers a <b>shuffle</b> across the network. <b>collect</b> is the Action; only when it runs does anything above it actually execute.</p>
+        <p><b>Flow:</b> (1) You declare source → map → filter → reduceByKey. Nothing runs yet; Spark just records this lineage. (2) You call collect(). (3) Spark plans the chain, splitting it into stages at the shuffle boundary (before reduceByKey). (4) Stage 1 runs map+filter on each partition in parallel. (5) The shuffle redistributes data by key. (6) Stage 2 runs reduceByKey. (7) The final result is sent to the driver.</p>
+      </div>
+
+      <h3>The operation catalogue (everything on your list)</h3>
+      <table>
+        <tr><th>Operation</th><th>Type</th><th>What it does</th><th>Remember it as</th></tr>
+        <tr><td>map</td><td>Narrow transf.</td><td>Turn each element into exactly one new element</td><td>one in, one out</td></tr>
+        <tr><td>flatMap</td><td>Narrow transf.</td><td>Turn each element into 0, 1, or many elements, then flatten</td><td>one in, many out</td></tr>
+        <tr><td>filter</td><td>Narrow transf.</td><td>Keep only elements that pass a test</td><td>keep the yes-es</td></tr>
+        <tr><td>mapPartitions</td><td>Narrow transf.</td><td>Run a function once per whole partition (not per element)</td><td>batch per table</td></tr>
+        <tr><td>distinct</td><td>Wide transf.</td><td>Remove duplicate elements (needs a shuffle)</td><td>de-dupe = travel</td></tr>
+        <tr><td>intersection</td><td>Wide transf.</td><td>Keep elements present in BOTH RDDs</td><td>common to both</td></tr>
+        <tr><td>groupByKey</td><td>Wide transf.</td><td>Group all values of each key into a list (shuffles ALL values)</td><td>gather, no combine</td></tr>
+        <tr><td>reduceByKey</td><td>Wide transf.</td><td>Combine values per key with a function; combines on each node first</td><td>gather + pre-combine</td></tr>
+        <tr><td>sortByKey</td><td>Wide transf.</td><td>Sort the RDD of (key,value) by key</td><td>order by key</td></tr>
+        <tr><td>join</td><td>Wide transf.</td><td>Match rows from two RDDs on their key</td><td>match on key</td></tr>
+        <tr><td>repartition</td><td>Wide transf.</td><td>Change partition count with a FULL shuffle (up or down)</td><td>reshuffle evenly</td></tr>
+        <tr><td>coalesce</td><td>Narrow transf.</td><td>REDUCE partition count without a full shuffle</td><td>merge, no travel</td></tr>
+        <tr><td>count</td><td>Action</td><td>Return the number of elements</td><td>how many?</td></tr>
+        <tr><td>collect</td><td>Action</td><td>Bring ALL elements to the driver (risky on big data)</td><td>bring it all home</td></tr>
+        <tr><td>take(n)</td><td>Action</td><td>Return the first n elements to the driver</td><td>just a peek</td></tr>
+        <tr><td>top(n)</td><td>Action</td><td>Return the n largest elements</td><td>the biggest n</td></tr>
+        <tr><td>countByValue</td><td>Action</td><td>Count how many times each distinct element appears</td><td>tally values</td></tr>
+        <tr><td>countByKey</td><td>Action</td><td>Count elements per key, returned as a map to the driver</td><td>tally per key</td></tr>
+        <tr><td>reduce</td><td>Action</td><td>Combine ALL elements into a single value with a function</td><td>squash to one</td></tr>
+      </table>
+      <div class="callout confusion"><b>Common confusion</b>reduceByKey is a Transformation (returns an RDD). reduce is an Action (returns one value to the driver). Same idea, different category - do not mix them up in an interview.</div>
+    </section>
+
+    <section id="s5">
+      <h2>5. Simple Example</h2>
+      <p>A tiny word-count pipeline in PySpark, explained one line at a time:</p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>rdd    = sc.parallelize(["a cat", "a dog", "a cat"])
+words  = rdd.flatMap(lambda line: line.split(" "))
+pairs  = words.map(lambda w: (w, 1))
+counts = pairs.reduceByKey(lambda a, b: a + b)
+result = counts.collect()
+print(result)</pre>
+      </div>
+      <ul>
+        <li><code>parallelize([...])</code> - creates the source RDD from a Python list.</li>
+        <li><code>flatMap(split)</code> - each line becomes many words (one-to-many), so 3 lines become 6 words. Narrow.</li>
+        <li><code>map(w to (w,1))</code> - pairs each word with the number 1. Narrow, one-to-one.</li>
+        <li><code>reduceByKey(a+b)</code> - adds the 1s for each identical word. Wide - this is where the shuffle happens.</li>
+        <li><code>collect()</code> - the Action. Only now does Spark actually run the four steps above and send the answer to the driver.</li>
+      </ul>
+      <p><b>Result:</b> <code>[('a', 3), ('cat', 2), ('dog', 1)]</code>. Nothing computed until collect(), because every step before it was a lazy transformation.</p>
+      <div class="callout pro"><b>Pro tip</b>Notice map + reduceByKey instead of groupByKey. reduceByKey adds up the 1s on each machine BEFORE shuffling, so far less data travels the network.</div>
+    </section>
+
+    <section id="s6">
+      <h2>6. Real-Time Industry Example</h2>
+      <p>An online retailer wants the total sales amount per product category from a day of order events. There are billions of order lines, so a single machine cannot do it. The data team writes an RDD job: read the raw lines, throw away malformed ones, turn each order into a (category, amount) pair, total the amounts per category, then pull the small summary to the driver to store.</p>
+      <div class="diagram">
+        <p><b>Diagram 2: Sales-by-category pipeline (which step is narrow vs wide).</b></p>
+        <div class="flow">
+          <div class="node alt">Raw orders<br>(RDD)</div>
+          <div class="arrow">→</div>
+          <div class="node">filter<br>(drop bad rows)</div>
+          <div class="arrow">→</div>
+          <div class="node">map<br>(cat, amount)</div>
+          <div class="arrow">→</div>
+          <div class="node warn">reduceByKey<br>(sum - shuffle)</div>
+          <div class="arrow">⇒</div>
+          <div class="node alt">collect<br>(save summary)</div>
+        </div>
+        <p class="legend"><b>How to read this:</b> left to right = the journey of one day of orders. Purple = narrow steps that stay on each machine, orange = the one wide step (a shuffle), teal = source and final action.</p>
+        <p><b>Components:</b> <b>Raw orders</b> is the huge source RDD. <b>filter</b> removes rows with missing fields (narrow). <b>map</b> converts each order into a (category, amount) pair (narrow). <b>reduceByKey</b> sums amounts per category and is the only wide step - amounts for the same category must be brought together (a shuffle). <b>collect</b> is the action that triggers everything and returns the small per-category totals.</p>
+        <p><b>Flow:</b> (1) Spark records filter → map → reduceByKey but runs nothing. (2) collect() is called. (3) Spark splits into two stages at the shuffle. (4) Stage 1 runs filter+map on every partition in parallel and pre-combines amounts locally. (5) The shuffle groups partial sums by category. (6) Stage 2 finishes the totals. (7) The tiny result (a few dozen categories) is sent to the driver and saved.</p>
+      </div>
+      <div class="callout watch"><b>Watch out</b>The result here is small (one number per category), so collect() is safe. Never collect() the raw billions of orders - only collect small, aggregated results.</div>
+    </section>
+
+    <section id="s7">
+      <h2>7. Code Examples</h2>
+      <p><b>Example A - the narrow transformations (map, flatMap, filter, mapPartitions):</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>nums = sc.parallelize([1, 2, 3, 4], 2)   # 2 partitions
+
+nums.map(lambda x: x * 10).collect()          # [10,20,30,40]  one-to-one
+nums.filter(lambda x: x % 2 == 0).collect()   # [2,4]          keep evens
+sc.parallelize(["a b","c"]).flatMap(
+        lambda s: s.split(" ")).collect()      # ['a','b','c']  one-to-many
+
+# mapPartitions: the function receives the WHOLE partition (an iterator)
+def add_all(part):
+    yield sum(part)                            # runs once per partition
+nums.mapPartitions(add_all).collect()          # [3, 7] -> per-partition sums</pre>
+      </div>
+      <p><b>What & why:</b> <code>map</code> transforms each element to exactly one result. <code>filter</code> keeps elements passing the test. <code>flatMap</code> can emit many results per input and flattens them. <code>mapPartitions</code> runs your function once per partition instead of once per element - use it to do expensive setup (like opening a connection) a single time per partition rather than per row.</p>
+
+      <p><b>Example B - the wide transformations (groupByKey vs reduceByKey, join, distinct, sortByKey):</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>pairs = sc.parallelize([("a",1),("b",1),("a",1)])
+
+pairs.reduceByKey(lambda a,b: a+b).collect()   # [('a',2),('b',1)]  efficient
+pairs.groupByKey().mapValues(list).collect()   # [('a',[1,1]),('b',[1])]  heavy
+pairs.sortByKey().collect()                     # sorted by key
+
+left  = sc.parallelize([("a",1),("b",2)])
+right = sc.parallelize([("a",9)])
+left.join(right).collect()                      # [('a',(1,9))]  match on key
+
+sc.parallelize([1,1,2,3]).distinct().collect()  # [1,2,3]  de-duplicate</pre>
+      </div>
+      <p><b>What & why:</b> <code>reduceByKey</code> and <code>groupByKey</code> both group by key, but reduceByKey combines values on each machine BEFORE the shuffle, so it moves far less data - prefer it for aggregations. <code>join</code> matches records from two RDDs by key (a shuffle). <code>distinct</code> and <code>sortByKey</code> also shuffle.</p>
+
+      <p><b>Example C - repartition vs coalesce, and the common actions:</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>big = sc.parallelize(range(100), 8)
+
+big.repartition(16)   # full shuffle, can go UP or down, evens out data
+big.coalesce(2)       # merges to 2 partitions, NO full shuffle (only reduces)
+
+big.count()                       # 100          (action)
+big.take(3)                       # [0,1,2]      (action, just a peek)
+big.top(3)                        # [99,98,97]   (action, n largest)
+big.reduce(lambda a,b: a+b)       # 4950         (action, squash to one)
+sc.parallelize([1,1,2]).countByValue()   # {1:2, 2:1}  (action)
+pairs.countByKey()                # {'a':2,'b':1}       (action)</pre>
+      </div>
+      <p><b>What & why:</b> <code>repartition</code> changes the number of partitions with a full shuffle (use it to increase parallelism or fix skew). <code>coalesce</code> only reduces partitions and avoids a full shuffle, so it is cheaper when you just want fewer output files. The rest are Actions: they end the lazy chain and return a value to the driver. <code>collect</code> is deliberately left out of the "safe" list here because it pulls everything back.</p>
+    </section>
+
+    <section id="s8">
+      <h2>8. Comparison</h2>
+      <table>
+        <tr><th>Question</th><th>Option A</th><th>Option B</th><th>Pick</th></tr>
+        <tr><td>Sum values per key</td><td>groupByKey + sum</td><td>reduceByKey</td><td>B - pre-combines, less shuffle</td></tr>
+        <tr><td>One-to-one vs one-to-many</td><td>map</td><td>flatMap</td><td>flatMap when each input yields many</td></tr>
+        <tr><td>Per-element vs per-partition</td><td>map</td><td>mapPartitions</td><td>mapPartitions to reuse setup</td></tr>
+        <tr><td>Change partition count</td><td>repartition (full shuffle)</td><td>coalesce (no full shuffle)</td><td>coalesce to reduce; repartition to increase/rebalance</td></tr>
+        <tr><td>Get results back</td><td>collect (all)</td><td>take(n) (a few)</td><td>take for a peek; collect only on small data</td></tr>
+      </table>
+      <p><b>When to pick which:</b> Reach for the operation that moves the least data. Combine before you shuffle (reduceByKey), shrink data early (filter first), and only bring small results to the driver. If you are just lowering the number of output files, use coalesce, not repartition.</p>
+    </section>
+
+    <section id="s9">
+      <h2>9. Best Practices</h2>
+      <p><b>Do:</b></p>
+      <ul>
+        <li>Prefer reduceByKey / aggregateByKey over groupByKey. <i>Why:</i> they combine locally before the shuffle, moving far less data.</li>
+        <li>filter as early as possible. <i>Why:</i> smaller data makes every later step faster.</li>
+        <li>Use coalesce to reduce partitions, repartition only when you must increase or rebalance. <i>Why:</i> coalesce avoids a full shuffle.</li>
+        <li>Use mapPartitions for per-partition setup (connections, models). <i>Why:</i> you pay the setup cost once per partition, not once per row.</li>
+      </ul>
+      <p><b>Common mistakes:</b></p>
+      <ul>
+        <li>collect() on a large RDD. <i>Why bad:</i> it pulls everything into driver memory and can crash it.</li>
+        <li>groupByKey for aggregation. <i>Why bad:</i> it shuffles every value; reduceByKey is cheaper.</li>
+        <li>Chaining many wide transformations blindly. <i>Why bad:</i> each shuffle is expensive; minimise and combine them.</li>
+        <li>Forgetting operations are lazy. <i>Why bad:</i> you expect work to happen at a transformation, but it only happens at the action.</li>
+      </ul>
+    </section>
+
+    <section id="s10">
+      <h2>10. Edge Cases & Gotchas</h2>
+      <ul>
+        <li><b>Lazy errors:</b> a bug inside a map lambda may only surface when the action runs, far from where you wrote it.</li>
+        <li><b>Key skew:</b> if one key holds most of the records, its reduce/join task lags while others finish - the job appears stuck near the end.</li>
+        <li><b>coalesce can under-parallelise:</b> coalescing to very few partitions before a heavy step starves you of parallelism; sometimes repartition is the right call despite the shuffle.</li>
+        <li><b>groupByKey memory blowups:</b> a key with millions of values must fit its value list in memory on one executor - reduceByKey avoids this.</li>
+        <li><b>take vs top:</b> take(n) returns any n (usually the first partition's), top(n) returns the largest n - do not use take expecting sorted results.</li>
+      </ul>
+      <div class="callout watch"><b>Watch out</b>"Works on sample, hangs on full data" is almost always a wide operation plus skew - not a code bug in your lambda.</div>
+    </section>
+
+    <section id="s11">
+      <h2>11. Troubleshooting / Common Errors</h2>
+      <table>
+        <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+        <tr><td>Driver OutOfMemory</td><td>collect() on big data</td><td>Use take(n) / aggregate first / write to storage</td></tr>
+        <tr><td>Executor OOM during groupByKey</td><td>One key has too many values</td><td>Switch to reduceByKey / aggregateByKey</td></tr>
+        <tr><td>Job stuck at last few tasks</td><td>Key skew in a wide op (join/reduceByKey)</td><td>Salt keys or repartition</td></tr>
+        <tr><td>Too many tiny output files</td><td>High partition count at write</td><td>coalesce(n) before saving</td></tr>
+        <tr><td>Error appears "on the wrong line"</td><td>Lazy evaluation - it runs at the action</td><td>Look at the transformation lambdas feeding that action</td></tr>
+      </table>
+    </section>
+
+    <section id="s12">
+      <h2>12. Interview Q&A (15)</h2>
+      <div class="qa"><span class="tag b">Beginner</span><b>What are the two categories of RDD operations?</b><br>Transformations, which build a new RDD lazily (map, filter), and Actions, which trigger execution and return a value to the driver (count, collect).</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What does map do?</b><br>Applies a function to every element and returns a new RDD with exactly one output per input (one-to-one).</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What does filter do?</b><br>Returns a new RDD containing only the elements that pass a boolean test; it can shrink but never grow the data.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What does collect do and why be careful?</b><br>It returns ALL elements to the driver as a list. On large data it can exhaust driver memory and crash the app.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>Is reduceByKey a transformation or an action?</b><br>A transformation - it returns a new RDD. reduce (without ByKey) is the action that returns a single value.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>Narrow vs wide transformation?</b><br>Narrow: each output partition depends on one input partition, no data movement (map, filter). Wide: output depends on many input partitions, causing a shuffle (groupByKey, join).</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>map vs flatMap?</b><br>map returns exactly one element per input; flatMap can return zero, one, or many and flattens the results into a single RDD.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>groupByKey vs reduceByKey - which is better?</b><br>reduceByKey, for aggregations. It combines values locally on each machine before the shuffle, so much less data crosses the network than groupByKey, which shuffles every value.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>repartition vs coalesce?</b><br>repartition does a full shuffle and can increase or decrease partitions; coalesce only reduces partitions and avoids a full shuffle, making it cheaper for lowering file counts.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>What is mapPartitions and when do you use it?</b><br>It runs your function once per partition (receiving an iterator) instead of once per element - useful to amortise setup like opening a DB connection or loading a model once per partition.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Why are transformations lazy, and what is the benefit?</b><br>Spark records transformations as a lineage/DAG and only runs them on an action. Laziness lets Spark optimise the whole chain (pipelining narrow steps, minimising shuffles) instead of running each step blindly.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>What is a shuffle and why is it expensive?</b><br>A shuffle redistributes data across the network so records with the same key are co-located. It involves disk writes, network transfer, and serialization, making it the main performance cost of wide operations.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>How does join work on RDDs and how do you optimise it?</b><br>join matches records by key, which normally requires a shuffle of both RDDs. If one side is small, broadcast it (broadcast join) so the large RDD is joined locally with no shuffle.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>What is lineage and how does it give fault tolerance?</b><br>Lineage is the recorded chain of transformations that built an RDD. If a partition is lost, Spark recomputes just that partition from its lineage instead of replicating all data.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>countByKey vs reduceByKey then collect - trade-offs?</b><br>countByKey is an action that returns a map to the driver and can overwhelm it if there are many keys. reduceByKey stays distributed as an RDD; you collect only if the result is small. Prefer the distributed path for many keys.</div>
+    </section>
+
+    <section id="s13">
+      <h2>13. Practice Quiz</h2>
+      <p>Answer all questions, then press Submit at the bottom.</p>
+      <div id="quizBox"></div>
+      <button class="primary" onclick="submitQuiz()">Submit Quiz</button>
+      <button class="ghost" onclick="resetQuiz()">Retry</button>
+      <div id="quizResult" class="result hidden"></div>
+    </section>
+
+    <section id="s14">
+      <h2>14. Formal Exam</h2>
+      <p>15 questions &middot; 1 mark each &middot; <span id="examTimerLabel" class="timer">15:00</span> &middot; Pass mark 60%.</p>
+      <button class="primary" id="startBtn" onclick="startExam()">Start Test</button>
+      <div id="examBox" class="hidden"></div>
+      <button class="primary hidden" id="examSubmitBtn" onclick="submitExam()">Submit Exam</button>
+      <button class="ghost" id="restartBtn" onclick="restartExam()">Restart Exam</button>
+      <div id="examResult" class="result hidden"></div>
+    </section>
+
+    <section id="s15">
+      <h2>15. Glossary</h2>
+      <ul>
+        <li><b>Action</b> - operation that triggers execution and returns a value (count, collect, reduce).</li>
+        <li><b>Coalesce</b> - reduce partition count without a full shuffle.</li>
+        <li><b>flatMap</b> - transformation returning 0..many elements per input.</li>
+        <li><b>Lazy evaluation</b> - transformations run only when an action is called.</li>
+        <li><b>Lineage / DAG</b> - recorded chain of transformations used for planning and recovery.</li>
+        <li><b>Narrow transformation</b> - no data movement between partitions.</li>
+        <li><b>reduceByKey</b> - combine values per key with local pre-combine before the shuffle.</li>
+        <li><b>Repartition</b> - change partition count via a full shuffle.</li>
+        <li><b>Shuffle</b> - network redistribution of data by key; the costly part of wide ops.</li>
+        <li><b>Transformation</b> - lazy operation returning a new RDD.</li>
+        <li><b>Wide transformation</b> - depends on many input partitions; causes a shuffle.</li>
+      </ul>
+    </section>
+
+    <section id="s16">
+      <h2>16. Summary</h2>
+      <p>RDD operations are either Transformations (lazy, return a new RDD) or Actions (trigger execution, return a value). Transformations are narrow (no shuffle: map, flatMap, filter, mapPartitions) or wide (shuffle: distinct, intersection, groupByKey, reduceByKey, sortByKey, join, repartition). Actions include count, collect, take, top, reduce, countByValue, and countByKey.</p>
+      <p><b>Quick-revision cheat list:</b></p>
+      <ul>
+        <li>Transformation = lazy (new RDD) &middot; Action = runs it (returns a value).</li>
+        <li>Narrow = no shuffle &middot; Wide = shuffle (data travels).</li>
+        <li>map = one-to-one &middot; flatMap = one-to-many &middot; filter = keep some &middot; mapPartitions = per partition.</li>
+        <li>reduceByKey beats groupByKey (pre-combine) &middot; coalesce beats repartition to shrink partitions.</li>
+        <li>collect brings everything home - use only on small results; take(n) for a peek, top(n) for the largest.</li>
+        <li>reduceByKey = transformation &middot; reduce = action.</li>
+      </ul>
+      <p><b>What to learn next:</b> pair-RDD ops (aggregateByKey, combineByKey) &rarr; partitioning &amp; broadcast joins &rarr; DataFrames &amp; the Catalyst optimiser &rarr; caching &amp; persistence.</p>
+    </section>
+  </main>
+
+  <aside>
+    <strong>Preparation</strong>
+    <div class="bar"><div id="progFill"></div></div>
+    <div id="progCount" style="font-size:12px;color:var(--muted)">0 / 16 prepared</div>
+    <div id="progList"></div>
+    <button class="ghost" style="width:100%;margin-top:8px;font-size:12px" onclick="resetProgress()">Reset progress</button>
+    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+    <details id="notesWrap" open>
+      <summary>My Notes</summary>
+      <p style="font-size:11.5px;color:var(--muted)">💡 Double-click any word in the lesson text to attach a note to it.</p>
+      <p id="storageHint" style="display:none;font-size:11.5px;color:#b45309;background:rgba(217,119,6,.1);padding:6px;border-radius:6px">Storage is blocked in this browser, so notes work now but won't be saved after you close the page.</p>
+      <div id="notesList"></div>
+      <button class="ghost" style="width:100%;margin-top:6px;font-size:12px" onclick="clearAllNotes()">Clear all notes</button>
+    </details>
+  </aside>
+</div>
+
+<div id="notePopup" class="hidden">
+  <textarea id="noteText" placeholder="Type your note..."></textarea>
+  <div class="row">
+    <button class="save" onclick="saveNote()">Save</button>
+    <button class="del" onclick="deleteCurrentNote()">Delete</button>
+    <button onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ---------- storage (feature-detected, all wrapped) ---------- */
+var STORAGE_OK=false;
+try{var _k="__t"+Date.now();localStorage.setItem(_k,"1");localStorage.getItem(_k);localStorage.removeItem(_k);STORAGE_OK=true;}catch(e){STORAGE_OK=false;}
+function sGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function sSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function sDel(k){try{localStorage.removeItem(k);}catch(e){}}
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+
+/* ---------- theme / font / sound ---------- */
+function toggleTheme(){document.body.classList.toggle("dark");sSet("theme",document.body.classList.contains("dark")?"dark":"light");}
+if(sGet("theme")==="dark")document.body.classList.add("dark");
+var fontStep=0;
+function changeFont(d){fontStep=Math.max(-2,Math.min(4,fontStep+d));document.querySelector("main").style.fontSize=(16+fontStep*1.5)+"px";}
+var muted=false;
+function toggleMute(){muted=!muted;document.getElementById("soundToggle").innerText=muted?"🔇 Sound: Off":"🔊 Sound: On";}
+function beep(freqs){if(muted)return;try{var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;var ctx=new Ctx();var t=ctx.currentTime;freqs.forEach(function(f){var o=ctx.createOscillator();var g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);o.start(t);o.stop(t+0.24);t+=0.16;});}catch(e){}}
+function soundFor(p){if(p>=100)beep([523,659,784,1047]);else if(p>=90)beep([659,880]);else if(p>=75)beep([587,740]);else if(p>=60)beep([494,494]);else beep([294,247]);}
+function mood(p){if(p>=100)return["🤩🎉","Perfect! Flawless run."];if(p>=90)return["😄","Excellent - interview-ready!"];if(p>=75)return["🙂","Well done - solid grasp."];if(p>=60)return["😌","Good - revise the misses."];return["💪","Needs focus - review & retry."];}
+
+/* ---------- copy code ---------- */
+function copyCode(btn){var code=btn.nextElementSibling.innerText;navigator.clipboard.writeText(code).then(function(){var o=btn.innerText;btn.innerText="Copied!";setTimeout(function(){btn.innerText=o;},900);});}
+
+/* ---------- progress checklist ---------- */
+var sections=[];
+function buildProgress(){
+  sections=Array.prototype.slice.call(document.querySelectorAll("main section"));
+  var list=document.getElementById("progList");list.innerHTML="";
+  sections.forEach(function(sec,i){
+    var title=(sec.querySelector("h2")||{}).innerText||("Section "+(i+1));
+    var saved=STORAGE_OK && sGet("prep"+i)==="1";
+    var row=document.createElement("label");row.className="checkrow";
+    row.innerHTML='<input type="checkbox" '+(saved?"checked":"")+' data-i="'+i+'"> '+title;
+    row.querySelector("input").addEventListener("change",function(){sSet("prep"+i,this.checked?"1":"0");updateProg();});
+    list.appendChild(row);
+  });
+  updateProg();
+}
+function updateProg(){
+  var boxes=document.querySelectorAll("#progList input");
+  var done=0;boxes.forEach(function(b){if(b.checked)done++;});
+  document.getElementById("progFill").style.width=(boxes.length?done/boxes.length*100:0)+"%";
+  document.getElementById("progCount").innerText=done+" / "+boxes.length+" prepared";
+}
+function resetProgress(){sections.forEach(function(_,i){sDel("prep"+i);});buildProgress();}
+
+/* ---------- QUIZ (15) ---------- */
+var quiz=[
+ {q:"Which of these is a transformation?",o:["count","map","collect","take"],a:1,e:"map returns a new RDD, so it is a lazy transformation."},
+ {q:"Which of these is an action?",o:["filter","flatMap","count","map"],a:2,e:"count triggers execution and returns a number to the driver."},
+ {q:"RDD transformations are evaluated...",o:["Immediately","Lazily (on an action)","Randomly","Only once cached"],a:1,e:"They are recorded and only run when an action is called."},
+ {q:"A narrow transformation...",o:["Always shuffles","Moves no data between partitions","Is an action","Sorts data"],a:1,e:"Narrow ops like map/filter keep each partition independent - no shuffle."},
+ {q:"Which operation causes a shuffle (wide)?",o:["map","filter","groupByKey","flatMap"],a:2,e:"groupByKey must bring all values of a key together, which shuffles."},
+ {q:"flatMap differs from map because it...",o:["Is an action","Can return 0..many outputs per input","Sorts the RDD","Removes duplicates"],a:1,e:"flatMap emits many elements per input and flattens them."},
+ {q:"For summing values per key, which is more efficient?",o:["groupByKey then sum","reduceByKey","collect then sum","sortByKey"],a:1,e:"reduceByKey pre-combines on each machine before the shuffle."},
+ {q:"mapPartitions runs the given function...",o:["Once per element","Once per partition","Once per RDD","Never"],a:1,e:"It receives the whole partition as an iterator - once per partition."},
+ {q:"collect() returns data to the...",o:["Executors","Driver","Disk only","Cluster manager"],a:1,e:"collect pulls all elements back to the driver - risky on big data."},
+ {q:"Which reduces partitions WITHOUT a full shuffle?",o:["repartition","coalesce","join","distinct"],a:1,e:"coalesce merges partitions locally and avoids a full shuffle."},
+ {q:"repartition() can...",o:["Only decrease partitions","Increase or decrease with a full shuffle","Never shuffle","Only be used as an action"],a:1,e:"repartition does a full shuffle and can go up or down."},
+ {q:"distinct() is a...",o:["Narrow transformation","Wide transformation","Action","Configuration"],a:1,e:"Removing duplicates requires a shuffle, so it is wide."},
+ {q:"take(3) does what?",o:["Returns all rows","Returns the first 3 rows to the driver","Sorts then returns","Is lazy"],a:1,e:"take(n) is an action returning the first n elements."},
+ {q:"countByKey() returns...",o:["A new RDD","A map of key to count to the driver","Nothing","A DataFrame"],a:1,e:"It is an action that returns a per-key count map to the driver."},
+ {q:"reduce vs reduceByKey: reduce is an ___ and reduceByKey is a ___",o:["action, transformation","transformation, action","action, action","transformation, transformation"],a:0,e:"reduce returns one value (action); reduceByKey returns an RDD (transformation)."}
+];
+function renderQuiz(){
+  var box=document.getElementById("quizBox");box.innerHTML="";
+  quiz.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="q"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="quiz'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function submitQuiz(){
+  var score=0;
+  quiz.forEach(function(item,i){
+    var sel=document.querySelector('input[name="quiz'+i+'"]:checked');
+    var d=document.getElementById("q"+i);
+    var ok=sel&&Number(sel.value)===item.a;
+    if(ok)score++;
+    d.classList.remove("correct","wrong");
+    d.classList.add(ok?"correct":"wrong");
+    var old=d.querySelector(".expl");if(old)old.remove();
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML=(ok?"<b style='color:var(--good)'>Correct.</b> ":"<b style='color:var(--bad)'>Correct answer: "+item.o[item.a]+".</b> ")+item.e;
+    d.appendChild(ex);
+  });
+  var pct=Math.round(score/quiz.length*100);var m=mood(pct);
+  var r=document.getElementById("quizResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Quiz score: "+score+"/"+quiz.length+" ("+pct+"%) — "+m[1];
+  soundFor(pct);
+}
+function resetQuiz(){
+  document.querySelectorAll("#quizBox input").forEach(function(x){x.checked=false;});
+  document.querySelectorAll("#quizBox .q").forEach(function(d){d.classList.remove("correct","wrong");var e=d.querySelector(".expl");if(e)e.remove();});
+  document.getElementById("quizResult").classList.add("hidden");
+}
+
+/* ---------- EXAM (15, timed) ---------- */
+var exam=[
+ {q:"groupByKey is generally preferred over reduceByKey for aggregations.",o:["True","False"],a:1,e:"False: reduceByKey pre-combines and shuffles far less data."},
+ {q:"Actions trigger execution of the recorded transformations.",o:["True","False"],a:0,e:"True: nothing runs until an action is called."},
+ {q:"map is a wide transformation.",o:["True","False"],a:1,e:"False: map is narrow - no shuffle."},
+ {q:"join between two RDDs is a wide transformation.",o:["True","False"],a:0,e:"True: matching by key normally requires a shuffle."},
+ {q:"coalesce (shuffle=false) can increase the number of partitions.",o:["True","False"],a:1,e:"False: coalesce only reduces partitions without a full shuffle."},
+ {q:"countByValue returns its result to the driver.",o:["True","False"],a:0,e:"True: it is an action returning a map to the driver."},
+ {q:"sortByKey does not require a shuffle.",o:["True","False"],a:1,e:"False: sorting by key is a wide, shuffling operation."},
+ {q:"filter can never increase the number of elements.",o:["True","False"],a:0,e:"True: it only keeps or drops elements."},
+ {q:"top(n) returns the n largest elements.",o:["True","False"],a:0,e:"True: top returns the largest n (take returns the first n)."},
+ {q:"Calling collect() on a very large RDD is safe.",o:["True","False"],a:1,e:"False: it can exhaust driver memory."},
+ {q:"intersection keeps elements present in both RDDs and involves a shuffle.",o:["True","False"],a:0,e:"True: it is a wide transformation."},
+ {q:"mapPartitions helps amortise setup cost once per partition.",o:["True","False"],a:0,e:"True: e.g. open one connection per partition, not per row."},
+ {q:"reduceByKey returns an RDD (it is a transformation).",o:["True","False"],a:0,e:"True: reduceByKey is a transformation; reduce is the action."},
+ {q:"take(5) must always process the entire dataset first.",o:["True","False"],a:1,e:"False: take can short-circuit once it has enough elements."},
+ {q:"repartition increases parallelism at the cost of a full shuffle.",o:["True","False"],a:0,e:"True: it reshuffles data across new partitions."}
+];
+var examStarted=false,examTimer=null,secondsLeft=900;
+function renderExam(){
+  var box=document.getElementById("examBox");box.innerHTML="";
+  exam.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="e"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="exam'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function fmt(s){var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x;}
+function startExam(){
+  if(examStarted)return;examStarted=true;secondsLeft=900;
+  renderExam();
+  document.getElementById("examBox").classList.remove("hidden");
+  document.getElementById("examSubmitBtn").classList.remove("hidden");
+  document.getElementById("startBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  var lbl=document.getElementById("examTimerLabel");lbl.classList.remove("warn");
+  examTimer=setInterval(function(){
+    secondsLeft--;lbl.innerText=fmt(secondsLeft);
+    if(secondsLeft<=60)lbl.classList.add("warn");
+    if(secondsLeft<=0)submitExam();
+  },1000);
+}
+function submitExam(){
+  if(!examStarted)return;
+  clearInterval(examTimer);examStarted=false;
+  var score=0;
+  exam.forEach(function(item,i){
+    var sel=document.querySelector('input[name="exam'+i+'"]:checked');
+    var chosen=sel?Number(sel.value):-1;
+    var ok=chosen===item.a;if(ok)score++;
+    var d=document.getElementById("e"+i);d.classList.add(ok?"correct":"wrong");
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML="Your answer: <b>"+(chosen>=0?item.o[chosen]:"—")+"</b> · Correct: <b>"+item.o[item.a]+"</b><br>"+item.e;
+    d.appendChild(ex);
+  });
+  var total=exam.length,pct=Math.round(score/total*100),m=mood(pct);
+  var pass=pct>=60?"<span style='color:var(--good)'>PASS</span>":"<span style='color:var(--bad)'>FAIL</span>";
+  var r=document.getElementById("examResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Marks: "+score+" / "+total+" · "+pct+"% · "+pass+" — "+m[1];
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  soundFor(pct);
+  if(STORAGE_OK){var h=sGet("examHist")||"";sSet("examHist",h+new Date().toLocaleString()+": "+pct+"%\n");}
+}
+function restartExam(){
+  clearInterval(examTimer);examStarted=false;secondsLeft=900;
+  document.getElementById("examBox").innerHTML="";
+  document.getElementById("examBox").classList.add("hidden");
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  document.getElementById("startBtn").classList.remove("hidden");
+  document.getElementById("examTimerLabel").innerText="15:00";
+  document.getElementById("examTimerLabel").classList.remove("warn");
+}
+
+/* ---------- DOUBLE-CLICK-WORD NOTES ---------- */
+var notes=[];
+function loadNotes(){if(!STORAGE_OK)return;try{notes=JSON.parse(sGet("notes")||"[]");}catch(e){notes=[];}}
+function persistNotes(){sSet("notes",JSON.stringify(notes));}
+var activeId=null;
+
+function occIndex(section,range,word){
+  var pre=document.createRange();pre.selectNodeContents(section);
+  try{pre.setEnd(range.startContainer,range.startOffset);}catch(e){return 0;}
+  var before=pre.toString();
+  var m=before.match(new RegExp("\\b"+esc(word)+"\\b","g"));
+  return m?m.length:0;
+}
+function wrapNth(section,word,index,id){
+  var walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+    if(!n.nodeValue||!n.parentElement)return NodeFilter.FILTER_REJECT;
+    if(n.parentElement.closest("script,style"))return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  var re=new RegExp("\\b"+esc(word)+"\\b","g"),count=0,node;
+  while((node=walker.nextNode())){
+    re.lastIndex=0;var m;
+    while((m=re.exec(node.nodeValue))){
+      if(count===index){
+        var r=document.createRange();r.setStart(node,m.index);r.setEnd(node,m.index+word.length);
+        var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+        try{r.surroundContents(span);}catch(e){return false;}
+        return true;
+      }
+      count++;
+    }
+  }
+  return false;
+}
+function restoreHighlights(){
+  notes.forEach(function(n){
+    var sec=document.getElementById(n.sectionId);
+    if(sec)wrapNth(sec,n.word,n.index,n.id);
+  });
+}
+function openPopupAt(rect,noteObj){
+  var p=document.getElementById("notePopup");
+  p.classList.remove("hidden");
+  // popup is position:fixed => use VIEWPORT coords (do NOT add scrollY/scrollX)
+  var top=rect.bottom+6, left=rect.left;
+  if(top>window.innerHeight-180){ top=Math.max(10, rect.top-180); }
+  if(left>window.innerWidth-270){ left=window.innerWidth-270; }
+  if(left<8){ left=8; }
+  p.style.top=top+"px";
+  p.style.left=left+"px";
+  document.getElementById("noteText").value=noteObj.note||"";
+  activeId=noteObj.id;
+  setTimeout(function(){document.getElementById("noteText").focus();},10);
+}
+function closePopup(){
+  var p=document.getElementById("notePopup");p.classList.add("hidden");
+  // if the active note has empty text, remove it + unwrap
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(n&&!n.note){deleteNoteById(activeId);}
+  activeId=null;
+}
+function saveNote(){
+  var txt=document.getElementById("noteText").value.trim();
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(!n)return;
+  if(!txt){deleteNoteById(activeId);document.getElementById("notePopup").classList.add("hidden");activeId=null;return;}
+  n.note=txt;persistNotes();renderNotesList();
+  document.getElementById("notePopup").classList.add("hidden");activeId=null;
+}
+function deleteCurrentNote(){if(activeId!=null){deleteNoteById(activeId);}document.getElementById("notePopup").classList.add("hidden");activeId=null;}
+function deleteNoteById(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(span){var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);}
+  notes=notes.filter(function(x){return x.id!==id;});
+  persistNotes();renderNotesList();
+}
+function clearAllNotes(){
+  document.querySelectorAll(".noted-word").forEach(function(span){
+    var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);
+  });
+  notes=[];persistNotes();renderNotesList();
+}
+function renderNotesList(){
+  var box=document.getElementById("notesList");if(!box)return;box.innerHTML="";
+  if(!notes.length){box.innerHTML='<p style="font-size:12px;color:var(--muted)">No notes yet.</p>';return;}
+  notes.forEach(function(n){
+    var d=document.createElement("div");d.className="noteItem";
+    d.innerHTML='<span class="w">'+n.word+'</span> — '+(n.note||"")+
+      '<div class="meta">'+n.sectionTitle+' · '+n.ts+'</div>'+
+      '<div class="acts"><button data-edit="'+n.id+'">Edit</button><button data-del="'+n.id+'">Delete</button></div>';
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-del]").forEach(function(b){b.onclick=function(){deleteNoteById(Number(b.getAttribute("data-del")));};});
+  box.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){
+    var id=Number(b.getAttribute("data-edit"));var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+    var n=notes.find(function(x){return x.id===id;});
+    if(span)openPopupAt(span.getBoundingClientRect(),n);else openPopupAt({bottom:100,left:100},n);
+  };});
+}
+function initNotes(){
+  loadNotes();restoreHighlights();renderNotesList();
+  document.addEventListener("dblclick",function(e){
+    // click on an existing noted word -> edit
+    var existing=e.target.closest(".noted-word");
+    if(existing){var id=Number(existing.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n){openPopupAt(existing.getBoundingClientRect(),n);}return;}
+    // must be inside tutorial body, not interactive
+    var host=e.target.closest(".tutorial");
+    if(!host)return;
+    if(e.target.closest("a,button,input,textarea,label,.no-note,.copybtn,pre,code,#toc,aside"))return;
+    var sel=window.getSelection();var word=sel.toString().trim();
+    if(!word||/\s/.test(word))return;
+    word=word.replace(/^[^\w]+|[^\w]+$/g,"");if(!word)return;
+    var range=sel.getRangeAt(0);
+    var sec=(range.startContainer.parentElement||host).closest("section");
+    if(!sec)return;
+    var index=occIndex(sec,range,word);
+    var id=Date.now();
+    var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+    try{
+      range.surroundContents(span);
+    }catch(err){
+      // fallback for selections that surroundContents can't wrap directly
+      try{ span.appendChild(range.extractContents()); range.insertNode(span); }
+      catch(err2){ return; }
+    }
+    sel.removeAllRanges();
+    var noteObj={id:id,word:word,note:"",index:index,sectionId:sec.id,sectionTitle:(sec.querySelector("h2")||{}).innerText||"",ts:new Date().toLocaleString()};
+    notes.push(noteObj);persistNotes();
+    openPopupAt(span.getBoundingClientRect(),noteObj);
+  });
+  // single click on a noted word to view/edit
+  document.addEventListener("click",function(e){
+    var w=e.target.closest(".noted-word");
+    if(w){var id=Number(w.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n)openPopupAt(w.getBoundingClientRect(),n);}
+  });
+}
+
+/* ---------- sparkle trail (reduced-motion aware, throttled) ---------- */
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var lastSpark=0;
+if(!reduce){
+  document.addEventListener("mousemove",function(e){
+    var now=Date.now();if(now-lastSpark<40)return;lastSpark=now;
+    var s=document.createElement("div");s.className="sparkle";
+    s.style.left=e.clientX+"px";s.style.top=e.clientY+"px";
+    document.body.appendChild(s);setTimeout(function(){s.remove();},600);
+  });
+}
+
+/* ---------- reading progress bar + active nav ---------- */
+window.addEventListener("scroll",function(){
+  var h=document.documentElement;
+  var pct=h.scrollTop/(h.scrollHeight-h.clientHeight)*100;
+  document.getElementById("readbar").style.width=pct+"%";
+  var secs=document.querySelectorAll("main section"),cur=secs[0].id;
+  secs.forEach(function(s){if(window.scrollY>=s.offsetTop-160)cur=s.id;});
+  document.querySelectorAll("#toc a").forEach(function(a){a.classList.toggle("active",a.getAttribute("href")==="#"+cur);});
+});
+
+/* ---------- init ---------- */
+window.onload=function(){
+  renderQuiz();
+  buildProgress();
+  initNotes();
+  if(!STORAGE_OK){
+    var hint=document.getElementById("storageHint");
+    if(hint) hint.style.display="block";
+  }
+};
+</script>
+</body>
+</html>
