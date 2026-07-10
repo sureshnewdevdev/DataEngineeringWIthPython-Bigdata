@@ -89,6 +89,11 @@
   .noted-word{background:var(--mark);border-bottom:2px solid var(--mark-line);border-radius:3px;
     cursor:pointer;padding:0 1px}
   body.dark .noted-word{color:#1a2232}
+  .noted-word.flash{animation:flashword 1.6s ease}
+  @keyframes flashword{0%,55%{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.5)}100%{background:var(--mark);box-shadow:none}}
+  .noteItem{cursor:pointer}
+  .noteItem:hover{border-color:var(--brand)}
+  .noteItem .w{text-decoration:underline dotted}
   #notePopup{position:fixed;z-index:100;background:var(--card);border:1px solid var(--line);
     border-radius:10px;box-shadow:var(--shadow);padding:12px;width:250px}
   #notePopup textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:8px;
@@ -754,14 +759,30 @@ function clearAllNotes(){
   });
   notes=[];persistNotes();renderNotesList();
 }
+function jumpToNote(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(!span){ // highlight missing (e.g. cleared) - re-apply then jump
+    var nn=notes.find(function(x){return x.id===id;});
+    if(nn){var sec=document.getElementById(nn.sectionId);if(sec)wrapNth(sec,nn.word,nn.index,nn.id);}
+    span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  }
+  if(!span)return;
+  var y=span.getBoundingClientRect().top+window.pageYOffset-headerH()-20;
+  window.scrollTo({top:Math.max(0,y),behavior:"smooth"});
+  span.classList.remove("flash");void span.offsetWidth; // restart animation
+  span.classList.add("flash");
+  setTimeout(function(){span.classList.remove("flash");},1700);
+}
 function renderNotesList(){
   var box=document.getElementById("notesList");if(!box)return;box.innerHTML="";
   if(!notes.length){box.innerHTML='<p style="font-size:12px;color:var(--muted)">No notes yet.</p>';return;}
   notes.forEach(function(n){
-    var d=document.createElement("div");d.className="noteItem";
+    var d=document.createElement("div");d.className="noteItem";d.title="Click to jump to this word";
     d.innerHTML='<span class="w">'+n.word+'</span> — '+(n.note||"")+
       '<div class="meta">'+n.sectionTitle+' · '+n.ts+'</div>'+
       '<div class="acts"><button data-edit="'+n.id+'">Edit</button><button data-del="'+n.id+'">Delete</button></div>';
+    // click the row (but not the Edit/Delete buttons) -> navigate to the word
+    d.addEventListener("click",function(e){ if(e.target.closest("button"))return; jumpToNote(n.id); });
     box.appendChild(d);
   });
   box.querySelectorAll("[data-del]").forEach(function(b){b.onclick=function(){deleteNoteById(Number(b.getAttribute("data-del")));};});
