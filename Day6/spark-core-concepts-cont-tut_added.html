@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TUT: Spark Core Concepts Continued | Architecture, Contexts, Features & Limitations</title>
+  <style>
+    :root{
+      --bg:#f5f7fb; --card:#ffffff; --ink:#172033; --muted:#64748b; --primary:#1f4e79; --primary2:#0f172a; --accent:#f59e0b;
+      --ok:#15803d; --bad:#b91c1c; --info:#0369a1; --violet:#6d28d9; --line:#d9e2ef; --soft:#eff6ff;
+      --code:#101827; --codeText:#e6edf3; --shadow:0 12px 28px rgba(15,23,42,.08);
+    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth}
+    body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.65}
+    header{background:linear-gradient(135deg,#0f172a,#1f4e79 58%,#0ea5e9);color:white;padding:34px 24px;position:sticky;top:0;z-index:20;box-shadow:var(--shadow)}
+    header h1{margin:0 0 8px;font-size:30px;letter-spacing:.2px} header p{margin:0;color:#dbeafe;max-width:1100px}
+    .layout{display:grid;grid-template-columns:300px 1fr 220px;gap:20px;max-width:1580px;margin:0 auto;padding:20px}
+    nav,.rightbar{position:sticky;top:126px;align-self:start;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow);max-height:calc(100vh - 150px);overflow:auto}
+    nav a{display:block;padding:8px 10px;margin:2px 0;border-radius:10px;color:var(--primary);text-decoration:none;font-size:14px;border-bottom:1px solid #edf2f7}
+    nav a:hover{background:var(--soft)}
+    .rightbar .mini{background:#f8fafc;border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0;font-size:13px}
+    main{min-width:0}.breadcrumb{font-size:13px;color:var(--muted);margin:2px 0 16px}.breadcrumb span{color:var(--primary);font-weight:700}
+    section{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;margin-bottom:20px;box-shadow:var(--shadow);transition:.2s ease}
+    section:hover{border-color:#93c5fd;transform:translateY(-2px)}
+    h2{margin-top:0;color:var(--primary);border-bottom:2px solid #e5edf8;padding-bottom:8px} h3{color:#0f3b63;margin-top:24px}
+    .badge{display:inline-block;background:#e0f2fe;color:#075985;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;margin:3px 6px 3px 0}
+    .trainer,.activity,.warning,.output,.interview,.memory,.definition{border-left:5px solid var(--primary);background:#f8fbff;padding:14px 16px;border-radius:14px;margin:14px 0}
+    .activity{border-left-color:var(--accent);background:#fffbeb}.warning{border-left-color:var(--bad);background:#fff1f2}.output{border-left-color:var(--ok);background:#f0fdf4}.interview{border-left-color:var(--violet);background:#f5f3ff}.memory{border-left-color:#0ea5e9;background:#f0f9ff}.definition{border-left-color:#0f766e;background:#f0fdfa}
+    pre{background:var(--code);color:var(--codeText);padding:16px;border-radius:15px;overflow-x:auto;font-size:14px;line-height:1.55} code{font-family:Consolas,Monaco,monospace}
+    table{width:100%;border-collapse:collapse;margin:16px 0;border-radius:14px;overflow:hidden} th,td{border:1px solid var(--line);padding:10px;vertical-align:top} th{background:#eaf3ff;color:#123d63}
+    .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .card{background:#f8fafc;border:1px solid var(--line);border-radius:16px;padding:16px}.card h4{margin:0 0 6px;color:#0f3b63}.card .big{font-size:24px;font-weight:800;color:var(--primary)}
+    .steps{counter-reset:step}.step{counter-increment:step;position:relative;padding-left:48px;margin:15px 0}.step:before{content:counter(step);position:absolute;left:0;top:0;background:var(--primary);color:#fff;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-weight:800}
+    .flow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0}.flow span{background:#eef6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;font-weight:700;color:#164e63}.arrow{font-weight:900;color:var(--primary)}
+    .svgbox{background:#ffffff;border:1px solid var(--line);border-radius:18px;padding:16px;margin:15px 0;overflow:auto}.svgbox svg{max-width:100%;height:auto;display:block;margin:auto}
+    .pill{display:inline-block;border:1px solid var(--line);background:#f8fafc;border-radius:999px;padding:5px 10px;margin:4px;font-size:13px}.kbd{background:#111827;color:#f9fafb;border-radius:6px;padding:2px 6px;font-family:Consolas,monospace;font-size:12px}
+    button{background:var(--primary);color:#fff;border:0;border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:800;margin:6px 6px 6px 0}button:hover{filter:brightness(1.08)}.secondary{background:#475569}.danger{background:var(--bad)}.success{background:var(--ok)}
+    .progress-box{display:flex;gap:12px;flex-wrap:wrap}.check-item{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:240px}.quiz-question,.exam-question{border:1px solid var(--line);border-radius:14px;background:#fbfdff;padding:14px;margin:12px 0} label{display:block;margin:7px 0;cursor:pointer}.score{font-weight:800;font-size:18px;margin-top:12px;color:#0f3b63}.notes-box{width:100%;min-height:110px;border:1px solid var(--line);border-radius:12px;padding:12px;font-family:inherit}
+    .sparkle{position:fixed;width:8px;height:8px;background:#facc15;border-radius:50%;pointer-events:none;animation:sparkle .8s linear forwards;z-index:9999}@keyframes sparkle{0%{transform:scale(1);opacity:1}100%{transform:scale(0);opacity:0}}
+    .footer{text-align:center;color:var(--muted);padding:30px 10px}.small{font-size:13px;color:var(--muted)}.mono{font-family:Consolas,monospace}
+    @media(max-width:1100px){.layout{grid-template-columns:1fr}.rightbar,nav,header{position:static;max-height:none}.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+    @media print{header,nav,.rightbar,button{display:none}.layout{display:block;padding:0}section{box-shadow:none;break-inside:avoid}}
+  </style>
+</head>
+<body>
+<header>
+  <h1>TUT: Spark Core Concepts Continued</h1>
+  <p>Classroom-style spoon-feeding notes: Spark Architecture, Driver/Executor/Task, SparkContext/SparkConf/SparkSession, SQLContext/HiveContext, Spark features and limitations.</p>
+</header>
+<div class="layout">
+  <nav>
+    <strong>Course Navigation</strong>
+    <a href="#s1">1. Learning Roadmap</a>
+    <a href="#s2">2. Big Picture: Spark Application</a>
+    <a href="#s3">3. Spark Architecture</a>
+    <a href="#s4">4. Driver / Executor / Task</a>
+    <a href="#s5">5. Job / Stage / Task Flow</a>
+    <a href="#s6">6. SparkContext</a>
+    <a href="#s7">7. SparkConf</a>
+    <a href="#s8">8. SparkSession</a>
+    <a href="#s9">9. SQLContext & HiveContext</a>
+    <a href="#s10">10. Hands-on Lab</a>
+    <a href="#s11">11. Features of Spark</a>
+    <a href="#s12">12. Limitations of Spark</a>
+    <a href="#s13">13. Best Practices</a>
+    <a href="#s14">14. Troubleshooting</a>
+    <a href="#s15">15. Interview Q&A</a>
+    <a href="#s16">16. Quiz, Exam & Notes</a>
+    <a href="#s17">17. Trainer Recap</a>
+  </nav>
+
+  <main>
+    <div class="breadcrumb">Home &gt; Big Data &gt; Spark &gt; <span>Spark Core Concepts Continued</span></div>
+
+    <section id="s1">
+      <h2>1. Learning Roadmap</h2>
+      <span class="badge">Corporate Trainer Notes</span><span class="badge">Spark Core</span><span class="badge">Architecture Focus</span><span class="badge">Interview Ready</span>
+      <p>This tutorial continues Spark Core concepts after the first introduction to Spark and RDDs. Here we focus on how Spark runs internally and how the main Spark entry objects are used in real projects.</p>
+      <div class="definition"><strong>Simple Goal:</strong> By the end, you should be able to draw Spark architecture, explain Driver/Executor/Task clearly, create SparkContext/SparkSession, compare old and modern SQL entry points, and discuss Spark features and limitations confidently.</div>
+      <h3>Topics Covered</h3>
+      <div class="grid3">
+        <div class="card"><h4>Architecture</h4><p>Driver, cluster manager, worker node, executor and task.</p></div>
+        <div class="card"><h4>Entry Points</h4><p>SparkContext, SparkConf, SparkSession, SQLContext, HiveContext.</p></div>
+        <div class="card"><h4>Practical Understanding</h4><p>Jobs, stages, tasks, partitions, caching and Spark UI.</p></div>
+      </div>
+      <div class="memory"><strong>Memory Aid:</strong> <span class="pill">Driver Decides</span> <span class="pill">Executor Executes</span> <span class="pill">Task Touches a Partition</span></div>
+    </section>
+
+    <section id="s2">
+      <h2>2. Big Picture: What Happens When a Spark Application Runs?</h2>
+      <p>Assume a ride-hailing company named <strong>SmartRide</strong> wants to analyze trip data. The trainer writes a Spark program. When the program runs, Spark creates a Driver, requests resources from a cluster manager, starts executors, divides the work into tasks and runs those tasks in parallel.</p>
+      <div class="flow">
+        <span>User Code</span><b class="arrow">→</b><span>Driver Program</span><b class="arrow">→</b><span>SparkContext / SparkSession</span><b class="arrow">→</b><span>Cluster Manager</span><b class="arrow">→</b><span>Executors</span><b class="arrow">→</b><span>Tasks</span><b class="arrow">→</b><span>Result</span>
+      </div>
+      <pre><code>// Scala Spark Shell example
+val trips = spark.read.option("header", "true").csv("data/trips.csv")
+val chennaiTrips = trips.filter($"city" === "Chennai")
+chennaiTrips.count()   // action triggers execution</code></pre>
+      <div class="trainer"><strong>Trainer Explanation:</strong> The filter line only builds a plan. The count line is an action. When an action is called, Spark converts the plan into a job, divides the job into stages, and sends tasks to executors.</div>
+    </section>
+
+    <section id="s3">
+      <h2>3. Spark Architecture</h2>
+      <p>Spark applications run as independent processes. The Driver coordinates the application using SparkContext, connects to a cluster manager, gets executors on worker nodes, sends application code to those executors and finally sends tasks to run.</p>
+      <div class="svgbox" aria-label="Spark Architecture Diagram">
+        <svg width="920" height="430" viewBox="0 0 920 430" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#1f4e79"/></marker>
+          </defs>
+          <rect x="360" y="20" width="200" height="70" rx="14" fill="#e0f2fe" stroke="#1f4e79" stroke-width="2"/>
+          <text x="460" y="49" text-anchor="middle" font-size="18" font-weight="700" fill="#0f3b63">Driver Program</text>
+          <text x="460" y="73" text-anchor="middle" font-size="13" fill="#0f3b63">main() + SparkSession</text>
+          <rect x="330" y="130" width="260" height="62" rx="14" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+          <text x="460" y="157" text-anchor="middle" font-size="17" font-weight="700" fill="#92400e">Cluster Manager</text>
+          <text x="460" y="178" text-anchor="middle" font-size="13" fill="#92400e">Standalone / YARN / Kubernetes</text>
+          <line x1="460" y1="90" x2="460" y2="130" stroke="#1f4e79" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+          <rect x="60" y="245" width="235" height="145" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+          <text x="177" y="272" text-anchor="middle" font-size="16" font-weight="700">Worker Node 1</text>
+          <rect x="88" y="295" width="178" height="68" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="177" y="322" text-anchor="middle" font-size="16" font-weight="700" fill="#14532d">Executor</text>
+          <text x="177" y="344" text-anchor="middle" font-size="13" fill="#14532d">Tasks + Cache</text>
+
+          <rect x="342" y="245" width="235" height="145" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+          <text x="460" y="272" text-anchor="middle" font-size="16" font-weight="700">Worker Node 2</text>
+          <rect x="371" y="295" width="178" height="68" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="460" y="322" text-anchor="middle" font-size="16" font-weight="700" fill="#14532d">Executor</text>
+          <text x="460" y="344" text-anchor="middle" font-size="13" fill="#14532d">Tasks + Cache</text>
+
+          <rect x="625" y="245" width="235" height="145" rx="16" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+          <text x="743" y="272" text-anchor="middle" font-size="16" font-weight="700">Worker Node 3</text>
+          <rect x="654" y="295" width="178" height="68" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2"/>
+          <text x="743" y="322" text-anchor="middle" font-size="16" font-weight="700" fill="#14532d">Executor</text>
+          <text x="743" y="344" text-anchor="middle" font-size="13" fill="#14532d">Tasks + Cache</text>
+
+          <line x1="407" y1="192" x2="178" y2="245" stroke="#1f4e79" stroke-width="2.5" marker-end="url(#arrow)"/>
+          <line x1="460" y1="192" x2="460" y2="245" stroke="#1f4e79" stroke-width="2.5" marker-end="url(#arrow)"/>
+          <line x1="513" y1="192" x2="743" y2="245" stroke="#1f4e79" stroke-width="2.5" marker-end="url(#arrow)"/>
+          <text x="30" y="415" font-size="13" fill="#64748b">Note: Each Spark application has its own driver and executor processes.</text>
+        </svg>
+      </div>
+      <table>
+        <tr><th>Component</th><th>Meaning</th><th>SmartRide Example</th></tr>
+        <tr><td>Application</td><td>Complete user program built on Spark.</td><td>Trip revenue analysis application.</td></tr>
+        <tr><td>Driver Program</td><td>Main control process that creates SparkContext/SparkSession.</td><td>The process running the analysis code.</td></tr>
+        <tr><td>Cluster Manager</td><td>Allocates resources for Spark applications.</td><td>YARN gives containers to executors.</td></tr>
+        <tr><td>Worker Node</td><td>Machine where executor processes run.</td><td>Data node or compute node in the cluster.</td></tr>
+        <tr><td>Executor</td><td>Worker process that runs tasks and stores cached data.</td><td>Processes partitions of trips.csv.</td></tr>
+        <tr><td>Task</td><td>Smallest unit of work sent to one executor.</td><td>Filter partition 1, partition 2, etc.</td></tr>
+      </table>
+    </section>
+
+    <section id="s4">
+      <h2>4. Driver / Executor / Task</h2>
+      <div class="grid3">
+        <div class="card"><h4>Driver</h4><p>The brain of a Spark application. It maintains the application plan, creates jobs, schedules tasks and collects final results.</p></div>
+        <div class="card"><h4>Executor</h4><p>The hands of a Spark application. It executes tasks, stores cached data and sends status/results back to Driver.</p></div>
+        <div class="card"><h4>Task</h4><p>The smallest execution unit. Usually one task processes one partition of an RDD/DataFrame.</p></div>
+      </div>
+      <h3>Real-life Analogy</h3>
+      <table>
+        <tr><th>Spark Component</th><th>Hotel Kitchen Analogy</th><th>Explanation</th></tr>
+        <tr><td>Driver</td><td>Head chef</td><td>Decides what has to be cooked and assigns work.</td></tr>
+        <tr><td>Cluster Manager</td><td>Kitchen manager</td><td>Allocates kitchen staff and counters.</td></tr>
+        <tr><td>Executor</td><td>Cook</td><td>Actually prepares food.</td></tr>
+        <tr><td>Task</td><td>One cooking instruction</td><td>Cut vegetables, fry item, make sauce.</td></tr>
+        <tr><td>Partition</td><td>One tray of ingredients</td><td>The data piece handled by a task.</td></tr>
+      </table>
+      <div class="warning"><strong>Important Interview Point:</strong> The Driver should not be overloaded. Calling <code>collect()</code> on huge data brings all data back to Driver and can cause Driver out-of-memory errors.</div>
+    </section>
+
+    <section id="s5">
+      <h2>5. Job / Stage / Task Flow</h2>
+      <p>When an action is executed, Spark creates a job. The job is divided into stages. Each stage contains many tasks. Stages are usually separated by shuffle boundaries.</p>
+      <div class="flow"><span>Action</span><b class="arrow">→</b><span>Job</span><b class="arrow">→</b><span>DAG</span><b class="arrow">→</b><span>Stages</span><b class="arrow">→</b><span>Tasks</span><b class="arrow">→</b><span>Executors</span></div>
+      <h3>Example</h3>
+      <pre><code>val rdd = sc.parallelize(Seq("chennai", "pune", "chennai", "mumbai"), 2)
+val result = rdd.map(city => (city, 1))
+                .reduceByKey(_ + _)
+                .collect()</code></pre>
+      <table>
+        <tr><th>Line</th><th>Transformation / Action</th><th>Execution?</th></tr>
+        <tr><td><code>parallelize</code></td><td>Creates base RDD</td><td>No full job yet</td></tr>
+        <tr><td><code>map</code></td><td>Narrow transformation</td><td>Lazy</td></tr>
+        <tr><td><code>reduceByKey</code></td><td>Wide transformation with shuffle</td><td>Lazy, creates stage boundary</td></tr>
+        <tr><td><code>collect</code></td><td>Action</td><td>Triggers job</td></tr>
+      </table>
+      <div class="memory"><strong>Memory Aid:</strong> <span class="pill">Action starts Job</span><span class="pill">Shuffle splits Stage</span><span class="pill">Partition decides Task count</span></div>
+    </section>
+
+    <section id="s6">
+      <h2>6. SparkContext</h2>
+      <div class="definition"><strong>Definition:</strong> SparkContext is the main entry point for Spark Core. It represents the connection between your application and the Spark cluster. It can create RDDs, accumulators and broadcast variables.</div>
+      <h3>In Spark Shell</h3>
+      <pre><code>// In spark-shell, SparkContext is already available as sc
+sc
+sc.appName
+sc.master
+sc.defaultParallelism</code></pre>
+      <h3>Scala Program</h3>
+      <pre><code>import org.apache.spark.{SparkConf, SparkContext}
+
+val conf = new SparkConf()
+  .setAppName("SmartRideCoreDemo")
+  .setMaster("local[*]")
+
+val sc = new SparkContext(conf)
+val data = sc.parallelize(Seq(10, 20, 30, 40))
+println(data.count())
+sc.stop()</code></pre>
+      <h3>PySpark Program</h3>
+      <pre><code>from pyspark import SparkConf, SparkContext
+
+conf = SparkConf().setAppName("SmartRideCoreDemo").setMaster("local[*]")
+sc = SparkContext(conf=conf)
+rdd = sc.parallelize([10, 20, 30, 40])
+print(rdd.count())
+sc.stop()</code></pre>
+      <div class="warning"><strong>Important:</strong> In one JVM, only one active SparkContext should normally exist. Stop the existing SparkContext before creating another one.</div>
+    </section>
+
+    <section id="s7">
+      <h2>7. SparkConf</h2>
+      <div class="definition"><strong>Definition:</strong> SparkConf is the configuration object used to set application name, master URL and many Spark properties.</div>
+      <pre><code>val conf = new SparkConf()
+  .setAppName("SmartRideTripAnalysis")
+  .setMaster("local[4]")
+  .set("spark.executor.memory", "2g")
+  .set("spark.driver.memory", "1g")</code></pre>
+      <h3>Common Configurations</h3>
+      <table>
+        <tr><th>Configuration</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><code>spark.app.name</code></td><td>Name shown in Spark UI.</td><td>SmartRideAnalysis</td></tr>
+        <tr><td><code>spark.master</code></td><td>Where Spark runs.</td><td>local[*], yarn, spark://host:7077</td></tr>
+        <tr><td><code>spark.driver.memory</code></td><td>Memory for Driver process.</td><td>1g, 2g</td></tr>
+        <tr><td><code>spark.executor.memory</code></td><td>Memory for each Executor.</td><td>2g, 4g</td></tr>
+        <tr><td><code>spark.sql.shuffle.partitions</code></td><td>Default shuffle partitions for SQL/DataFrame.</td><td>200 default commonly tuned lower for small labs</td></tr>
+      </table>
+      <div class="trainer"><strong>Trainer Tip:</strong> Explain SparkConf like a form submitted before the job starts: app name, where to run, how much memory, and special properties.</div>
+    </section>
+
+    <section id="s8">
+      <h2>8. SparkSession</h2>
+      <div class="definition"><strong>Definition:</strong> SparkSession is the modern unified entry point for Spark applications. It is used for DataFrames, SQL, Hive integration and can also access SparkContext using <code>spark.sparkContext</code>.</div>
+      <h3>Why SparkSession?</h3>
+      <ul>
+        <li>It reduces confusion between SparkContext, SQLContext and HiveContext.</li>
+        <li>It is the recommended entry point for modern Spark SQL/DataFrame work.</li>
+        <li>It provides <code>read</code>, <code>sql</code>, <code>catalog</code> and DataFrame APIs.</li>
+      </ul>
+      <h3>Scala</h3>
+      <pre><code>import org.apache.spark.sql.SparkSession
+
+val spark = SparkSession.builder()
+  .appName("SmartRideSparkSessionDemo")
+  .master("local[*]")
+  .getOrCreate()
+
+val sc = spark.sparkContext
+val df = spark.read.option("header", "true").csv("data/trips.csv")
+df.show()</code></pre>
+      <h3>PySpark</h3>
+      <pre><code>from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("SmartRideSparkSessionDemo") \
+    .master("local[*]") \
+    .getOrCreate()
+
+sc = spark.sparkContext
+df = spark.read.option("header", "true").csv("data/trips.csv")
+df.show()</code></pre>
+      <table>
+        <tr><th>Object</th><th>Main Use</th><th>Current Practical Status</th></tr>
+        <tr><td>SparkContext</td><td>RDD and low-level Spark Core operations</td><td>Still used, available through SparkSession</td></tr>
+        <tr><td>SparkSession</td><td>DataFrames, SQL, Dataset, Hive support</td><td>Recommended modern entry point</td></tr>
+      </table>
+    </section>
+
+    <section id="s9">
+      <h2>9. SQLContext and HiveContext</h2>
+      <p>SQLContext and HiveContext are important for interviews because they were used in older Spark versions. In modern Spark, SparkSession has replaced them for most use cases.</p>
+      <div class="grid2">
+        <div class="card"><h4>SQLContext</h4><p>Older entry point for DataFrame and SQL operations before SparkSession became the unified entry point.</p><pre><code>val sqlContext = new SQLContext(sc)</code></pre></div>
+        <div class="card"><h4>HiveContext</h4><p>Older entry point for Hive integration. It extended SQLContext with Hive support.</p><pre><code>val hiveContext = new HiveContext(sc)</code></pre></div>
+      </div>
+      <h3>Modern Hive Support</h3>
+      <pre><code>val spark = SparkSession.builder()
+  .appName("SmartRideHiveDemo")
+  .master("local[*]")
+  .enableHiveSupport()
+  .getOrCreate()
+
+spark.sql("SHOW DATABASES").show()</code></pre>
+      <table>
+        <tr><th>Concept</th><th>Older Spark Usage</th><th>Modern Usage</th></tr>
+        <tr><td>SQL queries</td><td>SQLContext</td><td>SparkSession</td></tr>
+        <tr><td>DataFrames</td><td>SQLContext</td><td>SparkSession</td></tr>
+        <tr><td>Hive queries</td><td>HiveContext</td><td>SparkSession + enableHiveSupport()</td></tr>
+      </table>
+      <div class="memory"><strong>Memory Aid:</strong> SparkSession is the <em>single door</em>. Earlier SQLContext and HiveContext were separate doors.</div>
+    </section>
+
+    <section id="s10">
+      <h2>10. Hands-on Lab: Architecture + Contexts</h2>
+      <h3>Lab Setup</h3>
+      <p>Open Spark Shell:</p>
+      <pre><code>spark-shell --master local[2]</code></pre>
+      <h3>Step 1: Check Existing Objects</h3>
+      <pre><code>sc
+spark
+sc.master
+sc.appName
+sc.defaultParallelism</code></pre>
+      <h3>Step 2: Create an RDD and Trigger Job</h3>
+      <pre><code>val trips = sc.parallelize(Seq(
+  ("Chennai", 350), ("Bangalore", 220), ("Chennai", 420),
+  ("Hyderabad", 600), ("Bangalore", 180)
+), 2)
+
+val cityRevenue = trips.reduceByKey(_ + _)
+cityRevenue.collect()</code></pre>
+      <h3>Step 3: Use SparkSession for DataFrame</h3>
+      <pre><code>import spark.implicits._
+
+val tripsDF = Seq(
+  ("T001", "Chennai", 350),
+  ("T002", "Bangalore", 220),
+  ("T003", "Chennai", 420)
+).toDF("trip_id", "city", "fare")
+
+tripsDF.createOrReplaceTempView("trips")
+spark.sql("select city, sum(fare) as total_fare from trips group by city").show()</code></pre>
+      <h3>Step 4: Open Spark UI</h3>
+      <p>While the application is running, open:</p>
+      <pre><code>http://localhost:4040</code></pre>
+      <div class="activity"><strong>Classroom Activity:</strong> Ask learners to identify Jobs, Stages, Tasks and Executors in Spark UI after running <code>collect()</code> and <code>show()</code>.</div>
+    </section>
+
+    <section id="s11">
+      <h2>11. Features of Spark</h2>
+      <div class="grid3">
+        <div class="card"><div class="big">01</div><h4>Fast Processing</h4><p>Spark can keep intermediate data in memory, making iterative and interactive workloads faster than disk-heavy models.</p></div>
+        <div class="card"><div class="big">02</div><h4>Distributed Execution</h4><p>Data and computation are split across executors on many machines.</p></div>
+        <div class="card"><div class="big">03</div><h4>Fault Tolerance</h4><p>Spark can recompute lost partitions using lineage information.</p></div>
+        <div class="card"><div class="big">04</div><h4>Lazy Evaluation</h4><p>Spark waits until an action is called, then optimizes the full execution plan.</p></div>
+        <div class="card"><div class="big">05</div><h4>Multi-language</h4><p>Supports Scala, Python, Java, SQL and R APIs.</p></div>
+        <div class="card"><div class="big">06</div><h4>Unified Engine</h4><p>Supports batch, SQL, streaming, machine learning and graph workloads.</p></div>
+      </div>
+      <h3>Feature Mapping</h3>
+      <table>
+        <tr><th>Feature</th><th>Business Benefit</th><th>Example</th></tr>
+        <tr><td>In-memory cache</td><td>Faster repeated analysis</td><td>Cache trip data reused by multiple reports.</td></tr>
+        <tr><td>Fault tolerance</td><td>Less manual recovery</td><td>Executor failure can be handled by recomputation.</td></tr>
+        <tr><td>SQL support</td><td>Easy for analysts</td><td>Revenue by city using SQL.</td></tr>
+        <tr><td>Streaming support</td><td>Real-time decisions</td><td>Live fraud/cancellation monitoring.</td></tr>
+      </table>
+    </section>
+
+    <section id="s12">
+      <h2>12. Limitations of Spark</h2>
+      <table>
+        <tr><th>Limitation</th><th>Explanation</th><th>How to Explain in Interview</th></tr>
+        <tr><td>Needs memory</td><td>Spark performs well with enough memory. Poor memory sizing causes spills and slow jobs.</td><td>Fast does not mean unlimited; memory planning is important.</td></tr>
+        <tr><td>Small file problem</td><td>Too many tiny files create overhead and too many tasks.</td><td>Compact files or use optimized storage formats.</td></tr>
+        <tr><td>Shuffle is expensive</td><td>Wide transformations move data across network and disk.</td><td>reduceByKey/groupBy/join need careful tuning.</td></tr>
+        <tr><td>Driver bottleneck</td><td>Collecting huge results to Driver can crash it.</td><td>Avoid collect on huge datasets; write results to storage.</td></tr>
+        <tr><td>Not required for small data</td><td>For tiny files, Spark startup overhead may be more than processing time.</td><td>Use pandas/SQL/local processing for small workloads.</td></tr>
+        <tr><td>Tuning complexity</td><td>Partitions, memory, executor count and shuffle settings require experience.</td><td>Spark is powerful but needs monitoring and tuning.</td></tr>
+      </table>
+      <div class="warning"><strong>Common Mistake:</strong> Saying “Spark has no limitation because it is fast.” Correct answer: Spark is fast for suitable distributed workloads, but memory, shuffle, small files and tuning still matter.</div>
+    </section>
+
+    <section id="s13">
+      <h2>13. Best Practices</h2>
+      <div class="grid2">
+        <div class="card"><h4>1. Prefer SparkSession</h4><p>Use SparkSession for modern DataFrame, SQL and Hive work.</p></div>
+        <div class="card"><h4>2. Avoid Huge collect()</h4><p>Use <code>show()</code>, <code>take()</code>, <code>limit()</code>, or write results to storage.</p></div>
+        <div class="card"><h4>3. Cache Carefully</h4><p>Cache only datasets reused multiple times. Unpersist when done.</p></div>
+        <div class="card"><h4>4. Watch Spark UI</h4><p>Use Spark UI to understand jobs, stages, tasks, skew and storage.</p></div>
+        <div class="card"><h4>5. Tune Partitions</h4><p>Too few partitions underuse cluster. Too many partitions add scheduling overhead.</p></div>
+        <div class="card"><h4>6. Use Efficient Formats</h4><p>Use Parquet/ORC for analytics instead of raw CSV where possible.</p></div>
+      </div>
+      <h3>Cache Example</h3>
+      <pre><code>val cleanedTrips = tripsDF.filter($"fare" > 0).cache()
+cleanedTrips.count()
+cleanedTrips.groupBy("city").sum("fare").show()
+cleanedTrips.unpersist()</code></pre>
+    </section>
+
+    <section id="s14">
+      <h2>14. Troubleshooting Spark Core Issues</h2>
+      <table>
+        <tr><th>Problem</th><th>Possible Reason</th><th>Fix</th></tr>
+        <tr><td><code>Only one SparkContext may be running</code></td><td>Another context is already active.</td><td>Use existing <code>sc</code> or call <code>sc.stop()</code> before creating new context.</td></tr>
+        <tr><td>Driver out of memory</td><td>Huge <code>collect()</code>, large broadcast, or insufficient driver memory.</td><td>Use <code>take()</code>, write output, increase driver memory carefully.</td></tr>
+        <tr><td>Job is slow</td><td>Shuffle, skew, too many small files, bad partition count.</td><td>Check Spark UI, repartition/coalesce, optimize file sizes.</td></tr>
+        <tr><td>Spark UI not opening</td><td>Application ended or port changed.</td><td>Keep app running; check logs for Spark UI port.</td></tr>
+        <tr><td>Hive table not found</td><td>Hive support not enabled or metastore not configured.</td><td>Use <code>enableHiveSupport()</code> and verify Hive configs.</td></tr>
+      </table>
+      <div class="activity"><strong>Lab Debug Question:</strong> If <code>cityRevenue.collect()</code> is slow, what will you check first in Spark UI? Expected answers: stages, tasks, shuffle read/write, executor time, failed tasks and skew.</div>
+    </section>
+
+    <section id="s15">
+      <h2>15. Interview Questions and Answers</h2>
+      <div class="interview"><strong>Q1. What is Spark architecture?</strong><br>Spark architecture consists of a Driver program, SparkContext/SparkSession, cluster manager, worker nodes, executors and tasks. The Driver coordinates the application and executors run tasks on data partitions.</div>
+      <div class="interview"><strong>Q2. What is Driver in Spark?</strong><br>Driver is the main controller of a Spark application. It runs the main program, creates SparkContext, builds DAG, schedules jobs/stages/tasks and communicates with executors.</div>
+      <div class="interview"><strong>Q3. What is Executor?</strong><br>Executor is a worker process launched for a Spark application. It runs tasks, stores cached/persisted data and reports status/results to the Driver.</div>
+      <div class="interview"><strong>Q4. What is a Task?</strong><br>A task is the smallest unit of execution in Spark. Usually one task processes one partition in a stage.</div>
+      <div class="interview"><strong>Q5. What is SparkContext?</strong><br>SparkContext is the connection between a Spark application and the Spark cluster. It is used for Spark Core operations such as creating RDDs, accumulators and broadcast variables.</div>
+      <div class="interview"><strong>Q6. What is SparkConf?</strong><br>SparkConf is used to configure Spark application properties such as application name, master URL, driver memory, executor memory and custom Spark settings.</div>
+      <div class="interview"><strong>Q7. What is SparkSession?</strong><br>SparkSession is the modern unified entry point for Spark. It supports DataFrame, Dataset, SQL and Hive operations, and it gives access to SparkContext.</div>
+      <div class="interview"><strong>Q8. SparkContext vs SparkSession?</strong><br>SparkContext is mainly the low-level Spark Core entry point, especially for RDDs. SparkSession is the modern high-level entry point for SQL/DataFrame/Dataset work and internally provides access to SparkContext.</div>
+      <div class="interview"><strong>Q9. What is SQLContext?</strong><br>SQLContext is the older entry point used for SQL and DataFrame operations before SparkSession became the unified interface.</div>
+      <div class="interview"><strong>Q10. What is HiveContext?</strong><br>HiveContext is the older SQL context with Hive integration. In modern Spark, use SparkSession with <code>enableHiveSupport()</code>.</div>
+      <div class="interview"><strong>Q11. What is a Job?</strong><br>A job is a parallel computation triggered by an action such as <code>count()</code>, <code>collect()</code>, <code>save()</code> or <code>show()</code>.</div>
+      <div class="interview"><strong>Q12. What is a Stage?</strong><br>A stage is a group of tasks that can run together without shuffle dependency. Wide transformations usually create new stages.</div>
+      <div class="interview"><strong>Q13. What is lazy evaluation?</strong><br>Spark transformations are not executed immediately. Spark waits until an action is called and then creates an optimized execution plan.</div>
+      <div class="interview"><strong>Q14. Why should collect() be avoided on huge data?</strong><br><code>collect()</code> brings all distributed data to the Driver. For huge datasets, this can cause Driver memory failure.</div>
+      <div class="interview"><strong>Q15. What are common limitations of Spark?</strong><br>Memory requirement, shuffle cost, small file overhead, Driver bottleneck, tuning complexity and unnecessary overhead for small datasets.</div>
+      <div class="interview"><strong>Q16. What is Spark UI used for?</strong><br>Spark UI is used to monitor jobs, stages, tasks, executors, storage, SQL plans and performance issues.</div>
+      <div class="interview"><strong>Q17. What is the role of cluster manager?</strong><br>The cluster manager allocates resources for Spark applications. Examples include Spark Standalone, YARN and Kubernetes.</div>
+      <div class="interview"><strong>Q18. Can multiple applications share executors?</strong><br>Each Spark application generally gets its own executor processes. Data cannot be shared between different SparkContext applications without external storage.</div>
+    </section>
+
+    <section id="s16">
+      <h2>16. Quiz, Formal Exam, Notes and Checklist</h2>
+      <h3>Learning Progress Checklist</h3>
+      <div class="progress-box" id="progressBox"></div>
+      <button onclick="resetProgress()" class="secondary">Reset Progress</button>
+
+      <h3>Practice MCQ Quiz</h3>
+      <div id="quiz"></div>
+      <button onclick="submitQuiz()">Submit Practice Quiz</button>
+      <button onclick="resetQuiz()" class="secondary">Reset Quiz</button>
+      <div id="quizScore" class="score"></div>
+
+      <h3>Formal Timed Exam</h3>
+      <p><strong>Duration:</strong> 7 minutes | <strong>Total Questions:</strong> 12</p>
+      <button onclick="startExam()" class="success">Start Exam</button>
+      <button onclick="submitExam()" class="danger">Submit Exam</button>
+      <div id="timer" class="score"></div>
+      <div id="exam"></div>
+      <div id="examScore" class="score"></div>
+
+      <h3>Double-click Notes</h3>
+      <p>Double-click any paragraph, heading, list item or table cell to copy that text into your notes area.</p>
+      <textarea id="notes" class="notes-box" placeholder="Your notes will appear here. You can also type your own notes."></textarea><br>
+      <button onclick="saveNotes()">Save Notes</button>
+      <button onclick="clearNotes()" class="secondary">Clear Notes</button>
+    </section>
+
+    <section id="s17">
+      <h2>17. Trainer Recap</h2>
+      <div class="output"><strong>One-line Recap:</strong> Spark Driver plans and schedules the work, executors run tasks on partitions, SparkContext connects the app to the cluster, SparkConf configures it, and SparkSession is the modern unified entry point.</div>
+      <h3>Whiteboard Revision Diagram</h3>
+      <pre><code>User Program
+   |
+   v
+Driver + SparkSession/SparkContext
+   |
+   v
+Cluster Manager
+   |
+   v
+Executors on Worker Nodes
+   |
+   v
+Tasks process Partitions</code></pre>
+      <h3>Final Memory Hooks</h3>
+      <div class="grid4">
+        <div class="card"><strong>D</strong>river = Decides</div>
+        <div class="card"><strong>E</strong>xecutor = Executes</div>
+        <div class="card"><strong>T</strong>ask = Tiny work</div>
+        <div class="card"><strong>S</strong>ession = Single door</div>
+      </div>
+      <p class="small">Reference baseline used while preparing this tutorial: Apache Spark official cluster overview, configuration guide and API documentation.</p>
+    </section>
+
+    <div class="footer">Generated for classroom-style technical training | Spark Core Concepts Continued TUT</div>
+  </main>
+
+  <aside class="rightbar">
+    <strong>Trainer Quick Card</strong>
+    <div class="mini"><b>Best first diagram:</b><br>Driver → Cluster Manager → Executors → Tasks</div>
+    <div class="mini"><b>Best analogy:</b><br>Driver = head chef, Executor = cook, Task = instruction.</div>
+    <div class="mini"><b>Interview punchline:</b><br>SparkSession is modern; SparkContext is still the core connection.</div>
+    <div class="mini"><b>Warning to repeat:</b><br>Never use collect() blindly on huge data.</div>
+  </aside>
+</div>
+<script>
+  const checklist = [
+    "I can draw Spark architecture",
+    "I can explain Driver",
+    "I can explain Executor",
+    "I can explain Task",
+    "I can explain Job, Stage and Task flow",
+    "I can use SparkContext in Spark Shell",
+    "I can explain SparkConf",
+    "I can create SparkSession",
+    "I can compare SQLContext and HiveContext",
+    "I can list Spark features",
+    "I can explain Spark limitations",
+    "I can use Spark UI for basic monitoring"
+  ];
+  const quizQuestions = [
+    {q:"Who coordinates a Spark application?",o:["Executor","Driver","Task","Partition"],a:1,ex:"Driver is the main controller."},
+    {q:"What does an Executor do?",o:["Runs tasks and stores cached data","Writes only SQL","Creates YARN","Designs schema only"],a:0,ex:"Executors execute tasks and cache/persist data."},
+    {q:"What triggers a Spark job?",o:["Transformation","Action","Import statement","Comment"],a:1,ex:"Actions like count, collect, save, show trigger jobs."},
+    {q:"Which object configures Spark application properties?",o:["SparkConf","TaskConf","ExecutorSQL","HiveRDD"],a:0,ex:"SparkConf contains app name, master and Spark properties."},
+    {q:"Modern unified entry point in Spark is",o:["SQLContext","HiveContext","SparkSession","NodeManager"],a:2,ex:"SparkSession is the modern single entry point."},
+    {q:"Older entry point for Hive integration was",o:["HiveContext","Only SparkConf","WorkerContext","TaskSession"],a:0,ex:"HiveContext was used before SparkSession + enableHiveSupport."},
+    {q:"Smallest unit of work sent to Executor is",o:["Job","Stage","Task","Application"],a:2,ex:"A task is the smallest execution unit."},
+    {q:"A wide transformation usually causes",o:["Shuffle","No job ever","SparkContext stop","Driver deletion"],a:0,ex:"Wide transformations often require shuffle and stage boundary."},
+    {q:"Which command is risky on huge data?",o:["filter","map","collect","select"],a:2,ex:"collect brings all data to the Driver."},
+    {q:"Spark UI commonly runs on",o:["4040","8088 only","1433","1521"],a:0,ex:"Driver UI is typically available at port 4040."}
+  ];
+  const examQuestions = [
+    {q:"SparkContext represents the connection to a Spark cluster.",o:["True","False"],a:0},
+    {q:"Executor is the smallest unit of execution in Spark.",o:["True","False"],a:1},
+    {q:"Task is usually related to a data partition.",o:["True","False"],a:0},
+    {q:"SparkSession is recommended for modern DataFrame and SQL operations.",o:["True","False"],a:0},
+    {q:"SQLContext and HiveContext are usually preferred over SparkSession in modern Spark.",o:["True","False"],a:1},
+    {q:"A Spark action can create a job.",o:["True","False"],a:0},
+    {q:"Shuffle can be expensive because data moves across network/disk.",o:["True","False"],a:0},
+    {q:"collect() is always safe for any dataset size.",o:["True","False"],a:1},
+    {q:"SparkConf can set app name and master URL.",o:["True","False"],a:0},
+    {q:"Spark UI helps monitor jobs, stages, tasks and executors.",o:["True","False"],a:0},
+    {q:"Spark has no limitations because it is in-memory.",o:["True","False"],a:1},
+    {q:"Cluster managers include Standalone, YARN and Kubernetes.",o:["True","False"],a:0}
+  ];
+  function initProgress(){const box=document.getElementById('progressBox');box.innerHTML='';checklist.forEach((item,i)=>{const saved=localStorage.getItem('sparkCoreContCheck'+i)==='true';const div=document.createElement('div');div.className='check-item';div.innerHTML=`<label><input type="checkbox" ${saved?'checked':''} onchange="saveProgress(${i},this.checked)"> ${item}</label>`;box.appendChild(div);});}
+  function saveProgress(i,checked){localStorage.setItem('sparkCoreContCheck'+i,checked);} function resetProgress(){checklist.forEach((_,i)=>localStorage.removeItem('sparkCoreContCheck'+i));initProgress();}
+  function renderQuiz(){const quiz=document.getElementById('quiz');quiz.innerHTML='';quizQuestions.forEach((q,i)=>{const div=document.createElement('div');div.className='quiz-question';div.innerHTML=`<strong>Q${i+1}. ${q.q}</strong>`+q.o.map((op,j)=>`<label><input type="radio" name="quiz${i}" value="${j}"> ${op}</label>`).join('')+`<div id="quizExp${i}" class="small"></div>`;quiz.appendChild(div);});}
+  function submitQuiz(){let score=0;quizQuestions.forEach((q,i)=>{const s=document.querySelector(`input[name="quiz${i}"]:checked`);const exp=document.getElementById('quizExp'+i);if(s&&Number(s.value)===q.a){score++;exp.innerHTML='<b style="color:#15803d">Correct.</b> '+q.ex;}else{exp.innerHTML='<b style="color:#b91c1c">Revise.</b> '+q.ex;}});const mood=score>=8?'Excellent 😊':score>=5?'Good, revise once 🙂':'Need more practice 💪';document.getElementById('quizScore').innerText=`Practice Quiz Score: ${score}/${quizQuestions.length} - ${mood}`;}
+  function resetQuiz(){document.querySelectorAll('#quiz input[type="radio"]').forEach(x=>x.checked=false);document.querySelectorAll('[id^="quizExp"]').forEach(x=>x.innerHTML='');document.getElementById('quizScore').innerText='';}
+  let examStarted=false,examTimer=null,secondsLeft=420;
+  function renderExam(){const exam=document.getElementById('exam');exam.innerHTML='';examQuestions.forEach((q,i)=>{const div=document.createElement('div');div.className='exam-question';div.innerHTML=`<strong>Q${i+1}. ${q.q}</strong>`+q.o.map((op,j)=>`<label><input type="radio" name="exam${i}" value="${j}"> ${op}</label>`).join('');exam.appendChild(div);});}
+  function startExam(){if(examStarted)return;examStarted=true;secondsLeft=420;renderExam();document.getElementById('examScore').innerText='';examTimer=setInterval(()=>{secondsLeft--;const m=Math.floor(secondsLeft/60),s=secondsLeft%60;document.getElementById('timer').innerText=`Time Left: ${m}:${String(s).padStart(2,'0')}`;if(secondsLeft<=0)submitExam();},1000);}
+  function submitExam(){if(!document.getElementById('exam').children.length)renderExam();clearInterval(examTimer);examStarted=false;let score=0;examQuestions.forEach((q,i)=>{const s=document.querySelector(`input[name="exam${i}"]:checked`);if(s&&Number(s.value)===q.a)score++;});const mood=score>=10?'Ready for interview 🚀':score>=7?'Good, revise limitations and contexts 🙂':'Repeat architecture once more 💪';document.getElementById('examScore').innerText=`Formal Exam Score: ${score}/${examQuestions.length} - ${mood}`;}
+  function saveNotes(){localStorage.setItem('sparkCoreContNotes',document.getElementById('notes').value);alert('Notes saved locally in this browser.');}
+  function clearNotes(){document.getElementById('notes').value='';localStorage.removeItem('sparkCoreContNotes');}
+  document.addEventListener('dblclick',e=>{const tag=e.target.tagName.toLowerCase();if(['p','h2','h3','li','td','th'].includes(tag)){const notes=document.getElementById('notes');notes.value+=(notes.value?'\n':'')+e.target.innerText;localStorage.setItem('sparkCoreContNotes',notes.value);}});
+  document.addEventListener('mousemove',e=>{if(Math.random()>.88){const s=document.createElement('div');s.className='sparkle';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),800);}});
+  window.onload=()=>{initProgress();renderQuiz();const n=localStorage.getItem('sparkCoreContNotes');if(n)document.getElementById('notes').value=n;};
+</script>
+</body>
+</html>
