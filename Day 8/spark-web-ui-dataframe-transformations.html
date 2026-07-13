@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Web UI, Job Execution & DataFrame Transformations</title>
+<style>
+:root{
+  --accent:#4f46e5;--accent2:#7c3aed;--accent-soft:#eef2ff;--bg:#f6f7fb;--card:#ffffff;
+  --text:#172033;--muted:#5f6b7a;--border:#dfe4ee;--good:#087f5b;--bad:#c92a2a;
+  --warn:#9c6b00;--code:#111827;--codeText:#e5e7eb;--shadow:0 10px 30px rgba(29,36,68,.08);
+  --font-size:16px;
+}
+html[data-theme="dark"]{
+  --accent:#a5b4fc;--accent2:#c4b5fd;--accent-soft:#24264a;--bg:#0f1320;--card:#171c2c;
+  --text:#eef2ff;--muted:#aab2c3;--border:#30384d;--good:#63e6be;--bad:#ff8787;
+  --warn:#ffd43b;--code:#090c14;--codeText:#e5e7eb;--shadow:0 10px 30px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;font-size:var(--font-size)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.65}
+a{color:var(--accent)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+#readProgress{position:fixed;left:0;top:0;width:0;height:5px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:9999}
+.topbar{position:sticky;top:0;z-index:1000;display:flex;gap:.55rem;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:color-mix(in srgb,var(--card) 92%,transparent);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.brand{font-weight:800;white-space:nowrap}.controls{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end}
+.btn,.icon-btn{border:1px solid var(--border);background:var(--card);color:var(--text);border-radius:10px;padding:.48rem .75rem;font-weight:650}
+.btn:hover,.icon-btn:hover{border-color:var(--accent);transform:translateY(-1px)}
+.btn.primary{background:var(--accent);color:white;border-color:var(--accent)}
+.btn.danger{background:#fff0f0;color:#b42318;border-color:#ffc9c9}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1500px;margin:auto}
+.sidebar{position:sticky;top:58px;height:calc(100vh - 58px);overflow:auto;padding:1rem;border-right:1px solid var(--border);background:var(--card)}
+.sidebar h3{margin:.4rem 0}.toc{list-style:none;padding:0;margin:.5rem 0}.toc a{display:block;padding:.42rem .55rem;border-radius:8px;text-decoration:none;color:var(--text);font-size:.91rem}.toc a:hover{background:var(--accent-soft);color:var(--accent)}
+.progress-card{padding:.75rem;border:1px solid var(--border);border-radius:12px;background:var(--bg);margin:.75rem 0}
+.progress-track{height:9px;background:var(--border);border-radius:999px;overflow:hidden}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+main{min-width:0;padding:1.1rem clamp(.8rem,2.5vw,2.2rem) 5rem}
+.section{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:clamp(1rem,2.5vw,2rem);margin:0 0 1.25rem;box-shadow:var(--shadow);transition:.2s}
+.section:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border));transform:translateY(-2px)}
+.section-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start}.section-head h2{margin-top:0}.prepared{white-space:nowrap;font-size:.9rem;background:var(--accent-soft);padding:.35rem .55rem;border-radius:10px}
+.hero{background:linear-gradient(135deg,#312e81,#6d28d9);color:white;border:none;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;width:360px;height:360px;border-radius:50%;right:-140px;top:-170px;background:rgba(255,255,255,.12)}
+.hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1.08;margin:.2rem 0}.hero .subtitle{font-size:1.15rem;max-width:900px}.pill-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}.pill{padding:.35rem .65rem;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mini-card{border:1px solid var(--border);border-radius:14px;padding:1rem;background:var(--bg)}
+.callout{border-left:5px solid var(--accent);padding:.85rem 1rem;margin:1rem 0;border-radius:0 12px 12px 0;background:var(--accent-soft)}
+.callout.warn{border-color:#f59f00;background:color-mix(in srgb,#fff3bf 75%,var(--card))}
+.callout.danger{border-color:#e03131;background:color-mix(in srgb,#ffe3e3 75%,var(--card))}
+.callout.good{border-color:#0ca678;background:color-mix(in srgb,#d3f9d8 65%,var(--card))}
+.callout strong.label{display:block;text-transform:uppercase;letter-spacing:.08em;font-size:.78rem;margin-bottom:.15rem}
+.memory{border:2px dashed var(--accent2);background:var(--accent-soft);padding:1rem;border-radius:14px}
+table{width:100%;border-collapse:collapse;margin:1rem 0;display:block;overflow:auto}
+th,td{border:1px solid var(--border);padding:.7rem;text-align:left;vertical-align:top}th{background:var(--accent-soft)}
+code{font-family:Consolas,Monaco,monospace}
+.code-wrap{position:relative;margin:1rem 0}.code-wrap pre{background:var(--code);color:var(--codeText);padding:1rem;border-radius:14px;overflow:auto;line-height:1.5;margin:0}
+.copy-btn{position:absolute;right:.5rem;top:.5rem;border:1px solid #475569;background:#1f2937;color:white;border-radius:8px;padding:.32rem .55rem}
+.output{background:#0b3d2e;color:#e6fcf5;padding:1rem;border-radius:12px;white-space:pre-wrap;overflow:auto}
+.diagram{border:1px solid var(--border);border-radius:16px;padding:1rem;background:var(--bg);margin:1rem 0}
+.diagram-title{font-weight:800;font-size:1.05rem;margin-bottom:.6rem}.legend{display:flex;gap:.7rem;flex-wrap:wrap;font-size:.88rem;margin:.5rem 0}.dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:.25rem;vertical-align:-1px}
+.flow{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap;padding:1rem}.node{min-width:135px;text-align:center;border:2px solid var(--accent);border-radius:12px;padding:.7rem;background:var(--card);font-weight:750}.node.action{border-color:#e8590c}.node.shuffle{border-color:#c2255c}.node.ui{border-color:#087f5b}.arrow{font-size:1.5rem;color:var(--accent);font-weight:900}
+.stage-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:stretch;gap:.5rem}.stage{border:2px solid var(--accent);border-radius:14px;padding:.8rem;background:var(--card)}.tasks{display:flex;gap:.3rem;flex-wrap:wrap;margin-top:.5rem}.task{padding:.2rem .45rem;border-radius:6px;background:var(--accent-soft);font-size:.82rem}.shuffle-bar{display:flex;align-items:center;justify-content:center;background:#ffe3e3;color:#c2255c;border-radius:12px;padding:.5rem;font-weight:800;writing-mode:vertical-rl}
+.microq{border:1px solid var(--border);border-radius:12px;margin:1rem 0;overflow:hidden}.microq button{width:100%;text-align:left;padding:.75rem;border:0;background:var(--accent-soft);color:var(--text);font-weight:750}.micro-answer{display:none;padding:.75rem}.microq.open .micro-answer{display:block}
+.term{border-bottom:1px dotted var(--accent);cursor:help}.tag{display:inline-block;padding:.18rem .45rem;border-radius:999px;font-size:.78rem;font-weight:750}.tag.b{background:#dbeafe;color:#1d4ed8}.tag.i{background:#fef3c7;color:#92400e}.tag.a{background:#f3e8ff;color:#7e22ce}
+.flash-area{text-align:center}.flashcard{max-width:800px;min-height:230px;margin:1rem auto;perspective:1000px}.flash-inner{position:relative;width:100%;height:230px;transition:transform .6s;transform-style:preserve-3d}.flashcard.flipped .flash-inner{transform:rotateY(180deg)}.flash-face{position:absolute;inset:0;backface-visibility:hidden;border:2px solid var(--accent);border-radius:16px;padding:1.4rem;display:flex;flex-direction:column;justify-content:center;background:var(--card)}.flash-back{transform:rotateY(180deg);background:var(--accent-soft)}
+.exercise,.question{border:1px solid var(--border);border-radius:14px;padding:1rem;margin:.85rem 0;background:var(--bg)}.feedback{margin-top:.55rem;font-weight:700}.correct{border-color:var(--good)!important;background:color-mix(in srgb,#d3f9d8 55%,var(--card))!important}.wrong{border-color:var(--bad)!important;background:color-mix(in srgb,#ffe3e3 55%,var(--card))!important}
+.options label{display:block;padding:.48rem;border-radius:8px;margin:.25rem 0}.options label:hover{background:var(--accent-soft)}
+.result{display:none;border:2px solid var(--accent);border-radius:16px;padding:1rem;margin:1rem 0;text-align:center}.result.show{display:block}.big-emoji{font-size:3rem}.timer{font-size:1.4rem;font-weight:900;padding:.55rem .8rem;border-radius:12px;background:var(--accent-soft);display:inline-block}.timer.danger{background:#ffe3e3;color:#c92a2a}
+#examQuestions{display:none}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}.match-item{border:1px solid var(--border);border-radius:10px;padding:.6rem;background:var(--card)}.match-item select{width:100%;margin-top:.4rem}
+.order-list{list-style:none;padding:0}.order-list li{display:flex;justify-content:space-between;gap:.5rem;align-items:center;border:1px solid var(--border);padding:.6rem;border-radius:10px;margin:.35rem 0;background:var(--card)}
+.glossary{columns:2;column-gap:1rem}.gloss-item{break-inside:avoid;border:1px solid var(--border);padding:.75rem;border-radius:10px;margin:0 0 .7rem;background:var(--bg)}
+.notes-panel{position:fixed;right:1rem;bottom:4.5rem;width:min(380px,calc(100vw - 2rem));max-height:60vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);z-index:1200;display:none;padding:1rem}.notes-panel.open{display:block}.note-highlight{background:#ffe066!important;color:#332701!important;border-bottom:2px solid #e67700;border-radius:3px;padding:0 2px;cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;display:none;place-items:center;padding:1rem}.modal.open{display:grid}.modal-card{width:min(520px,100%);background:var(--card);border-radius:16px;padding:1rem}.modal-card textarea{width:100%;min-height:120px}
+.floating{position:fixed;right:1rem;bottom:1rem;display:flex;gap:.5rem;z-index:1000}.floating button{width:46px;height:46px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.sparkle{position:fixed;pointer-events:none;z-index:9999;animation:spark .75s ease-out forwards;font-size:12px}@keyframes spark{to{transform:translateY(-20px) scale(0);opacity:0}}
+.certificate{display:none;border:10px double var(--accent);padding:2rem;text-align:center;background:var(--card);margin-top:1rem}.certificate.show{display:block}
+.history-item{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:.4rem 0}
+.sources{font-size:.9rem;color:var(--muted)}
+@media(max-width:900px){.layout{display:block}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}.toc{columns:2}.grid,.grid.three{grid-template-columns:1fr}.stage-row{grid-template-columns:1fr}.shuffle-bar{writing-mode:horizontal-tb}.glossary{columns:1}}
+@media(max-width:520px){.topbar{align-items:flex-start}.brand{font-size:.9rem}.toc{columns:1}.section-head{display:block}.prepared{display:inline-block;margin-bottom:.5rem}.match-grid{grid-template-columns:1fr}.flow{align-items:stretch}.node{width:100%}.arrow{transform:rotate(90deg);text-align:center}.hero h1{font-size:2.15rem}}
+@media print{
+  .topbar,.sidebar,.floating,#readProgress,.copy-btn,.quiz-actions,.exam-actions,.notes-panel,.modal,.prepared,.flash-controls,.rating-row{display:none!important}
+  body{background:white;color:black}.layout{display:block}.section{box-shadow:none;border:1px solid #bbb;break-inside:avoid}.micro-answer{display:block!important}
+  .result,.certificate{display:block!important}.hero{background:white!important;color:black;border:2px solid black}.section:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div id="readProgress"></div>
+<header class="topbar">
+  <div class="brand">⚡ Spark Execution Lab</div>
+  <div class="controls">
+    <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">🌙 Theme</button>
+    <button class="icon-btn" id="fontDown" aria-label="Decrease font size">A−</button>
+    <button class="icon-btn" id="fontUp" aria-label="Increase font size">A+</button>
+    <button class="icon-btn" id="soundBtn" aria-label="Toggle result sounds">🔊 Sound</button>
+    <button class="icon-btn storage-only" id="notesBtn">📝 Notes</button>
+  </div>
+</header>
+
+<div class="layout">
+<aside class="sidebar">
+  <h3>Course Map</h3>
+  <div class="progress-card storage-only">
+    <div><strong id="progressText">0 / 17 prepared</strong></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="btn" id="resetProgress" style="margin-top:.6rem">Reset progress</button>
+  </div>
+  <ul class="toc" id="toc">
+    <li><a href="#s1">1. Title & outcomes</a></li><li><a href="#s2">2. Introduction</a></li>
+    <li><a href="#s3">3. Foundational explanation</a></li><li><a href="#s4">4. Technical execution model</a></li>
+    <li><a href="#s5">5. Simple example</a></li><li><a href="#s6">6. Industry example</a></li>
+    <li><a href="#s7">7. Transformation code lab</a></li><li><a href="#s8">8. Comparison table</a></li>
+    <li><a href="#s9">9. Best practices</a></li><li><a href="#s10">10. Edge cases & gotchas</a></li>
+    <li><a href="#s11">11. Troubleshooting</a></li><li><a href="#s12">12. Interview Q&A</a></li>
+    <li><a href="#s13">13. Active exercises</a></li><li><a href="#s14">14. Practice quiz</a></li>
+    <li><a href="#s15">15. Timed exam</a></li><li><a href="#s16">16. Glossary</a></li>
+    <li><a href="#s17">17. Summary & next path</a></li>
+  </ul>
+  <div class="storage-only">
+    <h3>My Data</h3>
+    <button class="btn" id="exportData">Download my data</button>
+    <label class="btn" style="display:inline-block;margin-top:.4rem">Import JSON<input id="importData" type="file" accept=".json" hidden></label>
+    <h4>Score History</h4><div id="scoreHistory"></div>
+    <h4>Gamification</h4><div>XP: <strong id="xpValue">0</strong></div><div id="badges"></div>
+  </div>
+</aside>
+
+<main id="content">
+<section id="s1" class="section hero" data-title="Title & outcomes">
+  <div class="section-head"><div><h1>Spark Web UI, Job Execution & DataFrame Transformations</h1><p class="subtitle">Read Spark’s execution story from action → job → stage → task, then build reliable PySpark DataFrame pipelines using the most common transformation methods.</p></div><label class="prepared storage-only"><input type="checkbox" data-progress="s1"> Mark prepared</label></div>
+  <div class="pill-row"><span class="pill">Spark Web UI</span><span class="pill">Jobs • Stages • Tasks</span><span class="pill">DAG & Shuffle</span><span class="pill">PySpark DataFrames</span><span class="pill">Interview Preparation</span></div>
+  <div class="grid three">
+    <div class="mini-card"><strong>Prerequisites</strong><br>Basic Python, tables, and SparkSession awareness.</div>
+    <div class="mini-card"><strong>Estimated study</strong><br>90–120 minutes plus coding practice.</div>
+    <div class="mini-card"><strong>After completion</strong><br>Diagnose slow jobs in the UI and explain every requested transformation.</div>
+  </div>
+  <h3>Learning objectives</h3>
+  <ol><li>Identify what creates a Spark job and how it is divided into stages and tasks.</li><li>Read the Jobs, Stages, SQL, Executors, Storage, and Environment tabs.</li><li>Predict where a shuffle and a stage boundary will appear.</li><li>Use filtering, sorting, grouping, column, union, duplicate, and conditional transformations correctly.</li><li>Connect source code to the execution evidence displayed in Spark Web UI.</li></ol>
+  <div class="memory"><strong>Course memory hook:</strong> <em>Action starts a Job; Shuffle splits Stages; Partitions create Tasks.</em></div>
+</section>
+
+<section id="s2" class="section" data-title="Introduction">
+<div class="section-head"><h2>2. Introduction: Why Spark Web UI Matters</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s2"> Mark prepared</label></div>
+<p>Apache Spark executes data work across one machine or many machines. Your PySpark program may contain ten lines, but Spark converts those lines into an execution plan containing operators, exchanges, stages, and many parallel tasks. Without a visual monitor, a long-running pipeline can feel like a black box: you know it is slow, but not whether the cause is a shuffle, data skew, a failed executor, too many tiny tasks, or a single expensive SQL operator.</p>
+<p>The <span class="term" data-tip="A browser-based monitoring page launched by a Spark application.">Spark Web UI</span> is the browser-based control room for a running Spark application. In local mode it is commonly available at <strong>http://localhost:4040</strong>. If another Spark application already uses that port, Spark tries a later port such as 4041. The UI shows jobs, stages, tasks, executors, persisted data, configuration, and SQL query plans.</p>
+<p>DataFrame transformations matter because they decide the shape of the execution plan. A row filter often stays inside the same stage, while a global sort or groupBy normally requires data to move between partitions. That movement is called a <span class="term" data-tip="Redistribution of records across partitions, usually over network and disk.">shuffle</span>. Reading transformations and the Web UI together lets you answer both questions: <strong>“What did my code request?”</strong> and <strong>“How did Spark actually execute it?”</strong></p>
+<div class="grid">
+  <div class="mini-card"><h3>Without the Web UI</h3><p>“The job is slow.” You may guess, add random memory, or rewrite code without evidence.</p></div>
+  <div class="mini-card"><h3>With the Web UI</h3><p>“Stage 3 has 200 tasks; task duration is uneven; shuffle read is large; two tasks are stragglers.” Now the investigation is evidence-based.</p></div>
+</div>
+<div class="callout"><strong class="label">Key point</strong>The Web UI does not replace logs. It gives the execution overview; logs explain detailed failures and application messages.</div>
+<div class="microq"><button>Check yourself: Does calling <code>filter()</code> immediately create a job?</button><div class="micro-answer">No. DataFrame transformations are lazy. A job normally begins when an action such as <code>show()</code>, <code>count()</code>, <code>collect()</code>, or a write operation needs a result.</div></div>
+</section>
+
+<section id="s3" class="section" data-title="Foundational explanation">
+<div class="section-head"><h2>3. Foundational Explanation: Restaurant Kitchen Analogy</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s3"> Mark prepared</label></div>
+<p>Imagine a large restaurant handling a dinner order. The customer’s final request is the <strong>action</strong>. The restaurant must complete one full order, similar to a Spark <strong>job</strong>. The kitchen divides the order into groups of work that can proceed without exchanging ingredients, similar to <strong>stages</strong>. Each cook handles one tray or batch, similar to a <strong>task</strong> processing one partition.</p>
+<p>Some operations are local. A cook can remove damaged vegetables from their own tray without contacting another cook. This resembles <code>filter()</code>, a narrow transformation. Other operations require exchange. If the head chef asks, “Group every dish by table number,” all trays must be reorganized so items for the same table meet together. This resembles <code>groupBy()</code> and causes a shuffle.</p>
+<p>The analogy helps you remember the hierarchy, but it has a limit. Human cooks make independent decisions; Spark tasks follow a deterministic execution plan. Spark may retry a failed task automatically, optimize operators, combine adjacent operations, and schedule work based on available executor resources.</p>
+<h3>Step-by-step mapping</h3>
+<ol>
+<li><strong>Recipe instructions → transformations:</strong> They describe work but do not serve food yet.</li>
+<li><strong>Customer asks for the meal → action:</strong> The request forces execution.</li>
+<li><strong>Complete meal order → job:</strong> One action usually starts one job, though implementation details and reused exchanges can affect observed jobs.</li>
+<li><strong>Kitchen work groups → stages:</strong> A shuffle boundary separates groups of tasks.</li>
+<li><strong>Individual cook assignment → task:</strong> One task processes one partition for one stage.</li>
+<li><strong>Passing ingredients between stations → shuffle:</strong> Data moves between partitions and may use network, memory, and disk.</li>
+</ol>
+<div class="memory"><strong>Mnemonic — A-J-S-T:</strong> <strong>A</strong>ction → <strong>J</strong>ob → <strong>S</strong>tage → <strong>T</strong>ask. Say it as “A Job Starts Tasks.”</div>
+<h3>Transformation analogy map</h3>
+<table><thead><tr><th>Spark operation</th><th>Kitchen picture</th><th>Typical execution effect</th></tr></thead><tbody>
+<tr><td><code>filter/where</code></td><td>Remove unsuitable items from each tray</td><td>Narrow; no redistribution by itself</td></tr>
+<tr><td><code>withColumn</code></td><td>Add a label to each item</td><td>Narrow expression evaluation</td></tr>
+<tr><td><code>groupBy</code></td><td>Bring all items for the same table together</td><td>Shuffle before aggregation</td></tr>
+<tr><td><code>orderBy</code></td><td>Arrange every ticket in one global order</td><td>Range exchange/global sort</td></tr>
+<tr><td><code>union</code></td><td>Stack two prepared tray lists</td><td>Combines rows; duplicates remain</td></tr>
+</tbody></table>
+<div class="callout warn"><strong class="label">Common confusion</strong>A stage is not “one transformation.” Spark can pipeline several narrow transformations into the same stage.</div>
+<div class="microq"><button>Check yourself: What event most commonly creates a new stage?</button><div class="micro-answer">A shuffle dependency. Examples include grouping by key, global sorting, repartitioning, and many joins.</div></div>
+</section>
+
+<section id="s4" class="section" data-title="Technical execution model">
+<div class="section-head"><h2>4. Technical Explanation: Jobs, Stages, Tasks, DAG & UI Tabs</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s4"> Mark prepared</label></div>
+<p>A Spark application builds a logical lineage of transformations. When an action requires a result, the scheduler creates a <span class="term" data-tip="A collection of stages submitted for an action.">job</span>. Spark analyzes dependencies and divides that job into <span class="term" data-tip="A set of parallel tasks that can run without a shuffle boundary between them.">stages</span>. Each stage contains <span class="term" data-tip="The smallest scheduled unit of work; typically one partition in one stage.">tasks</span>, usually one task per input partition for that stage.</p>
+<h3>Glossary of core execution terms</h3>
+<div class="grid three">
+<div class="mini-card"><strong>Action</strong><br>An operation that asks Spark to produce or write a result, triggering execution.</div>
+<div class="mini-card"><strong>Job</strong><br>The execution work associated with an action.</div>
+<div class="mini-card"><strong>Stage</strong><br>A pipeline of tasks separated from other pipelines by shuffle dependencies.</div>
+<div class="mini-card"><strong>Task</strong><br>The smallest scheduled work unit, processing one partition for one stage.</div>
+<div class="mini-card"><strong>DAG</strong><br>Directed Acyclic Graph: nodes and one-way dependency edges with no cycles.</div>
+<div class="mini-card"><strong>Partition</strong><br>A logical slice of distributed data processed by a task.</div>
+<div class="mini-card"><strong>Shuffle</strong><br>Redistribution of data across partitions.</div>
+<div class="mini-card"><strong>Executor</strong><br>A process that runs tasks and stores data for an application.</div>
+<div class="mini-card"><strong>Driver</strong><br>The process coordinating the application, plan, scheduling, and UI.</div>
+</div>
+
+<div class="diagram">
+<div class="diagram-title">Diagram 1 — Execution hierarchy from code to parallel work</div>
+<div class="legend"><span><i class="dot" style="background:#e8590c"></i>Trigger</span><span><i class="dot" style="background:#4f46e5"></i>Scheduled work</span><span><i class="dot" style="background:#087f5b"></i>Monitoring evidence</span></div>
+<p><strong>How to read:</strong> Start at the left with a DataFrame action. Follow arrows to the job, then stages, then partition-level tasks. The UI observes each level.</p>
+<div class="flow">
+<div class="node action">Action<br><small>count/show/write</small></div><span class="arrow">→</span>
+<div class="node">Job</div><span class="arrow">→</span>
+<div class="node">Stages<br><small>split by shuffle</small></div><span class="arrow">→</span>
+<div class="node">Tasks<br><small>one per partition</small></div><span class="arrow">→</span>
+<div class="node ui">Spark Web UI<br><small>status + metrics</small></div>
+</div>
+<p><strong>Component explanation:</strong> The action demands an answer. The driver submits a job. The DAG scheduler divides dependencies into stages. The task scheduler sends tasks to executors. The Web UI collects status and metrics from these events.</p>
+<ol><li>Your code builds lazy DataFrame transformations.</li><li>An action requests materialized output.</li><li>Spark creates a job for the action.</li><li>Shuffle dependencies define stage boundaries.</li><li>Each stage launches tasks according to its partitions.</li><li>The Web UI displays job, stage, task, executor, and SQL evidence.</li></ol>
+</div>
+
+<div class="diagram">
+<div class="diagram-title">Diagram 2 — Narrow operations, shuffle boundary, and two stages</div>
+<p><strong>How to read:</strong> Read left to right. Filter and column calculation can be pipelined. Grouping requires records with the same key to meet, so the shuffle creates a stage boundary.</p>
+<div class="stage-row">
+<div class="stage"><strong>Stage 0</strong><div>Scan orders → Filter paid → Compute net_amount</div><div class="tasks"><span class="task">Task P0</span><span class="task">Task P1</span><span class="task">Task P2</span><span class="task">Task P3</span></div></div>
+<div class="shuffle-bar">SHUFFLE by region</div>
+<div class="stage"><strong>Stage 1</strong><div>Aggregate sum(net_amount) by region → Return result</div><div class="tasks"><span class="task">Task R0</span><span class="task">Task R1</span></div></div>
+</div>
+<p><strong>Component explanation:</strong> Stage 0 reads four input partitions and performs row-local work. The exchange redistributes rows by region. Stage 1 reads shuffle partitions and aggregates each region.</p>
+<ol><li>Each Stage 0 task reads one input partition.</li><li>Filter removes unpaid orders locally.</li><li>withColumn calculates net amount locally.</li><li>Shuffle writers partition output by region.</li><li>Stage 1 reducers read matching shuffle blocks.</li><li>The final aggregate is returned or written.</li></ol>
+</div>
+
+<h3>Spark Web UI tabs: what to inspect</h3>
+<table><thead><tr><th>Tab</th><th>What it tells you</th><th>Questions to ask</th></tr></thead><tbody>
+<tr><td><strong>Jobs</strong></td><td>Active/completed/failed jobs, duration, stage links, and a job DAG visualization.</td><td>Which action created the job? Which job is slow or failed?</td></tr>
+<tr><td><strong>Stages</strong></td><td>Stage status, tasks, input/output, shuffle read/write, task time, and detailed task table.</td><td>Is a stage dominated by shuffle, GC, spill, skew, or stragglers?</td></tr>
+<tr><td><strong>SQL / DataFrame</strong></td><td>SQL query list, duration, logical/physical details, and visual operator plan.</td><td>Where are Exchange, Sort, HashAggregate, scan, and join operators?</td></tr>
+<tr><td><strong>Executors</strong></td><td>Executor status, cores, memory, storage, task counts, input, shuffle, GC, logs.</td><td>Are executors lost? Is one executor doing disproportionate work?</td></tr>
+<tr><td><strong>Storage</strong></td><td>Persisted RDD/DataFrame blocks and memory/disk usage.</td><td>Is the expected dataset cached? Is it partially cached?</td></tr>
+<tr><td><strong>Environment</strong></td><td>Spark properties, system properties, classpath, runtime information.</td><td>Was the intended configuration actually applied?</td></tr>
+</tbody></table>
+<div class="callout good"><strong class="label">Pro tip</strong>Use <code>df.explain("formatted")</code> before execution to study the planned operators; use the SQL and Stages tabs after execution to inspect what actually ran.</div>
+<div class="microq"><button>Check yourself: If a stage shows 500 tasks, what is the first structural clue?</button><div class="micro-answer">That stage has about 500 partitions to process. Task count is tied to partition count for that stage, though retries/speculative attempts can add task attempts.</div></div>
+</section>
+
+<section id="s5" class="section" data-title="Simple example">
+<div class="section-head"><h2>5. Simple Example: One Pipeline, One Shuffle</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s5"> Mark prepared</label></div>
+<p>We will create five orders, keep only paid orders, calculate net revenue, group by region, and sort the final totals.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+spark = SparkSession.builder \
+    .appName("SparkUITransformationDemo") \
+    .master("local[2]") \
+    .getOrCreate()
+
+orders = spark.createDataFrame(
+    [
+        (101, "South", "PAID", 1200.0, 100.0),
+        (102, "North", "PENDING", 800.0, 0.0),
+        (103, "South", "PAID", 700.0, 50.0),
+        (104, "West", "PAID", 1500.0, 200.0),
+        (105, "North", "PAID", 600.0, 20.0),
+    ],
+    ["order_id", "region", "status", "amount", "discount"]
+)
+
+result = (
+    orders
+    .filter(F.col("status") == "PAID")
+    .withColumn("net_amount", F.col("amount") - F.col("discount"))
+    .groupBy("region")
+    .agg(F.sum("net_amount").alias("revenue"))
+    .orderBy(F.col("revenue").desc())
+)
+
+result.show()</code></pre></div>
+<h3>True line-by-line explanation</h3>
+<ol>
+<li><code>SparkSession.builder</code> creates the entry point used to build DataFrames and submit SQL work.</li>
+<li><code>local[2]</code> allows two local worker threads, so up to two tasks may run concurrently.</li>
+<li><code>createDataFrame</code> creates a distributed table with named columns.</li>
+<li><code>filter</code> keeps only rows whose status is PAID. This is lazy and does not run yet.</li>
+<li><code>withColumn</code> adds <code>net_amount = amount - discount</code>. It is also lazy.</li>
+<li><code>groupBy("region")</code> defines grouping keys. The following <code>agg</code> requests one revenue total per region.</li>
+<li>Grouping requires rows for the same region to meet, so Spark normally inserts an Exchange/shuffle.</li>
+<li><code>orderBy(...desc())</code> requests a global descending order and may add another exchange/sort depending on the optimized plan.</li>
+<li><code>show()</code> is the action. It starts execution and makes jobs/stages visible in the Web UI.</li>
+</ol>
+<div class="output">Expected output:
++------+-------+
+|region|revenue|
++------+-------+
+|South |1750.0 |
+|West  |1300.0 |
+|North |580.0  |
++------+-------+</div>
+<div class="callout good"><strong class="label">Trace the result</strong>South = (1200 − 100) + (700 − 50) = 1750; West = 1500 − 200 = 1300; North = 600 − 20 = 580.</div>
+<h3>What to observe in Spark Web UI</h3>
+<ol><li>Open the SQL tab and choose the query created by <code>show()</code>.</li><li>Look for scan, filter, projection, hash aggregate, exchange, and sort operators.</li><li>Open the linked job and stages.</li><li>Compare the number of tasks with input and shuffle partition counts.</li><li>Inspect shuffle read/write metrics around the aggregation and sorting work.</li></ol>
+<div class="microq"><button>Check yourself: Which exact line triggers the visible execution?</button><div class="micro-answer"><code>result.show()</code>. Every preceding DataFrame call builds a plan; <code>show()</code> requests rows.</div></div>
+</section>
+
+<section id="s6" class="section" data-title="Industry example">
+<div class="section-head"><h2>6. Real-Time Industry Example: Retail Revenue Quality Pipeline</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s6"> Mark prepared</label></div>
+<p>A retailer receives hourly order files from stores, mobile apps, and marketplaces. The data contains duplicate events, inconsistent column names, cancelled orders, and missing promotional fields. The analytics team must produce clean regional revenue totals and a business label such as “High”, “Medium”, or “Low” for dashboards.</p>
+<p>The engineering team uses the Spark Web UI during every run. If the deduplication or groupBy stage suddenly becomes slow, they compare shuffle size, task duration distribution, spill, and executor health with earlier runs. A single slow task may indicate a hot region or customer key. Many tiny tasks may indicate excessive partitions or tiny input files.</p>
+<div class="diagram">
+<div class="diagram-title">Diagram 3 — Retail pipeline and where to observe execution</div>
+<p><strong>How to read:</strong> Follow the top flow left to right. The lower labels show the main Spark UI location used to verify each step.</p>
+<div class="flow">
+<div class="node">Raw files<br><small>store + app</small></div><span class="arrow">→</span>
+<div class="node">Rename / unionByName</div><span class="arrow">→</span>
+<div class="node">Filter + dropDuplicates</div><span class="arrow">→</span>
+<div class="node shuffle">groupBy region</div><span class="arrow">→</span>
+<div class="node">when/otherwise label</div><span class="arrow">→</span>
+<div class="node ui">Write dashboard table</div>
+</div>
+<div class="grid three">
+<div class="mini-card"><strong>SQL tab</strong><br>Physical operators and exchanges.</div>
+<div class="mini-card"><strong>Stages tab</strong><br>Shuffle, spill, task duration, skew.</div>
+<div class="mini-card"><strong>Executors tab</strong><br>Failures, GC, memory, uneven workload.</div>
+</div>
+<p><strong>Component explanation:</strong> Rename creates a consistent schema. unionByName safely aligns columns. Filter removes invalid business states. dropDuplicates removes repeated event IDs. groupBy redistributes data by region. when/otherwise assigns a readable category. The final write is the action.</p>
+<ol><li>Read hourly files into source DataFrames.</li><li>Standardize column names before combining data.</li><li>Use <code>unionByName(..., allowMissingColumns=True)</code> for compatible schema evolution.</li><li>Filter cancelled/test orders.</li><li>Deduplicate on stable event identifiers.</li><li>Aggregate by region, causing a shuffle.</li><li>Add revenue bands with conditional expressions.</li><li>Write the curated table and inspect the UI.</li></ol>
+</div>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>from pyspark.sql import functions as F
+
+clean = (
+    store_orders
+    .withColumnRenamed("orderNo", "order_id")
+    .unionByName(app_orders, allowMissingColumns=True)
+    .filter((F.col("status") == "PAID") & F.col("order_id").isNotNull())
+    .dropDuplicates(["order_id"])
+    .withColumn(
+        "net_amount",
+        F.col("amount") - F.coalesce(F.col("discount"), F.lit(0.0))
+    )
+)
+
+regional = (
+    clean.groupBy("region")
+    .agg(
+        F.sum("net_amount").alias("revenue"),
+        F.count("*").alias("orders")
+    )
+    .withColumn(
+        "revenue_band",
+        F.when(F.col("revenue") >= 1_000_000, "High")
+         .when(F.col("revenue") >= 250_000, "Medium")
+         .otherwise("Low")
+    )
+    .orderBy(F.col("revenue").desc())
+)
+
+regional.write.mode("overwrite").parquet("/data/curated/regional_revenue")</code></pre></div>
+<div class="callout danger"><strong class="label">Watch out</strong>Deduplicating only by <code>order_id</code> is correct only if that ID is globally unique. If IDs repeat by source or date, use a composite subset such as <code>["source_system", "order_id"]</code>.</div>
+</section>
+
+<section id="s7" class="section" data-title="Transformation code lab">
+<div class="section-head"><h2>7. DataFrame Transformation Code Lab</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s7"> Mark prepared</label></div>
+
+<h3>7.1 <code>where()</code> and <code>filter()</code></h3>
+<p>Both keep rows satisfying a Boolean condition. In PySpark DataFrame API, <code>where()</code> is an alias for <code>filter()</code>. They return a new DataFrame and do not modify the original.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code># Column-expression style: preferred for composable PySpark logic
+paid = orders.filter(
+    (F.col("status") == "PAID") &
+    (F.col("amount") >= 500)
+)
+
+# SQL-expression string style
+south = orders.where("region = 'South' AND amount >= 500")</code></pre></div>
+<div class="callout"><strong class="label">Remember it as</strong><strong>Filter = keep matching rows.</strong> Use parentheses around each comparison when combining with <code>&</code> or <code>|</code>.</div>
+
+<h3>7.2 <code>orderBy()</code> and <code>sort()</code></h3>
+<p>These methods are aliases for global DataFrame sorting. A global order generally needs data redistribution, so it is more expensive than filtering or adding a local expression.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code># Revenue descending; ties resolved by region ascending
+sorted_df = regional.orderBy(
+    F.col("revenue").desc(),
+    F.col("region").asc()
+)
+
+# Equivalent alias
+sorted_again = regional.sort("region")</code></pre></div>
+<div class="callout warn"><strong class="label">Performance note</strong>Use <code>sortWithinPartitions()</code> when you need ordering inside each partition rather than one global order.</div>
+
+<h3>7.3 <code>groupBy()</code></h3>
+<p><code>groupBy()</code> returns a <code>GroupedData</code> object. It becomes useful when followed by an aggregation such as <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code>, or <code>agg</code>. Grouping typically causes a shuffle because identical keys must reach the same partition.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>summary = (
+    orders.groupBy("region", "status")
+    .agg(
+        F.count("*").alias("order_count"),
+        F.sum("amount").alias("gross_amount"),
+        F.avg("amount").alias("average_amount")
+    )
+)</code></pre></div>
+
+<h3>7.4 <code>withColumn()</code></h3>
+<p>Adds a new column or replaces an existing column of the same name. The expression must be based on columns from the same DataFrame. Since DataFrames are immutable, the result must be assigned.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>enriched = (
+    orders
+    .withColumn("net_amount", F.col("amount") - F.col("discount"))
+    .withColumn("is_large", F.col("amount") >= 1000)
+)</code></pre></div>
+<div class="callout danger"><strong class="label">What not to do</strong>A long Python loop calling <code>withColumn</code> hundreds of times can create an oversized logical plan. Prefer one <code>select()</code> with expressions or <code>withColumns()</code> when adding many columns.</div>
+
+<h3>7.5 <code>withColumnRenamed()</code></h3>
+<p>Returns a new DataFrame with one renamed column. If the old name does not exist, the operation is a no-op, so validate important schema assumptions.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>standardized = source_df.withColumnRenamed("orderNo", "order_id")
+
+# Rename several columns with chained calls
+standardized = (
+    source_df
+    .withColumnRenamed("orderNo", "order_id")
+    .withColumnRenamed("orderValue", "amount")
+)</code></pre></div>
+
+<h3>7.6 <code>union()</code>, <code>unionAll()</code>, and <code>unionByName()</code></h3>
+<p>PySpark <code>union()</code> combines rows and <strong>does not remove duplicates</strong>. <code>unionAll()</code> is an alias for <code>union()</code>. Both resolve ordinary columns by position. Use <code>unionByName()</code> when column order may differ.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code># Duplicates remain
+combined = january.union(february)
+
+# Same behavior; alias
+combined_alias = january.unionAll(february)
+
+# Safer when schemas have same names but different order
+combined_by_name = january.unionByName(february)
+
+# Schema evolution: absent columns become NULL
+combined_evolving = january.unionByName(
+    february,
+    allowMissingColumns=True
+)
+
+# Remove duplicate rows only when business rules require it
+unique_rows = combined.distinct()</code></pre></div>
+<div class="memory"><strong>Memory hook:</strong> In PySpark DataFrames, <em>union behaves like SQL UNION ALL</em>. Add <code>distinct()</code> when you truly want deduplication.</div>
+
+<h3>7.7 <code>drop()</code> and <code>dropDuplicates()</code></h3>
+<p><code>drop()</code> removes columns. <code>dropDuplicates()</code> removes duplicate rows, optionally using a subset of columns as the duplicate key.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code># Remove columns
+safe_view = orders.drop("customer_email", "payment_token")
+
+# Full-row deduplication
+all_columns_unique = orders.dropDuplicates()
+
+# Business-key deduplication
+one_row_per_order = orders.dropDuplicates(["order_id"])</code></pre></div>
+
+<h3>7.8 <code>when()</code> / <code>otherwise()</code> — CASE logic</h3>
+<p><code>when()</code> builds a conditional column expression equivalent to SQL <code>CASE WHEN</code>. Chain several <code>when</code> calls and finish with <code>otherwise</code>. Without <code>otherwise</code>, unmatched rows receive NULL.</p>
+<div class="code-wrap"><button class="copy-btn">Copy</button><pre><code>banded = orders.withColumn(
+    "amount_band",
+    F.when(F.col("amount") >= 1500, "Platinum")
+     .when(F.col("amount") >= 1000, "Gold")
+     .when(F.col("amount") >= 500, "Silver")
+     .otherwise("Bronze")
+)</code></pre></div>
+
+<h3>End-to-end trace</h3>
+<table><thead><tr><th>Transformation</th><th>Lazy?</th><th>Likely shuffle?</th><th>UI evidence after action</th></tr></thead><tbody>
+<tr><td>filter / where</td><td>Yes</td><td>No, by itself</td><td>Filter operator; input vs output row reduction</td></tr>
+<tr><td>withColumn / rename / drop</td><td>Yes</td><td>No, by itself</td><td>Project operator; usually same stage</td></tr>
+<tr><td>groupBy + agg</td><td>Yes</td><td>Yes</td><td>Exchange, shuffle read/write, aggregate stages</td></tr>
+<tr><td>orderBy / sort</td><td>Yes</td><td>Usually yes</td><td>Exchange and Sort operators</td></tr>
+<tr><td>union</td><td>Yes</td><td>Not necessarily</td><td>Union operator with multiple inputs</td></tr>
+<tr><td>dropDuplicates</td><td>Yes</td><td>Usually yes</td><td>Aggregate/dedup operators and exchange</td></tr>
+</tbody></table>
+<div class="microq"><button>Check yourself: What happens when <code>when(condition, value)</code> has no <code>otherwise</code>?</button><div class="micro-answer">Rows that match no condition receive NULL.</div></div>
+</section>
+
+<section id="s8" class="section" data-title="Comparison table">
+<div class="section-head"><h2>8. Comparison Table</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s8"> Mark prepared</label></div>
+<table><thead><tr><th>Concept A</th><th>Concept B</th><th>Same?</th><th>Practical selection rule</th></tr></thead><tbody>
+<tr><td><code>filter()</code></td><td><code>where()</code></td><td>Yes, aliases</td><td>Use the team’s preferred style; behavior is the same.</td></tr>
+<tr><td><code>orderBy()</code></td><td><code>sort()</code></td><td>Yes, aliases</td><td>Use <code>orderBy</code> when emphasizing SQL-like ordering; <code>sort</code> is equivalent.</td></tr>
+<tr><td><code>union()</code></td><td><code>unionAll()</code></td><td>Yes in PySpark</td><td>Prefer <code>union</code>; remember duplicates are preserved.</td></tr>
+<tr><td><code>union()</code></td><td><code>unionByName()</code></td><td>No</td><td>Use by-name when column order can differ or schemas evolve.</td></tr>
+<tr><td><code>drop()</code></td><td><code>dropDuplicates()</code></td><td>No</td><td>drop removes columns; dropDuplicates removes repeated rows.</td></tr>
+<tr><td><code>distinct()</code></td><td><code>dropDuplicates()</code></td><td>Same for all columns</td><td>Use dropDuplicates(subset) for business-key deduplication.</td></tr>
+<tr><td><code>withColumn()</code></td><td><code>select()</code></td><td>No</td><td>withColumn is convenient for a few fields; select is often cleaner for many expressions.</td></tr>
+<tr><td>Narrow transformation</td><td>Wide transformation</td><td>No</td><td>Narrow work can be pipelined; wide work redistributes data and creates a stage boundary.</td></tr>
+<tr><td>Job</td><td>Stage</td><td>No</td><td>A job is action-level work; a stage is a shuffle-separated unit inside a job.</td></tr>
+<tr><td>Task</td><td>Task attempt</td><td>No</td><td>A task is logical work; retries/speculation can create multiple attempts.</td></tr>
+</tbody></table>
+<p><strong>When to choose which:</strong> Prefer semantic clarity over shorter spelling. Choose by-name unions for safety, subset deduplication for business rules, and narrow transformations before wide ones when predicate pushdown and row reduction can reduce shuffle volume.</p>
+</section>
+
+<section id="s9" class="section" data-title="Best practices">
+<div class="section-head"><h2>9. Best Practices</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s9"> Mark prepared</label></div>
+<div class="grid">
+<div>
+<h3>Do</h3>
+<ol>
+<li><strong>Filter early.</strong> Why: fewer rows reach expensive shuffle and write operations.</li>
+<li><strong>Select only required columns.</strong> Why: less data is serialized, shuffled, cached, and written.</li>
+<li><strong>Use <code>unionByName</code> for evolving schemas.</strong> Why: position-based unions can silently place values under wrong column names.</li>
+<li><strong>Define deduplication keys explicitly.</strong> Why: full-row equality may not match business identity.</li>
+<li><strong>Inspect SQL and Stages together.</strong> Why: SQL shows operator intent; Stages shows runtime cost.</li>
+<li><strong>Compare median and maximum task duration.</strong> Why: a large gap often signals skew or stragglers.</li>
+<li><strong>Name jobs or SQL groups in larger applications.</strong> Why: readable descriptions improve UI diagnosis.</li>
+<li><strong>Use <code>explain("formatted")</code>.</strong> Why: it reveals Exchanges and physical operators before a production run.</li>
+</ol>
+</div>
+<div>
+<h3>Avoid</h3>
+<ol>
+<li><strong>Do not call <code>collect()</code> on large data.</strong> Why: all rows move to driver memory.</li>
+<li><strong>Do not assume union removes duplicates.</strong> Why: PySpark union preserves them.</li>
+<li><strong>Do not globally sort unless needed.</strong> Why: global ordering is expensive and often unnecessary for storage.</li>
+<li><strong>Do not chain hundreds of withColumn calls.</strong> Why: the logical plan can grow dramatically.</li>
+<li><strong>Do not trust a missing rename.</strong> Why: withColumnRenamed can be a no-op if the source name is absent.</li>
+<li><strong>Do not judge skew only by row counts.</strong> Why: one row can contain a much larger nested payload than another.</li>
+<li><strong>Do not cache everything.</strong> Why: unused cache consumes memory and may increase eviction/spill.</li>
+</ol>
+</div>
+</div>
+<div class="memory"><strong>Best-practice mnemonic — F-S-U-D-I:</strong> <strong>F</strong>ilter early, <strong>S</strong>elect narrow, <strong>U</strong>nion by name, <strong>D</strong>eduplicate by business key, <strong>I</strong>nspect UI.</div>
+</section>
+
+<section id="s10" class="section" data-title="Edge cases & gotchas">
+<div class="section-head"><h2>10. Edge Cases & Gotchas</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s10"> Mark prepared</label></div>
+<ol>
+<li><strong>Union column order mismatch:</strong> <code>union()</code> resolves by position. Equal data types can hide a semantic swap. Use <code>unionByName()</code>.</li>
+<li><strong>Missing <code>otherwise</code>:</strong> unmatched conditions become NULL, which may later disappear from aggregates or comparisons.</li>
+<li><strong>NULL comparisons:</strong> <code>col == None</code> is not the clearest Spark expression. Use <code>isNull()</code> or <code>isNotNull()</code>.</li>
+<li><strong>Operator precedence:</strong> In PySpark conditions, wrap comparisons in parentheses before using <code>&</code> and <code>|</code>.</li>
+<li><strong>drop no-op:</strong> Dropping a non-existent string column may silently leave the DataFrame unchanged.</li>
+<li><strong>withColumnRenamed no-op:</strong> A typo in the old column name may not raise an error.</li>
+<li><strong>dropDuplicates is non-deterministic for retained non-key columns:</strong> If several rows share the subset key, do not assume which complete row survives. Use a Window with an explicit order when “latest wins.”</li>
+<li><strong>Streaming deduplication keeps state:</strong> Without a watermark or bounded strategy, state can grow.</li>
+<li><strong>Global sort and one-file expectations:</strong> Sorting does not guarantee one output file. Partitioning and file writing are separate concerns.</li>
+<li><strong>UI retention:</strong> The live UI retains a configurable number of jobs and stages. For completed apps, configure event logging and use History Server.</li>
+<li><strong>One task per partition is a model, not every attempt count:</strong> retries and speculative execution can create extra attempts.</li>
+<li><strong>Adaptive Query Execution:</strong> Runtime plans can differ from the initial physical plan because Spark may coalesce shuffle partitions or change join strategies.</li>
+</ol>
+<div class="callout warn"><strong class="label">It works until...</strong>A position-based union “works” while schemas share the same order. A producer then reorders columns, and the pipeline continues with semantically corrupted data.</div>
+</section>
+
+<section id="s11" class="section" data-title="Troubleshooting">
+<div class="section-head"><h2>11. Troubleshooting / Common Errors</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s11"> Mark prepared</label></div>
+<table><thead><tr><th>Symptom / error</th><th>Meaning / cause</th><th>Exact fix</th></tr></thead><tbody>
+<tr><td>Web UI at 4040 does not open</td><td>No active SparkContext, app already finished, remote driver, blocked port, or another port was selected.</td><td>Keep the application running, check driver logs for the UI URL, try 4041+, or use SSH port forwarding for a remote driver.</td></tr>
+<tr><td><code>AnalysisException</code> unresolved column</td><td>Column name does not exist, changed after rename, or is ambiguous.</td><td>Run <code>printSchema()</code>, qualify aliases, and verify spelling/case.</td></tr>
+<tr><td><code>Cannot resolve column ... among (...)</code></td><td>withColumn expression references a column from another DataFrame.</td><td>Join/select the required column into the current DataFrame first.</td></tr>
+<tr><td>Union produces values under wrong headings</td><td>Columns were aligned by position.</td><td>Use <code>unionByName</code> and validate schemas.</td></tr>
+<tr><td>Union fails due to different column counts/types</td><td>Schemas are incompatible.</td><td>Cast types, add missing columns with <code>lit(None).cast(...)</code>, or use <code>allowMissingColumns=True</code>.</td></tr>
+<tr><td>All unmatched categories are NULL</td><td>No otherwise branch.</td><td>Add <code>.otherwise("Default")</code>.</td></tr>
+<tr><td>One stage takes most of the job time</td><td>Large shuffle, skew, spill, slow I/O, or stragglers.</td><td>Inspect task summary and task table; compare max/median, shuffle, spill, input, GC, and executor.</td></tr>
+<tr><td>Few tasks run while cluster is idle</td><td>Too few partitions in the current stage.</td><td>Review source partitioning, <code>repartition</code>, shuffle partitions, and downstream needs.</td></tr>
+<tr><td>Thousands of tiny fast tasks</td><td>Too many partitions or many small files.</td><td>Compact files, coalesce/repartition thoughtfully, or enable adaptive coalescing.</td></tr>
+<tr><td>Driver out of memory after <code>collect()</code></td><td>Dataset was materialized in driver memory.</td><td>Use distributed writes, <code>show</code>/<code>take</code> for samples, or aggregate before collection.</td></tr>
+<tr><td>Deduplication keeps the “wrong” record</td><td>dropDuplicates does not encode latest/priority ordering.</td><td>Use Window + <code>row_number</code> ordered by timestamp/priority.</td></tr>
+</tbody></table>
+</section>
+
+<section id="s12" class="section" data-title="Interview Q&A">
+<div class="section-head"><h2>12. Interview Q&A + Flashcards</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s12"> Mark prepared</label></div>
+<p>Use the full list for reading, then switch to flashcard mode for recall.</p>
+<div id="qaList"></div>
+<div class="flash-area">
+<h3>Flashcard mode</h3>
+<div id="dueText" class="storage-only"></div>
+<div class="flashcard" id="flashcard" tabindex="0" aria-label="Interview flashcard">
+<div class="flash-inner"><div class="flash-face flash-front"><span id="flashTag"></span><h3 id="flashQ"></h3><small>Click card to reveal</small></div><div class="flash-face flash-back"><p id="flashA"></p><small>Click card to return</small></div></div>
+</div>
+<div class="flash-controls"><button class="btn" id="prevFlash">Previous</button><button class="btn" id="shuffleFlash">Shuffle</button><button class="btn" id="nextFlash">Next</button></div>
+<div class="rating-row storage-only" style="margin-top:.7rem"><span>Recall:</span> <button class="btn rate" data-rate="again">Again</button><button class="btn rate" data-rate="hard">Hard</button><button class="btn rate" data-rate="good">Good</button><button class="btn rate" data-rate="easy">Easy</button><button class="btn" id="resetSchedule">Reset schedule</button></div>
+</div>
+</section>
+
+<section id="s13" class="section" data-title="Active exercises">
+<div class="section-head"><h2>13. Active Practice Exercises</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s13"> Mark prepared</label></div>
+<h3>A. Fill in the blank</h3>
+<div class="exercise" data-fill="filter"><p>1. Keep only paid orders: <code>orders.____(F.col("status") == "PAID")</code></p><input class="fill-input"><button class="btn check-fill">Check</button><button class="btn reveal-fill">Reveal</button><div class="feedback"></div></div>
+<div class="exercise" data-fill="otherwise"><p>2. Complete the default branch: <code>F.when(col("amount") &gt; 1000, "High").____("Normal")</code></p><input class="fill-input"><button class="btn check-fill">Check</button><button class="btn reveal-fill">Reveal</button><div class="feedback"></div></div>
+
+<h3>B. Matching</h3>
+<div class="exercise">
+<div class="match-grid">
+<div class="match-item"><strong>groupBy</strong><select data-answer="shuffle"><option value="">Choose meaning</option><option value="rows">Removes columns</option><option value="shuffle">Groups keys for aggregation, normally shuffling</option><option value="alias">Alias for filter</option></select></div>
+<div class="match-item"><strong>drop</strong><select data-answer="rows"><option value="">Choose meaning</option><option value="rows">Removes columns</option><option value="shuffle">Groups keys for aggregation, normally shuffling</option><option value="alias">Alias for filter</option></select></div>
+<div class="match-item"><strong>where</strong><select data-answer="alias"><option value="">Choose meaning</option><option value="rows">Removes columns</option><option value="shuffle">Groups keys for aggregation, normally shuffling</option><option value="alias">Alias for filter</option></select></div>
+</div><button class="btn" id="checkMatch">Check matching</button><div id="matchFeedback" class="feedback"></div>
+</div>
+<div class="exercise">
+<div class="match-grid">
+<div class="match-item"><strong>Job</strong><select data-answer="actionwork"><option value="">Choose</option><option value="actionwork">Work triggered by an action</option><option value="partitionwork">One partition's work in a stage</option><option value="boundary">Shuffle-separated task group</option></select></div>
+<div class="match-item"><strong>Stage</strong><select data-answer="boundary"><option value="">Choose</option><option value="actionwork">Work triggered by an action</option><option value="partitionwork">One partition's work in a stage</option><option value="boundary">Shuffle-separated task group</option></select></div>
+<div class="match-item"><strong>Task</strong><select data-answer="partitionwork"><option value="">Choose</option><option value="actionwork">Work triggered by an action</option><option value="partitionwork">One partition's work in a stage</option><option value="boundary">Shuffle-separated task group</option></select></div>
+</div><button class="btn" id="checkMatch2">Check matching</button><div id="matchFeedback2" class="feedback"></div>
+</div>
+
+<h3>C. Ordering / sequencing</h3>
+<div class="exercise"><p>Arrange the execution hierarchy.</p><ul class="order-list" id="order1"></ul><button class="btn" data-check-order="order1">Check order</button><div class="feedback" id="order1Feedback"></div></div>
+<div class="exercise"><p>Arrange a UI investigation flow for a slow DataFrame action.</p><ul class="order-list" id="order2"></ul><button class="btn" data-check-order="order2">Check order</button><div class="feedback" id="order2Feedback"></div></div>
+</section>
+
+<section id="s14" class="section" data-title="Practice quiz">
+<div class="section-head"><h2>14. Interactive Practice Quiz</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s14"> Mark prepared</label></div>
+<p>15 questions are drawn from a 30-question bank. Tag your confidence; answers appear only after submission.</p>
+<div id="quizQuestions"></div>
+<div class="quiz-actions"><button class="btn primary" id="submitQuiz">Submit practice quiz</button><button class="btn" id="retryQuiz" style="display:none">Retry & reshuffle</button><button class="btn" id="wrongOnly" style="display:none">Review wrong only</button></div>
+<div class="result" id="quizResult"></div>
+</section>
+
+<section id="s15" class="section" data-title="Timed exam">
+<div class="section-head"><h2>15. Formal Timed Exam</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s15"> Mark prepared</label></div>
+<p><strong>15 questions • 15 minutes • 1 mark each • Pass mark: 60% • No negative marking.</strong></p>
+<div class="exam-actions"><button class="btn primary" id="startExam">Start Test</button> <span class="timer" id="timer">15:00</span></div>
+<div id="examQuestions"></div>
+<div class="exam-actions"><button class="btn primary" id="submitExam" style="display:none">Submit exam</button><button class="btn" id="restartExam" style="display:none">Restart exam</button><button class="btn" id="weakRetry" style="display:none">Practice my weak areas</button></div>
+<div class="result" id="examResult"></div>
+<div id="weakArea"></div>
+</section>
+
+<section id="s16" class="section" data-title="Glossary">
+<div class="section-head"><h2>16. Glossary</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s16"> Mark prepared</label></div>
+<div class="glossary" id="glossary"></div>
+</section>
+
+<section id="s17" class="section" data-title="Summary & next path">
+<div class="section-head"><h2>17. Summary, Cheat List & What to Learn Next</h2><label class="prepared storage-only"><input type="checkbox" data-progress="s17"> Mark prepared</label></div>
+<h3>Key takeaways</h3>
+<ul>
+<li>Transformations build a lazy plan; actions request execution.</li>
+<li>An action creates job-level work; shuffle dependencies divide it into stages; partitions drive tasks.</li>
+<li>The Jobs tab gives the overview; Stages gives runtime details; SQL connects DataFrame operators to physical execution.</li>
+<li>filter/where, sort/orderBy, and union/unionAll are alias pairs, but union preserves duplicates.</li>
+<li>groupBy, global sort, and deduplication commonly introduce shuffles.</li>
+<li>withColumn adds or replaces a column; withColumnRenamed can silently do nothing when the source name is absent.</li>
+<li>when without otherwise returns NULL for unmatched rows.</li>
+</ul>
+<h3>Quick-revision cheat list</h3>
+<div class="grid">
+<div class="mini-card"><strong>A-J-S-T:</strong> Action → Job → Stage → Task.</div>
+<div class="mini-card"><strong>Shuffle = boundary:</strong> wide dependency starts another stage.</div>
+<div class="mini-card"><strong>Task ≈ partition:</strong> per stage, one task handles one partition.</div>
+<div class="mini-card"><strong>Filter early:</strong> reduce data before expensive wide operations.</div>
+<div class="mini-card"><strong>Union keeps duplicates:</strong> use distinct only deliberately.</div>
+<div class="mini-card"><strong>By-name is safer:</strong> protect against column-order changes.</div>
+</div>
+<h3>Learning path</h3>
+<p><strong>Prerequisites:</strong> SparkSession, schemas, columns, lazy evaluation → <strong>This topic:</strong> execution UI + transformations → <strong>Next:</strong> joins and join strategies → partitioning and shuffles → caching → Adaptive Query Execution → performance tuning → History Server and event logs.</p>
+
+<div class="mini-card">
+<h3>Certificate of Completion</h3>
+<label>Your name <input id="certName" placeholder="Enter your name"></label>
+<button class="btn primary" id="makeCertificate">Generate certificate</button>
+<div class="certificate" id="certificate">
+<h2>Certificate of Completion</h2><p>This certifies that</p><h1 id="certPerson">Learner</h1>
+<p>has completed</p><h3>Spark Web UI, Job Execution & DataFrame Transformations</h3>
+<p>Best recorded exam score: <strong id="certScore">Not attempted</strong></p><p id="certDate"></p>
+</div>
+</div>
+
+<div class="sources">
+<h3>Accuracy references</h3>
+<p>Prepared against Apache Spark 4.1.x official documentation: Web UI, Monitoring and Instrumentation, Cluster Mode Overview, RDD Programming Guide, and PySpark DataFrame/SQL API references for filter, groupBy, sort/orderBy, withColumn, withColumnRenamed, union/unionAll/unionByName, drop, dropDuplicates, when, and otherwise.</p>
+</div>
+</section>
+</main>
+</div>
+
+<div class="floating"><button id="notesFloat" class="storage-only" aria-label="Open notes">📝</button><button id="topBtn" aria-label="Back to top">↑</button></div>
+
+<div class="notes-panel storage-only" id="notesPanel">
+<div style="display:flex;justify-content:space-between;align-items:center"><h3>My Notes</h3><button class="btn" id="closeNotes">Close</button></div>
+<p>Double-click a word in tutorial text to add a note.</p>
+<div id="notesList"></div><button class="btn danger" id="clearNotes">Clear all notes</button>
+</div>
+<div class="modal storage-only" id="noteModal"><div class="modal-card"><h3>Note for: <span id="noteWord"></span></h3><textarea id="noteText" placeholder="Type your preparation note..."></textarea><div style="display:flex;gap:.5rem;justify-content:flex-end"><button class="btn" id="cancelNote">Cancel</button><button class="btn danger" id="deleteNote">Delete</button><button class="btn primary" id="saveNote">Save note</button></div></div></div>
+
+<script>
+(() => {
+"use strict";
+const KEY="sparkUiDfTutV1";
+let storageOK=true;
+try{localStorage.setItem("__spark_test__","1");localStorage.removeItem("__spark_test__")}catch(e){storageOK=false}
+if(!storageOK) document.querySelectorAll(".storage-only").forEach(e=>e.style.display="none");
+const defaultState={progress:{},notes:[],history:[],xp:0,badges:[],sound:true,theme:"light",font:16,schedule:{},best:0,lastSection:"s1"};
+let state=JSON.parse(JSON.stringify(defaultState));
+if(storageOK){try{state=Object.assign(state,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){}}
+const save=()=>{if(storageOK)localStorage.setItem(KEY,JSON.stringify(state))};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
+const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+
+/* Theme, font, progress */
+document.documentElement.dataset.theme=state.theme||"light";
+document.documentElement.style.setProperty("--font-size",(state.font||16)+"px");
+$("#themeBtn").onclick=()=>{state.theme=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=state.theme;save()};
+$("#fontDown").onclick=()=>{state.font=clamp((state.font||16)-1,13,21);document.documentElement.style.setProperty("--font-size",state.font+"px");save()};
+$("#fontUp").onclick=()=>{state.font=clamp((state.font||16)+1,13,21);document.documentElement.style.setProperty("--font-size",state.font+"px");save()};
+$("#soundBtn").textContent=state.sound?"🔊 Sound":"🔇 Muted";
+$("#soundBtn").onclick=()=>{state.sound=!state.sound;$("#soundBtn").textContent=state.sound?"🔊 Sound":"🔇 Muted";save()};
+window.addEventListener("scroll",()=>{
+ const d=document.documentElement;const max=d.scrollHeight-d.clientHeight;$("#readProgress").style.width=(max?d.scrollTop/max*100:0)+"%";
+ let current="s1";$$(".section").forEach(s=>{if(s.getBoundingClientRect().top<140)current=s.id});state.lastSection=current;save();
+});
+$("#topBtn").onclick=()=>scrollTo({top:0,behavior:"smooth"});
+if(storageOK){
+ $$("[data-progress]").forEach(c=>{c.checked=!!state.progress[c.dataset.progress];c.onchange=()=>{state.progress[c.dataset.progress]=c.checked;if(c.checked)addXP(5);updateProgress();save()}});
+ $("#resetProgress").onclick=()=>{state.progress={};$$("[data-progress]").forEach(c=>c.checked=false);updateProgress();save()};
+}
+function updateProgress(){
+ const total=17,done=Object.values(state.progress).filter(Boolean).length;
+ $("#progressText").textContent=`${done} / ${total} prepared`;$("#progressFill").style.width=(done/total*100)+"%";
+ if(done===total)unlockBadge("All Topics Prepared");
+}
+if(storageOK)updateProgress();
+
+/* Tooltips */
+document.addEventListener("mouseover",e=>{if(e.target.classList.contains("term"))e.target.title=e.target.dataset.tip||""});
+$$(".microq button").forEach(b=>b.onclick=()=>b.parentElement.classList.toggle("open"));
+
+/* Copy */
+$$(".copy-btn").forEach(b=>b.onclick=async()=>{const text=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(text)}catch(e){const t=document.createElement("textarea");t.value=text;document.body.append(t);t.select();document.execCommand("copy");t.remove()}const old=b.textContent;b.textContent="Copied!";setTimeout(()=>b.textContent=old,1200)});
+
+/* Sparkles */
+if(!matchMedia("(prefers-reduced-motion: reduce)").matches){
+ let last=0;addEventListener("pointermove",e=>{const now=performance.now();if(now-last<55)return;last=now;const s=document.createElement("span");s.className="sparkle";s.textContent=Math.random()>.5?"✦":"·";s.style.left=e.clientX+"px";s.style.top=e.clientY+"px";s.style.color=getComputedStyle(document.documentElement).getPropertyValue("--accent");document.body.append(s);setTimeout(()=>s.remove(),800)})
+}
+
+/* Q&A and flashcards */
+const qa=[
+["Beginner","What is Spark Web UI?","Spark Web UI is the browser-based monitoring interface created for a Spark application. It shows jobs, stages, tasks, executors, storage, configuration, and SQL execution information so you can understand progress and diagnose performance or failures."],
+["Beginner","What is a Spark job?","A job is the set of execution work Spark creates when an action needs a result. A job contains one or more stages depending on the dependency graph and shuffle boundaries."],
+["Beginner","What is a stage?","A stage is a group of parallel tasks that can run as one pipeline without another shuffle boundary inside it. Wide dependencies such as groupBy commonly separate one stage from the next."],
+["Beginner","What is a task?","A task is Spark’s smallest scheduled unit of work. In a stage, a task typically processes one partition, and executors run many tasks over time."],
+["Beginner","What is a DAG?","DAG means Directed Acyclic Graph. It represents transformations and dependencies as a one-way graph with no cycle, allowing Spark to plan execution and recover lost partitions from lineage."],
+["Beginner","What triggers Spark execution?","An action such as count, show, collect, save, or write triggers execution. Transformations such as filter and withColumn remain lazy until an action requests a result."],
+["Intermediate","Why does groupBy usually create a new stage?","groupBy requires all rows with the same grouping key to reach the same downstream partition. That redistribution is a shuffle, and the shuffle dependency creates a stage boundary."],
+["Intermediate","What is the difference between Jobs and Stages tabs?","The Jobs tab gives action-level progress and links to stages. The Stages tab gives detailed runtime metrics such as task duration, input, output, shuffle read/write, spill, and task attempts."],
+["Intermediate","How do you identify data skew in Spark UI?","Compare task duration and input/shuffle sizes within the same stage. If a few tasks are far larger or slower than the median, the partitioning key or record size may be skewed."],
+["Intermediate","Are filter and where different?","No. In PySpark DataFrame API, where is an alias for filter. Both return rows satisfying a Boolean condition."],
+["Intermediate","Are orderBy and sort different?","No. They are aliases for global sorting on a DataFrame. A global sort normally needs exchange and sort work, so it can be expensive."],
+["Intermediate","Does PySpark union remove duplicates?","No. PySpark DataFrame union preserves duplicate rows and resolves columns by position. unionAll is an alias for union; use distinct or dropDuplicates when deduplication is required."],
+["Intermediate","When should unionByName be used?","Use unionByName when matching should be based on column names instead of positions. It is especially useful when source systems order columns differently or schemas evolve."],
+["Advanced","How can Adaptive Query Execution change what you see?","AQE can modify the runtime physical plan after collecting shuffle statistics. It may coalesce shuffle partitions, handle skewed partitions, or change join strategies, so the final executed plan can differ from the initial plan."],
+["Advanced","Why can repeated withColumn calls be problematic?","Each call adds another projection to the logical plan. Very long loops can produce large plans and longer analysis/optimization time; select or withColumns can express many additions more compactly."],
+["Advanced","Why is dropDuplicates(subset) not enough for latest-record selection?","It defines duplicate keys but not a deterministic priority among matching records. Use a Window ordered by event timestamp and row_number when a specific record, such as the latest, must win."],
+["Advanced","What do shuffle spill metrics indicate?","They indicate that intermediate shuffle or aggregation data exceeded available in-memory capacity and was written to disk. Spill increases I/O and often signals large partitions, limited memory, or inefficient aggregation."],
+["Advanced","What is the relationship between tasks and partitions?","A stage normally launches one task per partition that the stage must process. Retries and speculative execution can create multiple attempts for the same logical task."],
+["Advanced","How do you investigate a slow stage?","Start with the stage summary, then inspect task duration distribution, input, shuffle read/write, spill, GC time, locality, and failed attempts. Correlate outlier tasks with executors and the SQL operator responsible for that stage."],
+["Advanced","How do you monitor an application after it finishes?","Enable Spark event logging and use Spark History Server or a platform-provided history UI. The live 4040 UI disappears when the driver process ends."]
+];
+const tagClass={Beginner:"b",Intermediate:"i",Advanced:"a"};
+$("#qaList").innerHTML=qa.map((x,i)=>`<div class="mini-card" style="margin:.6rem 0"><span class="tag ${tagClass[x[0]]}">${x[0]}</span> <strong>${i+1}. ${esc(x[1])}</strong><p>${esc(x[2])}</p></div>`).join("");
+let flashOrder=qa.map((_,i)=>i),flashPos=0;
+function renderFlash(){const x=qa[flashOrder[flashPos]];$("#flashTag").innerHTML=`<span class="tag ${tagClass[x[0]]}">${x[0]}</span>`;$("#flashQ").textContent=x[1];$("#flashA").textContent=x[2];$("#flashcard").classList.remove("flipped");updateDue()}
+$("#flashcard").onclick=()=>$("#flashcard").classList.toggle("flipped");
+$("#flashcard").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#flashcard").classList.toggle("flipped")}};
+$("#prevFlash").onclick=()=>{flashPos=(flashPos-1+flashOrder.length)%flashOrder.length;renderFlash()};
+$("#nextFlash").onclick=()=>{flashPos=(flashPos+1)%flashOrder.length;renderFlash()};
+$("#shuffleFlash").onclick=()=>{flashOrder=shuffle(flashOrder);flashPos=0;renderFlash()};
+function updateDue(){if(!storageOK)return;const today=new Date().toISOString().slice(0,10);const due=qa.filter((_,i)=>!state.schedule[i]||state.schedule[i].due<=today).length;$("#dueText").textContent=`Due today: ${due} of ${qa.length} cards`}
+if(storageOK){
+ $$(".rate").forEach(b=>b.onclick=()=>{const idx=flashOrder[flashPos],r=b.dataset.rate;const prev=state.schedule[idx]||{interval:0,ease:2.5};let days=1,ease=prev.ease;
+ if(r==="again"){days=0;ease=Math.max(1.3,ease-.2)}if(r==="hard"){days=Math.max(1,Math.round(prev.interval*1.2)||1);ease=Math.max(1.3,ease-.1)}
+ if(r==="good"){days=Math.max(1,Math.round(prev.interval*ease)||1)}if(r==="easy"){days=Math.max(2,Math.round((prev.interval||1)*ease*1.3));ease+=.1}
+ const d=new Date();d.setDate(d.getDate()+days);state.schedule[idx]={interval:days,ease,due:d.toISOString().slice(0,10)};addXP(2);save();$("#nextFlash").click()});
+ $("#resetSchedule").onclick=()=>{state.schedule={};save();updateDue()};
+}
+renderFlash();
+
+/* Exercises */
+$$(".check-fill").forEach(b=>b.onclick=()=>{const ex=b.closest(".exercise"),ans=ex.dataset.fill.trim().toLowerCase(),v=ex.querySelector(".fill-input").value.trim().toLowerCase(),f=ex.querySelector(".feedback");const ok=v===ans;f.textContent=ok?"Correct — "+ans+" completes the expression.":"Try again. Think about the method described.";f.style.color=ok?"var(--good)":"var(--bad)";if(ok)addXP(3)});
+$$(".reveal-fill").forEach(b=>b.onclick=()=>{const ex=b.closest(".exercise");ex.querySelector(".feedback").textContent="Answer: "+ex.dataset.fill;ex.querySelector(".feedback").style.color="var(--accent)"});
+function checkMatching(rootSel,feedbackSel){let ok=true;$$(rootSel+" select").forEach(s=>{const yes=s.value===s.dataset.answer;s.style.borderColor=yes?"var(--good)":"var(--bad)";ok=ok&&yes});$(feedbackSel).textContent=ok?"All pairs are correct.":"Some pairs need revision.";$(feedbackSel).style.color=ok?"var(--good)":"var(--bad)";if(ok)addXP(5)}
+$("#checkMatch").onclick=()=>checkMatching("#checkMatch".replace("#checkMatch",".exercise:has(#checkMatch)"),"#matchFeedback");
+$("#checkMatch2").onclick=()=>checkMatching("#checkMatch2".replace("#checkMatch2",".exercise:has(#checkMatch2)"),"#matchFeedback2");
+/* :has fallback handled directly */
+$("#checkMatch").onclick=()=>{let ok=true;$("#checkMatch").parentElement.querySelectorAll("select").forEach(s=>{const y=s.value===s.dataset.answer;s.style.borderColor=y?"var(--good)":"var(--bad)";ok=ok&&y});$("#matchFeedback").textContent=ok?"All pairs are correct.":"Some pairs need revision.";$("#matchFeedback").style.color=ok?"var(--good)":"var(--bad)";if(ok)addXP(5)};
+$("#checkMatch2").onclick=()=>{let ok=true;$("#checkMatch2").parentElement.querySelectorAll("select").forEach(s=>{const y=s.value===s.dataset.answer;s.style.borderColor=y?"var(--good)":"var(--bad)";ok=ok&&y});$("#matchFeedback2").textContent=ok?"All pairs are correct.":"Some pairs need revision.";$("#matchFeedback2").style.color=ok?"var(--good)":"var(--bad)";if(ok)addXP(5)};
+const orders={
+ order1:{items:["Action","Job","Stage","Task"],answer:["Action","Job","Stage","Task"]},
+ order2:{items:["Open the action's job","Find the slow stage","Inspect task distribution and shuffle metrics","Correlate outliers with SQL operator and executor"],answer:["Open the action's job","Find the slow stage","Inspect task distribution and shuffle metrics","Correlate outliers with SQL operator and executor"]}
+};
+function renderOrder(id){const ul=$("#"+id),arr=shuffle(orders[id].items);ul.innerHTML=arr.map(x=>`<li data-value="${esc(x)}"><span>${esc(x)}</span><span><button class="btn up">↑</button><button class="btn down">↓</button></span></li>`).join("");ul.querySelectorAll(".up").forEach(b=>b.onclick=()=>{const li=b.closest("li");if(li.previousElementSibling)li.parentElement.insertBefore(li,li.previousElementSibling)});ul.querySelectorAll(".down").forEach(b=>b.onclick=()=>{const li=b.closest("li");if(li.nextElementSibling)li.parentElement.insertBefore(li.nextElementSibling,li)})}
+renderOrder("order1");renderOrder("order2");
+$$("[data-check-order]").forEach(b=>b.onclick=()=>{const id=b.dataset.checkOrder,got=[...$("#"+id).children].map(li=>li.dataset.value),ok=JSON.stringify(got)===JSON.stringify(orders[id].answer),f=$("#"+id+"Feedback");f.textContent=ok?"Correct sequence.":"Not yet. Use the hierarchy or investigation logic described earlier.";f.style.color=ok?"var(--good)":"var(--bad)";if(ok)addXP(5)});
+
+/* Questions */
+const bank=[
+{t:"Execution",q:"Which operation most directly triggers a Spark job?",o:["filter()","withColumn()","count()","withColumnRenamed()"],a:2,e:"count() is an action; the others are lazy transformations."},
+{t:"Execution",q:"What usually separates Spark stages?",o:["A Python variable","A shuffle dependency","Every DataFrame method","Every executor"],a:1,e:"A shuffle dependency creates a stage boundary."},
+{t:"Execution",q:"A task normally processes what in one stage?",o:["One Spark application","One partition","Every partition","One job"],a:1,e:"A task typically processes one partition for that stage."},
+{t:"Execution",q:"What does DAG stand for?",o:["Data Action Group","Directed Acyclic Graph","Distributed Aggregate Grid","Dynamic Application Gateway"],a:1,e:"DAG means Directed Acyclic Graph."},
+{t:"Web UI",q:"Which UI tab is best for task duration and shuffle metrics?",o:["Environment","Stages","Storage","Jobs only"],a:1,e:"The Stages tab exposes stage and task runtime metrics."},
+{t:"Web UI",q:"Which UI tab shows executor cores, tasks, GC, and shuffle totals?",o:["Executors","Storage","SQL only","Environment only"],a:0,e:"The Executors tab summarizes executor runtime health and workload."},
+{t:"Web UI",q:"What is the common live application UI port for the first local SparkContext?",o:["8080","4040","9870","18080"],a:1,e:"The live application UI commonly starts at port 4040."},
+{t:"Web UI",q:"Which tab helps verify Spark configuration properties actually used?",o:["Environment","Storage","Jobs","SQL"],a:0,e:"The Environment tab displays Spark and system properties."},
+{t:"Transformations",q:"In PySpark, where() is an alias for which method?",o:["groupBy","filter","drop","union"],a:1,e:"where() and filter() are aliases."},
+{t:"Transformations",q:"Which operation normally requires a shuffle?",o:["withColumn using arithmetic","filter","groupBy and aggregate","withColumnRenamed"],a:2,e:"Grouping requires equal keys to be redistributed together."},
+{t:"Transformations",q:"What does withColumn do when the target name already exists?",o:["Always throws","Replaces that column","Removes the row","Starts a new job"],a:1,e:"withColumn adds a new column or replaces an existing same-named column."},
+{t:"Transformations",q:"What can happen when withColumnRenamed receives an absent old name?",o:["It is a no-op","It deletes all columns","It starts two jobs","It deduplicates data"],a:0,e:"The rename is a no-op if the schema does not contain the old name."},
+{t:"Union",q:"Does PySpark DataFrame union remove duplicate rows automatically?",o:["Yes","Only in local mode","No","Only for integers"],a:2,e:"PySpark union preserves duplicates."},
+{t:"Union",q:"How does ordinary DataFrame union align columns?",o:["By position","By primary key","Alphabetically","By metadata ID"],a:0,e:"Ordinary union resolves columns by position."},
+{t:"Union",q:"What is unionAll() in PySpark DataFrame API?",o:["A duplicate-removing method","An alias for union()","A join type","A streaming-only action"],a:1,e:"unionAll is an alias for union."},
+{t:"Union",q:"Which method is safer when column order differs?",o:["unionByName","groupBy","drop","orderBy"],a:0,e:"unionByName resolves columns by name."},
+{t:"Duplicates",q:"Which call removes duplicates based only on order_id?",o:["drop('order_id')","dropDuplicates(['order_id'])","filter('order_id')","orderBy('order_id')"],a:1,e:"dropDuplicates with a subset defines the deduplication key."},
+{t:"Duplicates",q:"Why can dropDuplicates(['id']) be wrong for 'latest record wins'?",o:["It sorts descending","It does not define which duplicate survives","It removes the id column","It is an action"],a:1,e:"Subset deduplication does not encode an explicit ordering priority."},
+{t:"Conditions",q:"What do unmatched rows receive if when() has no otherwise()?",o:["Zero","Empty string","NULL","The previous row's value"],a:2,e:"Unmatched rows receive NULL."},
+{t:"Conditions",q:"What is when/otherwise most similar to in SQL?",o:["GROUP BY","CASE WHEN ... ELSE","UNION ALL","ORDER BY"],a:1,e:"It builds conditional CASE-style expressions."},
+{t:"Sorting",q:"orderBy() and sort() are what in PySpark DataFrames?",o:["Aliases","Opposites","Actions","Join strategies"],a:0,e:"They are aliases for DataFrame sorting."},
+{t:"Sorting",q:"Why can global orderBy be expensive?",o:["It deletes columns","It usually requires data redistribution and sorting","It disables executors","It always collects to the driver"],a:1,e:"Global ordering commonly requires exchange and sort work."},
+{t:"Performance",q:"A few tasks are 20× slower than the median. What is a likely concern?",o:["Data skew or stragglers","Successful predicate pushdown","Too few columns","A renamed field"],a:0,e:"Large within-stage task imbalance is a common skew/straggler signal."},
+{t:"Performance",q:"What do spill metrics indicate?",o:["Data was written to disk from memory pressure","The job was cancelled","A column was renamed","The driver opened port 4040"],a:0,e:"Spill records intermediate data written to disk when memory is insufficient."},
+{t:"Performance",q:"What is a good first step before a wide groupBy?",o:["Filter and select required data","Collect all rows","Globally sort twice","Cache every source"],a:0,e:"Reducing rows and columns before a shuffle lowers data movement."},
+{t:"Performance",q:"What does a stage with thousands of tiny tasks often suggest?",o:["Too many partitions or tiny files","No partitions","A missing otherwise","A union mismatch"],a:0,e:"Excessive partitions or small files can create scheduler overhead."},
+{t:"API",q:"Which operation removes columns rather than rows?",o:["drop","dropDuplicates","filter","groupBy"],a:0,e:"drop removes specified columns."},
+{t:"API",q:"What does groupBy return before aggregation?",o:["GroupedData","A Python list","An executor","A completed job"],a:0,e:"groupBy returns a GroupedData object."},
+{t:"API",q:"Which expression correctly combines two PySpark conditions?",o:["(c1) & (c2)","c1 and c2","c1 && c2","AND(c1,c2)"],a:0,e:"Use Column operators & and | with parentheses."},
+{t:"Advanced",q:"Why might the final runtime plan differ from the initial plan?",o:["Adaptive Query Execution","Python comments","The UI theme","Column aliases"],a:0,e:"AQE can alter shuffle partitioning and strategies using runtime statistics."}
+];
+let quizSet=[],examSet=[],quizWrong=[],examWrong=[],timerId=null,timeLeft=900,examActive=false;
+function chooseSets(){const idx=shuffle(bank.map((_,i)=>i));quizSet=idx.slice(0,15).map(i=>bank[i]);examSet=idx.slice(15,30).map(i=>bank[i])}
+chooseSets();
+function renderQuestions(container,set,prefix,confidence){
+ $(container).innerHTML=set.map((q,i)=>{
+  const opts=shuffle(q.o.map((text,orig)=>({text,orig})));
+  return `<div class="question" data-index="${i}" data-topic="${esc(q.t)}"><p><strong>${i+1}. ${esc(q.q)}</strong></p><div class="options">${opts.map(x=>`<label><input type="radio" name="${prefix}${i}" value="${x.orig}"> ${esc(x.text)}</label>`).join("")}</div>${confidence?`<label>Confidence: <select class="confidence"><option value="unsure">Unsure</option><option value="sure">Sure</option></select></label>`:""}<div class="feedback"></div></div>`
+ }).join("")
+}
+renderQuestions("#quizQuestions",quizSet,"q",true);
+function tier(p){if(p===100)return["🤩🎉","Perfect! Flawless run."];if(p>=90)return["😄","Excellent — interview-ready!"];if(p>=75)return["🙂","Well done — solid grasp."];if(p>=60)return["😌","Good — revise the misses."];return["💪😤","Needs focus — review and retry."]}
+function sound(p){
+ if(!state.sound)return;try{const A=window.AudioContext||window.webkitAudioContext;if(!A)return;const c=new A(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);const now=c.currentTime;const base=p>=90?660:p>=75?550:p>=60?440:260;o.frequency.setValueAtTime(base,now);o.frequency.exponentialRampToValueAtTime(base*(p>=60?1.5:1.15),now+.7);g.gain.setValueAtTime(.08,now);g.gain.exponentialRampToValueAtTime(.001,now+.85);o.start(now);o.stop(now+.9)}catch(e){}
+}
+function scoreSet(container,set,prefix,type){
+ let correct=0,wrong=[],topic={};$$(container+" .question").forEach((el,i)=>{
+  const sel=el.querySelector(`input[name="${prefix}${i}"]:checked`),val=sel?+sel.value:-1,ok=val===set[i].a,conf=el.querySelector(".confidence")?.value;
+  topic[set[i].t]=topic[set[i].t]||{right:0,total:0};topic[set[i].t].total++;if(ok){correct++;topic[set[i].t].right++}else wrong.push(i);
+  el.classList.add(ok?"correct":"wrong");const chosen=val>=0?set[i].o[val]:"Not answered";el.querySelector(".feedback").innerHTML=`<strong>${ok?"Correct":"Incorrect"}.</strong> Your answer: ${esc(chosen)}<br>Correct answer: ${esc(set[i].o[set[i].a])}<br>${esc(set[i].e)}${conf?`<br>Confidence: ${conf}${ok&&conf==="unsure"?" — shaky spot":(!ok&&conf==="sure"?" — priority fix":"")}`:""}`
+ });
+ const pct=Math.round(correct/set.length*100),[em,msg]=tier(pct);sound(pct);addHistory(type,pct);addXP(correct*2);if(pct>=60)unlockBadge(type==="Exam"?"Exam Passed":"Quiz Passed");if(pct===100)unlockBadge("Perfect Score");return{correct,pct,wrong,topic,em,msg}
+}
+$("#submitQuiz").onclick=()=>{const r=scoreSet("#quizQuestions",quizSet,"q","Quiz");quizWrong=r.wrong;$("#quizResult").classList.add("show");$("#quizResult").innerHTML=`<div class="big-emoji">${r.em}</div><h3>${r.correct}/15 — ${r.pct}%</h3><p>${r.msg}</p>`;$("#retryQuiz").style.display="inline-block";$("#wrongOnly").style.display="inline-block";$("#submitQuiz").disabled=true};
+$("#retryQuiz").onclick=()=>{chooseSets();renderQuestions("#quizQuestions",quizSet,"q",true);$("#quizResult").classList.remove("show");$("#retryQuiz").style.display="none";$("#wrongOnly").style.display="none";$("#submitQuiz").disabled=false};
+$("#wrongOnly").onclick=()=>{$$("#quizQuestions .question").forEach((el,i)=>el.style.display=quizWrong.includes(i)?"block":"none")};
+
+$("#startExam").onclick=()=>{if(examActive)return;examActive=true;renderQuestions("#examQuestions",examSet,"e",false);$("#examQuestions").style.display="block";$("#submitExam").style.display="inline-block";$("#startExam").disabled=true;timeLeft=900;updateTimer();timerId=setInterval(()=>{timeLeft--;updateTimer();if(timeLeft<=0){clearInterval(timerId);submitExam()}},1000)};
+function updateTimer(){const m=String(Math.floor(timeLeft/60)).padStart(2,"0"),s=String(timeLeft%60).padStart(2,"0");$("#timer").textContent=`${m}:${s}`;$("#timer").classList.toggle("danger",timeLeft<=60)}
+function submitExam(){if(!examActive)return;examActive=false;clearInterval(timerId);const r=scoreSet("#examQuestions",examSet,"e","Exam");examWrong=r.wrong;state.best=Math.max(state.best||0,r.pct);save();const breakdown=Object.entries(r.topic).map(([k,v])=>`${k}: ${v.right}/${v.total}`).join(" • ");$("#examResult").classList.add("show");$("#examResult").innerHTML=`<div class="big-emoji">${r.em}</div><h3>${r.correct}/15 marks — ${r.pct}% — ${r.pct>=60?"PASS":"REVISE & RETRY"}</h3><p>${r.msg}</p><p>${breakdown}</p>`;$("#submitExam").style.display="none";$("#restartExam").style.display="inline-block";$("#weakRetry").style.display=r.wrong.length?"inline-block":"none"}
+$("#submitExam").onclick=submitExam;
+$("#restartExam").onclick=()=>{clearInterval(timerId);chooseSets();$("#examQuestions").innerHTML="";$("#examQuestions").style.display="none";$("#examResult").classList.remove("show");$("#restartExam").style.display="none";$("#weakRetry").style.display="none";$("#startExam").disabled=false;$("#timer").textContent="15:00";$("#timer").classList.remove("danger");examActive=false};
+$("#weakRetry").onclick=()=>{const set=examWrong.map(i=>examSet[i]);$("#weakArea").innerHTML="<h3>Weak-area mini quiz</h3><div id='miniQs'></div><button class='btn primary' id='miniSubmit'>Submit mini quiz</button><div id='miniResult'></div>";renderQuestions("#miniQs",set,"m",false);$("#miniSubmit").onclick=()=>{const r=scoreSet("#miniQs",set,"m","Weak Retry");$("#miniResult").innerHTML=`<h4>${r.correct}/${set.length} — ${r.pct}%</h4>`};$("#weakArea").scrollIntoView({behavior:"smooth"})};
+
+/* History, XP, badges */
+function addHistory(type,pct){if(!storageOK)return;state.history.unshift({type,pct,date:new Date().toLocaleString()});state.history=state.history.slice(0,20);renderHistory();save()}
+function renderHistory(){if(!storageOK)return;$("#scoreHistory").innerHTML=(state.history||[]).map(h=>`<div class="history-item"><span>${esc(h.type)}</span><strong>${h.pct}%</strong></div>`).join("")||"<small>No attempts yet.</small>"}
+function addXP(n){if(!storageOK)return;state.xp=(state.xp||0)+n;$("#xpValue").textContent=state.xp;save()}
+function unlockBadge(name){if(!storageOK)return;state.badges=state.badges||[];if(!state.badges.includes(name))state.badges.push(name);renderBadges();save()}
+function renderBadges(){if(!storageOK)return;$("#badges").innerHTML=(state.badges||[]).map(b=>`<span class="tag i" style="margin:.2rem">${esc(b)}</span>`).join("")||"<small>No badges yet.</small>"}
+if(storageOK){renderHistory();renderBadges();$("#xpValue").textContent=state.xp||0}
+
+/* Glossary */
+const glossary={
+"Action":"An operation that requests a result or writes output and therefore triggers execution.",
+"Adaptive Query Execution":"Runtime optimization that can change parts of the physical plan using observed statistics.",
+"DAG":"Directed Acyclic Graph of transformations and dependencies.",
+"DataFrame":"A distributed table-like collection with named columns and a schema.",
+"Driver":"The coordinating process that owns the Spark application and schedules work.",
+"Executor":"A worker process that runs tasks and stores application data.",
+"Exchange":"A physical-plan operator representing data redistribution, usually a shuffle.",
+"Job":"Execution work created for an action.",
+"Lazy evaluation":"Transformations build a plan without running until an action requires output.",
+"Narrow transformation":"A transformation whose output partition depends on a small number of input partitions, often one.",
+"Partition":"A logical slice of distributed data.",
+"Projection":"Selection or calculation of output columns.",
+"Shuffle":"Redistribution of records across partitions.",
+"Stage":"A shuffle-separated group of parallel tasks.",
+"Task":"The smallest scheduled work unit, usually for one partition in one stage.",
+"Wide transformation":"A transformation whose output partitions depend on many input partitions and usually require a shuffle."
+};
+$("#glossary").innerHTML=Object.entries(glossary).sort().map(([k,v])=>`<div class="gloss-item"><strong>${esc(k)}</strong><br>${esc(v)}</div>`).join("");
+
+/* Notes */
+let noteCtx={word:"",section:"",id:null};
+function openNotes(){$("#notesPanel").classList.add("open");renderNotes()}
+if(storageOK){
+ $("#notesBtn").onclick=openNotes;$("#notesFloat").onclick=openNotes;$("#closeNotes").onclick=()=>$("#notesPanel").classList.remove("open");
+ $("#clearNotes").onclick=()=>{if(confirm("Clear all notes?")){state.notes=[];save();location.reload()}};
+ document.addEventListener("dblclick",e=>{
+  if(e.target.closest("button,a,input,textarea,select,label,pre,code,.notes-panel,.modal,.question,.exercise"))return;
+  const sel=getSelection();const word=(sel?.toString()||"").trim();if(!word||!/^[-A-Za-z0-9_]+$/.test(word))return;
+  const sec=e.target.closest(".section");noteCtx={word,section:sec?.dataset.title||"",id:null};const existing=state.notes.find(n=>n.word.toLowerCase()===word.toLowerCase()&&n.section===noteCtx.section);if(existing){noteCtx.id=existing.id;$("#noteText").value=existing.text}else $("#noteText").value="";
+  $("#noteWord").textContent=word;$("#deleteNote").style.display=existing?"inline-block":"none";$("#noteModal").classList.add("open");$("#noteText").focus()
+ });
+ $("#cancelNote").onclick=()=>$("#noteModal").classList.remove("open");
+ $("#saveNote").onclick=()=>{const text=$("#noteText").value.trim();if(!text)return;const found=state.notes.find(n=>n.id===noteCtx.id);if(found){found.text=text;found.time=new Date().toLocaleString()}else state.notes.push({id:Date.now(),word:noteCtx.word,section:noteCtx.section,text,time:new Date().toLocaleString()});save();$("#noteModal").classList.remove("open");renderNotes();applyHighlights()};
+ $("#deleteNote").onclick=()=>{state.notes=state.notes.filter(n=>n.id!==noteCtx.id);save();$("#noteModal").classList.remove("open");location.reload()};
+}
+function renderNotes(){if(!storageOK)return;$("#notesList").innerHTML=(state.notes||[]).map(n=>`<div class="mini-card" style="margin:.5rem 0"><strong>${esc(n.word)}</strong> <small>(${esc(n.section)})</small><p>${esc(n.text)}</p><small>${esc(n.time)}</small><br><button class="btn danger del-note" data-id="${n.id}">Delete</button></div>`).join("")||"<p>No notes yet.</p>";$$(".del-note").forEach(b=>b.onclick=()=>{state.notes=state.notes.filter(n=>String(n.id)!==b.dataset.id);save();location.reload()})}
+function applyHighlights(){
+ if(!storageOK||!state.notes.length)return;
+ const walker=document.createTreeWalker($("#content"),NodeFilter.SHOW_TEXT,{acceptNode:n=>{
+  if(!n.nodeValue.trim())return NodeFilter.FILTER_REJECT;const p=n.parentElement;if(!p||p.closest("script,style,button,a,input,textarea,select,label,pre,code,.note-highlight,.question,.exercise"))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});
+ const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);
+ nodes.forEach(node=>{const sec=node.parentElement.closest(".section")?.dataset.title||"";const relevant=state.notes.filter(n=>n.section===sec);if(!relevant.length)return;let text=node.nodeValue;const frag=document.createDocumentFragment();let cursor=0;const matches=[];relevant.forEach(n=>{const re=new RegExp(`\\b${n.word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")}\\b`,"gi");let m;while((m=re.exec(text)))matches.push({start:m.index,end:m.index+m[0].length,n,shown:m[0]})});matches.sort((a,b)=>a.start-b.start);let last=-1;matches.forEach(m=>{if(m.start<cursor||m.start===last)return;if(m.start>cursor)frag.append(text.slice(cursor,m.start));const sp=document.createElement("span");sp.className="note-highlight";sp.textContent=m.shown;sp.title=m.n.text;sp.onclick=()=>{noteCtx={word:m.n.word,section:m.n.section,id:m.n.id};$("#noteWord").textContent=m.n.word;$("#noteText").value=m.n.text;$("#deleteNote").style.display="inline-block";$("#noteModal").classList.add("open")};frag.append(sp);cursor=m.end;last=m.start});if(cursor){frag.append(text.slice(cursor));node.replaceWith(frag)}})
+}
+if(storageOK){renderNotes();applyHighlights()}
+
+/* Export/import */
+if(storageOK){
+ $("#exportData").onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="spark-ui-tutorial-progress.json";a.click();URL.revokeObjectURL(a.href)};
+ $("#importData").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const x=JSON.parse(r.result);state=Object.assign(state,x);save();location.reload()}catch(err){alert("Invalid JSON file.")}};r.readAsText(f)}
+}
+
+/* Certificate */
+$("#makeCertificate").onclick=()=>{const n=$("#certName").value.trim()||"Learner";$("#certPerson").textContent=n;$("#certScore").textContent=state.best?state.best+"%":"Not attempted";$("#certDate").textContent=new Date().toLocaleDateString();$("#certificate").classList.add("show");$("#certificate").scrollIntoView({behavior:"smooth"});addXP(10)};
+
+/* Resume */
+if(storageOK&&state.lastSection&&state.lastSection!=="s1"){
+ const resume=document.createElement("button");resume.className="btn";resume.textContent="Resume at "+state.lastSection.toUpperCase();resume.onclick=()=>document.getElementById(state.lastSection)?.scrollIntoView({behavior:"smooth"});$(".sidebar").insertBefore(resume,$(".toc"));
+}
+})();
+</script>
+</body>
+</html>

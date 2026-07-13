@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Web UI - Classroom Tutorial</title>
+<style>
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1a2232; --muted:#5a6478;
+    --brand:#4f46e5; --brand2:#0f766e; --line:#dde5f1; --good:#15803d; --bad:#b91c1c;
+    --mark:#fde68a; --mark-line:#d97706; --shadow:0 10px 24px rgba(20,30,60,.08);
+  }
+  body.dark{
+    --bg:#0f1526; --card:#161d31; --ink:#e7ecf6; --muted:#9aa6bd; --line:#26314b;
+    --shadow:0 10px 24px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:130px}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);
+    color:var(--ink);line-height:1.65}
+  header{background:linear-gradient(135deg,#312e81,#4f46e5 60%,#0f766e);color:#fff;
+    padding:26px 22px;position:sticky;top:0;z-index:30;box-shadow:var(--shadow)}
+  header h1{margin:0 0 6px;font-size:clamp(21px,3vw,32px)}
+  header p{margin:0;color:#dbe4ff}
+  .topbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .topbar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
+    padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  .topbar button:hover{background:rgba(255,255,255,.28)}
+  .layout{max-width:1320px;margin:0 auto;display:grid;
+    grid-template-columns:250px minmax(0,1fr) 260px;gap:16px;padding:16px}
+  nav,aside{position:sticky;top:120px;align-self:start;max-height:calc(100vh - 140px);
+    overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;box-shadow:var(--shadow)}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:5px 8px;border-radius:8px;
+    font-size:13.5px}
+  nav a:hover,nav a.active{background:var(--brand);color:#fff}
+  main{min-width:0}
+  section{scroll-margin-top:130px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);transition:transform .15s}
+  section:hover{transform:translateY(-2px)}
+  h2{margin-top:0;color:var(--brand);font-size:21px}
+  h3{color:var(--brand2)}
+  code,pre{font-family:"Fira Code",Consolas,monospace}
+  pre{background:#0f172a;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:13px}
+  .codewrap{position:relative}
+  .copybtn{position:absolute;top:8px;right:8px;background:#1e293b;color:#fff;border:1px solid #334155;
+    border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .callout{border-left:5px solid var(--brand);background:rgba(79,70,229,.07);padding:10px 14px;
+    border-radius:8px;margin:12px 0}
+  .callout.key{border-color:#4f46e5;background:rgba(79,70,229,.08)}
+  .callout.remember{border-color:#0f766e;background:rgba(15,118,110,.08)}
+  .callout.confusion{border-color:#b45309;background:rgba(217,119,6,.09)}
+  .callout.pro{border-color:#7c3aed;background:rgba(124,58,237,.08)}
+  .callout.watch{border-color:#b91c1c;background:rgba(185,28,28,.08)}
+  .callout.hook{border-color:#db2777;background:rgba(219,39,119,.08)}
+  .callout b{display:block;margin-bottom:2px;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{background:rgba(79,70,229,.1)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px}
+  .tag.b{background:#dcfce7;color:#166534}.tag.i{background:#fef9c3;color:#854d0e}.tag.a{background:#fee2e2;color:#991b1b}
+  .qa{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+  /* diagram */
+  .diagram{border:1px dashed var(--line);border-radius:12px;padding:16px;margin:12px 0;background:rgba(79,70,229,.03)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center}
+  .node{background:var(--brand);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;min-width:96px}
+  .node.alt{background:var(--brand2)}
+  .node.warn{background:#b45309}
+  .arrow{font-size:22px;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  /* quiz/exam */
+  .q{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+  .q label{display:block;padding:4px 6px;border-radius:6px;cursor:pointer}
+  .q label:hover{background:rgba(79,70,229,.06)}
+  .q.correct{border-color:var(--good);background:rgba(21,128,61,.06)}
+  .q.wrong{border-color:var(--bad);background:rgba(185,28,28,.06)}
+  .expl{font-size:13px;margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(0,0,0,.03)}
+  .primary{background:var(--brand);color:#fff;border:none;padding:10px 18px;border-radius:9px;cursor:pointer;font-weight:600}
+  .ghost{background:transparent;color:var(--brand);border:1px solid var(--brand);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .result{font-size:17px;font-weight:700;margin:10px 0;padding:12px;border-radius:10px;background:rgba(79,70,229,.08)}
+  .timer{font-weight:700;color:var(--brand)}
+  .timer.warn{color:var(--bad)}
+  .hidden{display:none!important}
+  /* progress */
+  .checkrow{font-size:13px;margin:4px 0}
+  .bar{height:10px;background:var(--line);border-radius:20px;overflow:hidden;margin:8px 0}
+  .bar>div{height:100%;width:0;background:var(--brand);transition:width .25s}
+  /* notes */
+  .noted-word{background:var(--mark);border-bottom:2px solid var(--mark-line);border-radius:3px;
+    cursor:pointer;padding:0 1px}
+  body.dark .noted-word{color:#1a2232}
+  .noted-word.flash{animation:flashword 1.6s ease}
+  @keyframes flashword{0%,55%{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.5)}100%{background:var(--mark);box-shadow:none}}
+  .noteItem{cursor:pointer}
+  .noteItem:hover{border-color:var(--brand)}
+  .noteItem .w{text-decoration:underline dotted}
+  #notePopup{position:fixed;z-index:100;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;box-shadow:var(--shadow);padding:12px;width:250px}
+  #notePopup textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:8px;
+    padding:6px;font-family:inherit;background:var(--bg);color:var(--ink)}
+  #notePopup .row{display:flex;gap:6px;margin-top:8px}
+  #notePopup button{flex:1;font-size:12px;padding:6px;border-radius:6px;cursor:pointer;border:1px solid var(--line)}
+  #notePopup .save{background:var(--brand);color:#fff;border:none}
+  #notePopup .del{background:#fee2e2;color:#991b1b;border:none}
+  .noteItem{border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0;font-size:12.5px}
+  .noteItem .w{font-weight:700;color:var(--brand)}
+  .noteItem .meta{color:var(--muted);font-size:11px;margin-top:3px}
+  .noteItem .acts{display:flex;gap:6px;margin-top:6px}
+  .noteItem button{font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .sparkle{position:fixed;width:7px;height:7px;border-radius:50%;
+    background:radial-gradient(circle,#a78bfa,#4f46e5);pointer-events:none;z-index:200;opacity:.9}
+  .progress-top{position:fixed;top:0;left:0;height:4px;background:var(--brand2);z-index:40;width:0}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand2)}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}nav,aside{position:static;max-height:none}}
+  @media print{
+    header,nav,aside,.topbar,.copybtn,.sparkle,#notePopup,.primary,.ghost,#soundToggle,.progress-top{display:none!important}
+    section{box-shadow:none;break-inside:avoid}
+    .expl,.q.correct,.q.wrong{display:block!important}
+  }
+</style>
+</head>
+<body>
+<div class="progress-top" id="readbar"></div>
+<header>
+  <h1>The Spark Web UI</h1>
+  <p>How to open it, read every tab, and use it to find why a job is slow - with hands-on practice samples.</p>
+  <div class="topbar">
+    <button onclick="toggleTheme()">🌓 Theme</button>
+    <button onclick="changeFont(1)">A+</button>
+    <button onclick="changeFont(-1)">A−</button>
+    <button id="soundToggle" onclick="toggleMute()">🔊 Sound: On</button>
+    <button onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="toc">
+    <strong>Contents</strong>
+    <a href="#s1">1. Overview & Objectives</a>
+    <a href="#s2">2. Introduction</a>
+    <a href="#s3">3. Beginner Explanation</a>
+    <a href="#s4">4. The Tabs Explained</a>
+    <a href="#s5">5. Open It (Simple Example)</a>
+    <a href="#s6">6. Real Debugging Story</a>
+    <a href="#s7">7. Practice Samples</a>
+    <a href="#s8">8. Live UI vs History Server</a>
+    <a href="#s9">9. Best Practices</a>
+    <a href="#s10">10. Edge Cases</a>
+    <a href="#s11">11. Troubleshooting</a>
+    <a href="#s12">12. Interview Q&A</a>
+    <a href="#s13">13. Practice Quiz</a>
+    <a href="#s14">14. Formal Exam</a>
+    <a href="#s15">15. Glossary</a>
+    <a href="#s16">16. Summary</a>
+  </nav>
+
+  <main class="tutorial">
+    <section id="s1">
+      <h2>1. Spark Web UI - Overview</h2>
+      <p>The Spark Web UI is a website that Spark serves from your own machine while a Spark application is running. It shows you, in real time, exactly what Spark is doing: which jobs ran, how they split into stages and tasks, how long each took, and where time and memory were spent. It is the single most important tool for understanding and fixing slow Spark jobs.</p>
+      <p><b>Learning objectives:</b></p>
+      <ul>
+        <li>Open the Spark Web UI on your own machine (port 4040) and keep it open long enough to explore.</li>
+        <li>Read each tab - Jobs, Stages, Tasks, Storage, Environment, Executors, SQL - and say what it is for.</li>
+        <li>Use the UI to spot the three classic problems: a shuffle, data skew, and a spill.</li>
+        <li>Run the practice samples and predict what the UI will show before you look.</li>
+      </ul>
+      <div class="callout key"><b>Before you start</b>Prerequisites: Spark installed locally and the ability to run <code>pyspark</code>. Estimated time: 45-60 min. After this you can open a job's UI and explain in an interview exactly why it was slow.</div>
+    </section>
+
+    <section id="s2">
+      <h2>2. Introduction</h2>
+      <p>When a Spark job is slow, you cannot see inside it by reading your code - the code only says <i>what</i> you asked for, not <i>how</i> Spark actually executed it. Spark solves this by starting a small web server inside your application and publishing a dashboard to it. Point a browser at that dashboard and Spark shows you its own execution, step by step.</p>
+      <p><b>Why it matters.</b> Almost every real Spark performance problem is diagnosed in this UI. Was there a shuffle you did not expect? Did one task take ten minutes while the other 199 took two seconds (data skew)? Did Spark run out of memory and write to disk (a spill)? None of this is visible from your code, but all of it is plainly visible in the UI. Engineers who can read this dashboard fix problems in minutes; those who cannot, guess.</p>
+      <p><b>Where it lives.</b> While your application runs, the UI is served at <code>http://localhost:4040</code>. It disappears when the application ends - which is the single most common frustration for beginners. To view finished applications you use the <b>History Server</b>, covered in section 8.</p>
+      <div class="callout hook"><b>Memory hook</b>The Web UI is Spark's <b>black box flight recorder</b>. Remember it as: <b>your code says what; the UI shows how.</b></div>
+    </section>
+
+    <section id="s3">
+      <h2>3. Beginner-Friendly Explanation</h2>
+      <p>Imagine a large parcel depot. You hand over an order ("deliver these 10,000 parcels") and walk away. Later someone says the delivery was slow. You have no idea why - you only saw the order form.</p>
+      <p>Now imagine the depot has a big glass wall with live monitors. Through it you can see:</p>
+      <ol>
+        <li><b>The orders board (Jobs tab)</b> - every order you placed, whether it finished, and how long it took.</li>
+        <li><b>The workflow board (Stages tab)</b> - each order broken into phases: "sort by postcode", then "load the vans". You can see which phase was the slow one.</li>
+        <li><b>The individual workers (Tasks)</b> - inside a phase, each worker's time. If 199 workers finished in seconds and one took an hour, you have found your problem - that worker got a giant pile (this is <b>data skew</b>).</li>
+        <li><b>The staff list (Executors tab)</b> - how many workers you have, how much memory each has, and whether any crashed.</li>
+        <li><b>The storage room (Storage tab)</b> - what you asked the depot to keep on a shelf for reuse (your cached data).</li>
+      </ol>
+      <p>The Spark Web UI is that glass wall. Without it you are guessing; with it, you can point at the exact phase and the exact worker that caused the delay.</p>
+      <p><b>Where the analogy breaks down:</b> a real depot keeps running after your order finishes, but Spark's live UI shuts down the moment your application ends - the glass wall vanishes. That is why the History Server exists: it is the archive of past deliveries.</p>
+      <div class="callout remember"><b>Remember it as</b>Jobs = orders &middot; Stages = phases &middot; Tasks = individual workers &middot; Executors = the staff &middot; Storage = the shelf.</div>
+      <details><summary>Check yourself: 199 tasks finish in 2 seconds, one takes 8 minutes. What is this called?</summary><p>Data skew - one partition holds far more data than the others, so its task lags behind while the rest sit idle.</p></details>
+    </section>
+
+    <section id="s4">
+      <h2>4. The Tabs Explained (Technical)</h2>
+      <p><b>Definition.</b> The Spark Web UI is an HTTP dashboard served by the <b>driver</b> (the process that coordinates your application) on port 4040 by default, exposing metrics for jobs, stages, tasks, executors, storage, environment, and SQL queries.</p>
+      <h3>Key terms</h3>
+      <ul>
+        <li><b>Job</b> - all the work triggered by one action (e.g. <code>count()</code>, <code>show()</code>). One action = one job.</li>
+        <li><b>Stage</b> - a group of tasks that can run without moving data between machines. Spark starts a new stage at every shuffle.</li>
+        <li><b>Task</b> - the smallest unit of work; one task processes one partition.</li>
+        <li><b>Shuffle</b> - moving data across the network so records with the same key land together. Expensive; visible as Shuffle Read/Write in the UI.</li>
+        <li><b>Data skew</b> - one partition is far larger than the rest, so its task takes much longer (a "straggler").</li>
+        <li><b>Spill</b> - when data does not fit in memory, Spark writes it to disk. Shown as "Spill (Memory)" and "Spill (Disk)"; a strong slowness signal.</li>
+        <li><b>DAG</b> - the Directed Acyclic Graph, the picture of how your operations connect; each stage shows one.</li>
+      </ul>
+
+      <table>
+        <tr><th>Tab</th><th>What it shows</th><th>Use it to answer</th></tr>
+        <tr><td><b>Jobs</b></td><td>Every job, its status, duration, and stages</td><td>"Which action was slow?"</td></tr>
+        <tr><td><b>Stages</b></td><td>Each stage's tasks, shuffle read/write, spill, and the DAG</td><td>"Which phase cost the time? Was there a shuffle?"</td></tr>
+        <tr><td><b>Tasks</b> (inside a stage)</td><td>Per-task duration, and the min/median/max summary</td><td>"Is one task lagging? (skew)"</td></tr>
+        <tr><td><b>Storage</b></td><td>Cached/persisted RDDs and DataFrames, size, fraction cached</td><td>"Did my cache actually work?"</td></tr>
+        <tr><td><b>Environment</b></td><td>Spark properties, JVM and system settings, classpath</td><td>"What config is actually in effect?"</td></tr>
+        <tr><td><b>Executors</b></td><td>Each executor's cores, memory used, tasks, GC time, failures</td><td>"Am I out of memory? Did an executor die?"</td></tr>
+        <tr><td><b>SQL / DataFrame</b></td><td>Query plans and per-operator timings</td><td>"How did Spark plan my DataFrame query?"</td></tr>
+      </table>
+
+      <div class="diagram">
+        <p><b>Diagram 1: How your code becomes what the UI shows.</b></p>
+        <div class="flow">
+          <div class="node alt">Your action<br>(count/show)</div>
+          <div class="arrow">→</div>
+          <div class="node">JOB<br>(Jobs tab)</div>
+          <div class="arrow">→</div>
+          <div class="node warn">STAGE 1 → shuffle →<br>STAGE 2 (Stages tab)</div>
+          <div class="arrow">→</div>
+          <div class="node">TASKS<br>(one per partition)</div>
+          <div class="arrow">→</div>
+          <div class="node alt">EXECUTORS<br>(who ran them)</div>
+        </div>
+        <p class="legend"><b>How to read this:</b> left to right = the chain from your code down to the machines. Teal = what you wrote / who ran it, purple = Spark's units of work, orange = where a shuffle splits the work into two stages.</p>
+        <p><b>Components:</b> <b>Your action</b> is the trigger. It becomes one <b>Job</b> in the Jobs tab. The job is cut into <b>Stages</b> at every shuffle boundary - a shuffle is why Stage 2 exists at all. Each stage is made of <b>Tasks</b>, one per partition. Those tasks run on <b>Executors</b>, listed with their memory and failures.</p>
+        <p><b>Flow:</b> (1) You call an action. (2) Spark creates a Job - see it appear in the Jobs tab. (3) Spark splits it at shuffles into Stages - the Stages tab shows Shuffle Read/Write bytes here. (4) Each stage runs Tasks in parallel, one per partition - click the stage to see per-task durations. (5) Executors report memory, GC, and failures. To debug, walk this chain top-down: slow Job → which Stage → which Task → which Executor.</p>
+      </div>
+      <div class="callout confusion"><b>Common confusion</b>Port 4040 is per-application, not per-machine. If you start a second Spark app while the first is running, the second gets 4041, the third 4042, and so on. If 4040 "shows the wrong job", you are probably looking at another app's UI.</div>
+    </section>
+
+    <section id="s5">
+      <h2>5. Open It (Simple Example)</h2>
+      <p>The catch: the UI only lives while the app lives. So we deliberately keep the app alive with an <code>input()</code> pause, then browse the UI.</p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>from pyspark.sql import SparkSession
+
+spark = SparkSession.builder.appName("uiDemo").getOrCreate()
+
+df = spark.range(1_000_000)          # 1 million rows
+print(df.count())                     # ACTION -> creates Job 0
+
+input("Open http://localhost:4040 then press Enter to quit...")
+spark.stop()</pre>
+      </div>
+      <ul>
+        <li><code>SparkSession...getOrCreate()</code> - starts the app; the driver immediately begins serving the UI on port 4040.</li>
+        <li><code>spark.range(1_000_000)</code> - builds a DataFrame. Nothing runs yet (it is lazy).</li>
+        <li><code>df.count()</code> - the <b>action</b>. This creates <b>Job 0</b>, which you will now see in the Jobs tab.</li>
+        <li><code>input(...)</code> - the trick: it freezes the program so the app stays alive and the UI stays reachable.</li>
+        <li><code>spark.stop()</code> - ends the app; the UI at 4040 immediately stops responding.</li>
+      </ul>
+      <p><b>Result:</b> open <code>http://localhost:4040</code> in a browser. You will see one job ("count at ..."), with one or two stages, and a number of tasks equal to your partition count. If the page does not load, the app has already exited - that is the classic mistake.</p>
+      <div class="callout pro"><b>Pro tip</b>In the <code>pyspark</code> interactive shell you do not need the input() trick at all - the shell keeps the app alive, so 4040 stays up as long as the shell is open. That is the easiest way to explore.</div>
+    </section>
+
+    <section id="s6">
+      <h2>6. Real Debugging Story (Industry Example)</h2>
+      <p>A retail data team has a nightly job that joins orders to customers and totals revenue per customer. It used to take 12 minutes; this week it takes 90. The code has not changed. Nobody can see the problem by reading it, so an engineer opens the Web UI while the job runs.</p>
+      <p>She works top-down. In the <b>Jobs</b> tab, one job dominates the runtime. She clicks into its <b>Stages</b> and finds one stage taking almost all the time, with a large <b>Shuffle Read</b> - so a shuffle is involved, as expected for a join. Then she opens that stage's <b>task</b> summary and sees the giveaway: the <i>median</i> task took 3 seconds, but the <i>max</i> took 46 minutes. One single task is holding up the entire job. That is <b>data skew</b> - one customer ID (a bulk corporate account) now owns a huge share of the orders, so all its rows landed in one partition. The <b>Executors</b> tab confirms it: that one executor shows heavy spill to disk while the others idle.</p>
+      <div class="diagram">
+        <p><b>Diagram 2: Top-down debugging path through the UI.</b></p>
+        <div class="flow">
+          <div class="node alt">Jobs tab<br>"which job is slow?"</div>
+          <div class="arrow">→</div>
+          <div class="node">Stages tab<br>"which stage? shuffle?"</div>
+          <div class="arrow">→</div>
+          <div class="node warn">Task summary<br>"median vs MAX?"</div>
+          <div class="arrow">→</div>
+          <div class="node">Executors tab<br>"spill? GC? failures?"</div>
+          <div class="arrow">⇒</div>
+          <div class="node alt">Diagnosis:<br>data skew</div>
+        </div>
+        <p class="legend"><b>How to read this:</b> left to right = the order you should click through the UI. Teal = start and conclusion, purple = the tabs you visit, orange = the decisive clue (the median-vs-max gap).</p>
+        <p><b>Components:</b> The <b>Jobs tab</b> narrows you to the slow job. The <b>Stages tab</b> narrows to the slow stage and reveals shuffle bytes. The <b>Task summary</b> is the decisive step: comparing the median task time to the max exposes a straggler. The <b>Executors tab</b> corroborates with spill and GC. Together they yield the <b>diagnosis</b>.</p>
+        <p><b>Flow:</b> (1) Open the UI while the job runs. (2) Jobs tab: find the job consuming the runtime. (3) Stages tab: find the stage consuming that job, and note Shuffle Read/Write. (4) Click the stage and read the task summary - if max is vastly greater than median, you have skew. (5) Executors tab: check spill and GC to confirm. (6) Fix the cause (salt the hot key, repartition, or broadcast the small side of the join), rerun, and compare the same screens.</p>
+      </div>
+      <div class="callout watch"><b>Watch out</b>Do not stop at "the stage is slow". The median-vs-max comparison in the task summary is what separates skew (one bad task) from a genuinely heavy stage (all tasks slow). They need completely different fixes.</div>
+    </section>
+
+    <section id="s7">
+      <h2>7. Practice Samples</h2>
+      <p>Run each sample in the <code>pyspark</code> shell (which keeps the UI alive at <code>http://localhost:4040</code>). Before you look, <b>predict</b> what the UI will show - then check.</p>
+
+      <p><b>Sample 1 - See a Job appear (no shuffle):</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>df = spark.range(1_000_000)
+df.filter("id % 2 = 0").count()     # action -> one job</pre>
+      </div>
+      <p><b>Look for:</b> Jobs tab shows one new job. It has a single stage - filter is <i>narrow</i>, so no shuffle. Shuffle Read/Write should be ~0. <b>Lesson:</b> narrow operations do not create extra stages.</p>
+
+      <p><b>Sample 2 - Make a shuffle appear (two stages):</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>df = spark.range(1_000_000)
+df.groupBy(df.id % 10).count().show()   # groupBy -> WIDE -> shuffle</pre>
+      </div>
+      <p><b>Look for:</b> the job now has <b>two stages</b>. In the Stages tab you will see non-zero <b>Shuffle Write</b> on the first stage and <b>Shuffle Read</b> on the second. <b>Lesson:</b> a new stage is created at every shuffle - this is how you spot shuffles you did not intend.</p>
+
+      <p><b>Sample 3 - Create data skew and see the straggler:</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>from pyspark.sql.functions import when, col
+# 90% of rows get key 0 -> one giant partition
+skewed = spark.range(2_000_000).withColumn(
+    "k", when(col("id") % 10 != 0, 0).otherwise(col("id")))
+skewed.groupBy("k").count().show()</pre>
+      </div>
+      <p><b>Look for:</b> open the slow stage and read the <b>task summary table</b>. The <b>max</b> task duration will be far larger than the <b>median</b> - that gap is the fingerprint of skew. <b>Lesson:</b> always compare median vs max, not just the total.</p>
+
+      <p><b>Sample 4 - Watch caching in the Storage tab:</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>df = spark.range(5_000_000).cache()
+df.count()      # first action: computes AND caches
+df.count()      # second action: should be much faster</pre>
+      </div>
+      <p><b>Look for:</b> the <b>Storage</b> tab now lists a cached dataset with its size and "100% cached". In the Jobs tab, the second <code>count()</code> job is dramatically shorter. <b>Lesson:</b> Storage tab proves whether your cache actually took effect - an empty Storage tab means it did not.</p>
+
+      <p><b>Sample 5 - Confirm your config in the Environment tab:</b></p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>spark.conf.set("spark.sql.shuffle.partitions", 8)
+spark.range(100000).groupBy("id").count().count()</pre>
+      </div>
+      <p><b>Look for:</b> the <b>Environment</b> tab shows <code>spark.sql.shuffle.partitions = 8</code>, and the shuffle stage now has 8 tasks instead of the default 200. <b>Lesson:</b> Environment tells you what config is <i>really</i> in effect - useful when a setting "isn't working".</p>
+      <div class="callout pro"><b>Pro tip</b>Do these five in order and you will have seen, with your own eyes, a job, a stage boundary, a shuffle, skew, a cache, and a config change - which is most of what the UI is used for in real work.</div>
+    </section>
+
+    <section id="s8">
+      <h2>8. Live UI vs History Server</h2>
+      <table>
+        <tr><th>Aspect</th><th>Live Web UI (4040)</th><th>History Server (18080)</th></tr>
+        <tr><td>When available</td><td>Only while the app is running</td><td>After the app has finished</td></tr>
+        <tr><td>Default port</td><td>4040 (then 4041, 4042 ...)</td><td>18080</td></tr>
+        <tr><td>Needs setup?</td><td>No - automatic</td><td>Yes - enable event logging, start the server</td></tr>
+        <tr><td>Best for</td><td>Watching a job as it runs</td><td>Post-mortem on a finished/failed job</td></tr>
+      </table>
+      <p><b>Enable the History Server</b> (so finished jobs are still viewable):</p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre># in spark-defaults.conf (or as --conf flags)
+spark.eventLog.enabled           true
+spark.eventLog.dir               file:///tmp/spark-events
+spark.history.fs.logDirectory    file:///tmp/spark-events
+
+# create the folder, then start the server:
+mkdir -p /tmp/spark-events
+$SPARK_HOME/sbin/start-history-server.sh
+# browse http://localhost:18080</pre>
+      </div>
+      <p><b>What &amp; why:</b> <code>spark.eventLog.enabled</code> tells Spark to write a log of everything the UI showed. <code>eventLog.dir</code> is where those logs go, and <code>history.fs.logDirectory</code> is where the History Server reads them from - <b>these two must match</b>, which is the most common mistake. The folder must exist before the app runs.</p>
+      <p><b>When to pick which:</b> use the live UI (4040) while developing and watching a job; use the History Server (18080) to investigate a job that already finished or failed overnight - which is most production debugging.</p>
+    </section>
+
+    <section id="s9">
+      <h2>9. Best Practices</h2>
+      <p><b>Do:</b></p>
+      <ul>
+        <li>Explore in the <code>pyspark</code> shell. <i>Why:</i> the shell keeps the app alive, so the UI stays up while you click around.</li>
+        <li>Debug top-down: Jobs → Stages → Tasks → Executors. <i>Why:</i> it narrows the problem instead of guessing.</li>
+        <li>Always compare median vs max task time. <i>Why:</i> it is the fastest way to distinguish skew from a genuinely heavy stage.</li>
+        <li>Enable event logging in any job you might need to debug later. <i>Why:</i> without it, the evidence vanishes when the app exits.</li>
+        <li>Check the Environment tab when a config "isn't working". <i>Why:</i> it shows what is actually in effect, not what you think you set.</li>
+      </ul>
+      <p><b>Common mistakes:</b></p>
+      <ul>
+        <li>Running a script and then wondering why 4040 is dead. <i>Why bad:</i> the UI dies with the app - keep it alive or use the History Server.</li>
+        <li>Reading only total stage time. <i>Why bad:</i> it hides a single straggler task (skew).</li>
+        <li>Ignoring Shuffle Read/Write columns. <i>Why bad:</i> they are the clearest evidence of the most expensive operation in Spark.</li>
+        <li>Mismatching eventLog.dir and history.fs.logDirectory. <i>Why bad:</i> the History Server shows an empty list and you assume it is broken.</li>
+      </ul>
+    </section>
+
+    <section id="s10">
+      <h2>10. Edge Cases &amp; Gotchas</h2>
+      <ul>
+        <li><b>Port drift:</b> a second concurrent app takes 4041, not 4040. Read the driver's startup log - it prints the actual UI port.</li>
+        <li><b>Port already in use:</b> a leftover Spark process can hold 4040; kill it or let Spark move to the next port.</li>
+        <li><b>Remote clusters:</b> localhost:4040 will not work from your laptop - you must tunnel or use the cluster manager's proxy link (e.g. YARN's tracking URL).</li>
+        <li><b>Nothing in the Jobs tab:</b> you only ran transformations. Until an <i>action</i> runs, there is no job to show - this is lazy evaluation, not a broken UI.</li>
+        <li><b>Empty Storage tab despite calling cache():</b> cache is lazy too - it only materialises after an action.</li>
+        <li><b>200 tiny tasks:</b> a default <code>spark.sql.shuffle.partitions=200</code> on small data creates lots of near-empty tasks; the UI makes this obvious.</li>
+      </ul>
+      <div class="callout watch"><b>Watch out</b>"The UI is empty" is almost never a UI bug. It usually means no action has run yet, or the application already exited.</div>
+    </section>
+
+    <section id="s11">
+      <h2>11. Troubleshooting / Common Errors</h2>
+      <table>
+        <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+        <tr><td>localhost:4040 will not load</td><td>The application already finished</td><td>Use the pyspark shell / pause the script, or use the History Server</td></tr>
+        <tr><td>UI shows a different app's jobs</td><td>Another Spark app owns 4040; yours is on 4041+</td><td>Check the driver log for the real UI port</td></tr>
+        <tr><td>Jobs tab is empty</td><td>Only transformations ran (lazy)</td><td>Call an action (count, show, collect)</td></tr>
+        <tr><td>Storage tab empty after cache()</td><td>cache is lazy until an action</td><td>Run an action, then re-check</td></tr>
+        <tr><td>History Server list is empty</td><td>eventLog.dir ≠ history.fs.logDirectory, or folder missing</td><td>Make the paths match; create the folder</td></tr>
+        <tr><td>Cannot reach UI on a cluster</td><td>4040 is on the driver node, not your laptop</td><td>Use the cluster proxy/tracking URL or an SSH tunnel</td></tr>
+      </table>
+    </section>
+
+    <section id="s12">
+      <h2>12. Interview Q&A (15)</h2>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is the Spark Web UI?</b><br>A dashboard served by the driver that shows a running application's jobs, stages, tasks, executors, storage, environment, and SQL plans in real time.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is the default port?</b><br>4040. A second concurrent application uses 4041, a third 4042, and so on.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>Why does the UI disappear when my script ends?</b><br>The UI is served by the driver process; when the application exits, the driver stops and the web server goes with it.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What does the Jobs tab show?</b><br>One entry per action, with its status, duration, and the stages it contains.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What does the Executors tab show?</b><br>Each executor's cores, memory usage, task counts, GC time, spill, and failures.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>How do you tell from the UI that a shuffle happened?</b><br>The job splits into more than one stage, and the Stages tab shows non-zero Shuffle Write on one stage and Shuffle Read on the next.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>How do you detect data skew in the UI?</b><br>Open the slow stage's task summary: if the max task duration is far greater than the median, one partition is oversized - that is skew.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>What is a spill and where do you see it?</b><br>When data does not fit in memory Spark writes it to disk. It appears as Spill (Memory)/Spill (Disk) in the stage and executor metrics, and signals memory pressure.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>What is the Storage tab for?</b><br>It lists cached/persisted datasets with their size and how much is actually cached - the way to verify a cache took effect.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>Why might the Jobs tab be empty?</b><br>Because only transformations have run. Transformations are lazy; no job exists until an action triggers execution.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>What is the History Server and how do you enable it?</b><br>A server (default port 18080) that renders finished applications from event logs. Enable spark.eventLog.enabled, set eventLog.dir, point history.fs.logDirectory at the same path, and start start-history-server.sh.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Walk me through debugging a slow job with the UI.</b><br>Top-down: Jobs tab to find the slow job, Stages tab to find the dominant stage and check shuffle bytes, the task summary to compare median vs max (skew), then Executors for spill, GC, and failures. Fix the cause and compare the same screens after rerunning.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>How does the SQL tab help?</b><br>It shows the query plan for DataFrame/SQL operations with per-operator metrics, letting you see how Spark actually planned and executed the query, including where the exchanges (shuffles) are.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Why can't you reach localhost:4040 on a cluster job?</b><br>The UI runs on the driver node, not your laptop. You reach it through the cluster manager's proxy/tracking URL or an SSH tunnel.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>The Environment tab shows a config different from what you set. Why?</b><br>Configs set after the SparkContext starts, or overridden by spark-defaults/submit flags, may not apply. The Environment tab shows what is actually in effect, which is why it is the place to check.</div>
+    </section>
+
+    <section id="s13">
+      <h2>13. Practice Quiz</h2>
+      <p>Answer all questions, then press Submit at the bottom.</p>
+      <div id="quizBox"></div>
+      <button class="primary" onclick="submitQuiz()">Submit Quiz</button>
+      <button class="ghost" onclick="resetQuiz()">Retry</button>
+      <div id="quizResult" class="result hidden"></div>
+    </section>
+
+    <section id="s14">
+      <h2>14. Formal Exam</h2>
+      <p>15 questions &middot; 1 mark each &middot; <span id="examTimerLabel" class="timer">15:00</span> &middot; Pass mark 60%.</p>
+      <button class="primary" id="startBtn" onclick="startExam()">Start Test</button>
+      <div id="examBox" class="hidden"></div>
+      <button class="primary hidden" id="examSubmitBtn" onclick="submitExam()">Submit Exam</button>
+      <button class="ghost" id="restartBtn" onclick="restartExam()">Restart Exam</button>
+      <div id="examResult" class="result hidden"></div>
+    </section>
+
+    <section id="s15">
+      <h2>15. Glossary</h2>
+      <ul>
+        <li><b>DAG</b> - the graph of how operations connect; shown per stage.</li>
+        <li><b>Data skew</b> - one partition far larger than others, causing a straggler task.</li>
+        <li><b>Driver</b> - the process that coordinates the app and serves the Web UI.</li>
+        <li><b>Event log</b> - the recorded history of an app, used by the History Server.</li>
+        <li><b>History Server</b> - dashboard for finished apps, default port 18080.</li>
+        <li><b>Job</b> - all work triggered by one action.</li>
+        <li><b>Port 4040</b> - default live Web UI port (4041, 4042 for further apps).</li>
+        <li><b>Shuffle Read/Write</b> - bytes moved across the network; the sign of a wide operation.</li>
+        <li><b>Spill</b> - data written to disk because it did not fit in memory.</li>
+        <li><b>Stage</b> - group of tasks with no shuffle between them.</li>
+        <li><b>Straggler</b> - the one task holding up a stage.</li>
+        <li><b>Task</b> - the smallest unit of work; one per partition.</li>
+      </ul>
+    </section>
+
+    <section id="s16">
+      <h2>16. Summary</h2>
+      <p>The Spark Web UI is the driver's live dashboard at <code>localhost:4040</code>. It turns your invisible execution into something you can read: Jobs (one per action), Stages (split at shuffles), Tasks (one per partition), plus Storage, Environment, Executors, and SQL. Debug top-down, and use the History Server (18080) for jobs that have already finished.</p>
+      <p><b>Quick-revision cheat list:</b></p>
+      <ul>
+        <li>Live UI = <b>localhost:4040</b> &middot; second app = 4041 &middot; History Server = <b>18080</b>.</li>
+        <li>UI dies with the app - use the pyspark shell, a pause, or event logging.</li>
+        <li>One action = one <b>Job</b>. A new <b>Stage</b> starts at every <b>shuffle</b>.</li>
+        <li>Shuffle Read/Write &gt; 0 = a wide operation happened.</li>
+        <li><b>Skew</b> = max task time far greater than median task time.</li>
+        <li><b>Spill</b> = ran out of memory, wrote to disk = a slowness red flag.</li>
+        <li>Storage tab proves a cache worked; Environment tab proves a config took effect.</li>
+        <li>Debug order: <b>Jobs → Stages → Tasks → Executors</b>.</li>
+      </ul>
+      <p><b>What to learn next:</b> reading the SQL plan &amp; Exchange operators &rarr; fixing skew (salting, broadcast joins) &rarr; tuning spark.sql.shuffle.partitions &rarr; memory tuning and spill reduction.</p>
+    </section>
+  </main>
+
+  <aside>
+    <strong>Preparation</strong>
+    <div class="bar"><div id="progFill"></div></div>
+    <div id="progCount" style="font-size:12px;color:var(--muted)">0 / 16 prepared</div>
+    <div id="progList"></div>
+    <button class="ghost" style="width:100%;margin-top:8px;font-size:12px" onclick="resetProgress()">Reset progress</button>
+    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+    <details id="notesWrap" open>
+      <summary>My Notes</summary>
+      <p style="font-size:11.5px;color:var(--muted)">💡 Double-click any word in the lesson text to attach a note to it.</p>
+      <p id="storageHint" style="display:none;font-size:11.5px;color:#b45309;background:rgba(217,119,6,.1);padding:6px;border-radius:6px">Storage is blocked in this browser, so notes work now but won't be saved after you close the page.</p>
+      <div id="notesList"></div>
+      <button class="ghost" style="width:100%;margin-top:6px;font-size:12px" onclick="clearAllNotes()">Clear all notes</button>
+    </details>
+  </aside>
+</div>
+
+<div id="notePopup" class="hidden">
+  <textarea id="noteText" placeholder="Type your note..."></textarea>
+  <div class="row">
+    <button class="save" onclick="saveNote()">Save</button>
+    <button class="del" onclick="deleteCurrentNote()">Delete</button>
+    <button onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ---------- storage (feature-detected, all wrapped) ---------- */
+var STORAGE_OK=false;
+try{var _k="__t"+Date.now();localStorage.setItem(_k,"1");localStorage.getItem(_k);localStorage.removeItem(_k);STORAGE_OK=true;}catch(e){STORAGE_OK=false;}
+function sGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function sSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function sDel(k){try{localStorage.removeItem(k);}catch(e){}}
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+
+/* ---------- theme / font / sound ---------- */
+function toggleTheme(){document.body.classList.toggle("dark");sSet("theme",document.body.classList.contains("dark")?"dark":"light");}
+if(sGet("theme")==="dark")document.body.classList.add("dark");
+var fontStep=0;
+function changeFont(d){fontStep=Math.max(-2,Math.min(4,fontStep+d));document.querySelector("main").style.fontSize=(16+fontStep*1.5)+"px";}
+var muted=false;
+function toggleMute(){muted=!muted;document.getElementById("soundToggle").innerText=muted?"🔇 Sound: Off":"🔊 Sound: On";}
+function beep(freqs){if(muted)return;try{var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;var ctx=new Ctx();var t=ctx.currentTime;freqs.forEach(function(f){var o=ctx.createOscillator();var g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);o.start(t);o.stop(t+0.24);t+=0.16;});}catch(e){}}
+function soundFor(p){if(p>=100)beep([523,659,784,1047]);else if(p>=90)beep([659,880]);else if(p>=75)beep([587,740]);else if(p>=60)beep([494,494]);else beep([294,247]);}
+function mood(p){if(p>=100)return["🤩🎉","Perfect! Flawless run."];if(p>=90)return["😄","Excellent - interview-ready!"];if(p>=75)return["🙂","Well done - solid grasp."];if(p>=60)return["😌","Good - revise the misses."];return["💪","Needs focus - review & retry."];}
+
+/* ---------- copy code ---------- */
+function copyCode(btn){var code=btn.nextElementSibling.innerText;navigator.clipboard.writeText(code).then(function(){var o=btn.innerText;btn.innerText="Copied!";setTimeout(function(){btn.innerText=o;},900);});}
+
+/* ---------- progress checklist ---------- */
+var sections=[];
+function buildProgress(){
+  sections=Array.prototype.slice.call(document.querySelectorAll("main section"));
+  var list=document.getElementById("progList");list.innerHTML="";
+  sections.forEach(function(sec,i){
+    var title=(sec.querySelector("h2")||{}).innerText||("Section "+(i+1));
+    var saved=STORAGE_OK && sGet("prep"+i)==="1";
+    var row=document.createElement("label");row.className="checkrow";
+    row.innerHTML='<input type="checkbox" '+(saved?"checked":"")+' data-i="'+i+'"> '+title;
+    row.querySelector("input").addEventListener("change",function(){sSet("prep"+i,this.checked?"1":"0");updateProg();});
+    list.appendChild(row);
+  });
+  updateProg();
+}
+function updateProg(){
+  var boxes=document.querySelectorAll("#progList input");
+  var done=0;boxes.forEach(function(b){if(b.checked)done++;});
+  document.getElementById("progFill").style.width=(boxes.length?done/boxes.length*100:0)+"%";
+  document.getElementById("progCount").innerText=done+" / "+boxes.length+" prepared";
+}
+function resetProgress(){sections.forEach(function(_,i){sDel("prep"+i);});buildProgress();}
+
+/* ---------- QUIZ (15) ---------- */
+var quiz=[
+ {q:"What is the default port of the live Spark Web UI?",o:["8080","4040","18080","9000"],a:1,e:"The live UI runs on port 4040 by default."},
+ {q:"Which process serves the Web UI?",o:["The executor","The driver","The cluster manager","The worker node"],a:1,e:"The driver hosts the UI, which is why it dies when the app ends."},
+ {q:"Why does localhost:4040 stop working after a script finishes?",o:["The port changes","The app (and driver) exited","Spark caches it","The browser blocks it"],a:1,e:"The UI lives only as long as the application does."},
+ {q:"One entry in the Jobs tab corresponds to one…",o:["Transformation","Action","Partition","Executor"],a:1,e:"Each action triggers exactly one job."},
+ {q:"A new stage is created at every…",o:["map","filter","shuffle","cache"],a:2,e:"Stages are split at shuffle boundaries."},
+ {q:"Non-zero Shuffle Read/Write in the Stages tab means…",o:["A wide operation ran","Data was cached","An executor died","Nothing ran"],a:0,e:"Shuffle bytes indicate a wide operation moved data across the network."},
+ {q:"Which tab shows cached datasets and their size?",o:["Storage","Jobs","Environment","SQL"],a:0,e:"The Storage tab lists persisted/cached data."},
+ {q:"Which tab confirms which Spark config is actually in effect?",o:["Environment","Executors","Stages","Jobs"],a:0,e:"The Environment tab lists effective properties."},
+ {q:"The clearest UI signal of data skew is…",o:["High total stage time","Max task time far above the median","Many jobs","A large DAG"],a:1,e:"A straggler shows up as max >> median in the task summary."},
+ {q:"'Spill (Disk)' in the UI means…",o:["Data didn't fit in memory","The disk failed","Caching succeeded","A job finished"],a:0,e:"Spark wrote data to disk because memory ran out."},
+ {q:"Which tab shows executor memory, GC time, and failures?",o:["Executors","Storage","Jobs","SQL"],a:0,e:"The Executors tab reports per-executor health."},
+ {q:"A second concurrent Spark app typically uses port…",o:["4040","4041","18080","8081"],a:1,e:"Ports increment: 4040, then 4041, 4042, ..."},
+ {q:"The Jobs tab is empty. The most likely reason is…",o:["Only transformations ran (lazy)","The UI is broken","Spark isn't installed","Too much data"],a:0,e:"No action means no job yet - transformations are lazy."},
+ {q:"Which tab shows DataFrame/SQL query plans?",o:["SQL","Storage","Environment","Jobs"],a:0,e:"The SQL tab shows plans and per-operator metrics."},
+ {q:"Recommended debugging order in the UI is…",o:["Executors → Jobs","Jobs → Stages → Tasks → Executors","SQL → Storage","Random"],a:1,e:"Work top-down to narrow the problem."}
+];
+function renderQuiz(){
+  var box=document.getElementById("quizBox");box.innerHTML="";
+  quiz.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="q"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="quiz'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function submitQuiz(){
+  var score=0;
+  quiz.forEach(function(item,i){
+    var sel=document.querySelector('input[name="quiz'+i+'"]:checked');
+    var d=document.getElementById("q"+i);
+    var ok=sel&&Number(sel.value)===item.a;
+    if(ok)score++;
+    d.classList.remove("correct","wrong");
+    d.classList.add(ok?"correct":"wrong");
+    var old=d.querySelector(".expl");if(old)old.remove();
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML=(ok?"<b style='color:var(--good)'>Correct.</b> ":"<b style='color:var(--bad)'>Correct answer: "+item.o[item.a]+".</b> ")+item.e;
+    d.appendChild(ex);
+  });
+  var pct=Math.round(score/quiz.length*100);var m=mood(pct);
+  var r=document.getElementById("quizResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Quiz score: "+score+"/"+quiz.length+" ("+pct+"%) — "+m[1];
+  soundFor(pct);
+}
+function resetQuiz(){
+  document.querySelectorAll("#quizBox input").forEach(function(x){x.checked=false;});
+  document.querySelectorAll("#quizBox .q").forEach(function(d){d.classList.remove("correct","wrong");var e=d.querySelector(".expl");if(e)e.remove();});
+  document.getElementById("quizResult").classList.add("hidden");
+}
+
+/* ---------- EXAM (15, timed) ---------- */
+var exam=[
+ {q:"The Spark History Server default port is 18080.",o:["True","False"],a:0,e:"True: the History Server serves finished apps on 18080."},
+ {q:"The live Web UI is still available after the application exits.",o:["True","False"],a:1,e:"False: it dies with the driver; use the History Server."},
+ {q:"spark.eventLog.enabled must be true for the History Server to show a job.",o:["True","False"],a:0,e:"True: without event logs there is nothing to render."},
+ {q:"eventLog.dir and history.fs.logDirectory should point to the same place.",o:["True","False"],a:0,e:"True: mismatched paths give an empty History Server list."},
+ {q:"Transformations alone will create entries in the Jobs tab.",o:["True","False"],a:1,e:"False: only actions create jobs (lazy evaluation)."},
+ {q:"Running pyspark in a shell keeps the UI alive while you browse it.",o:["True","False"],a:0,e:"True: the shell keeps the application running."},
+ {q:"groupBy will typically add an extra stage in the UI.",o:["True","False"],a:0,e:"True: it shuffles, and stages split at shuffles."},
+ {q:"filter usually causes a shuffle and a new stage.",o:["True","False"],a:1,e:"False: filter is narrow - no shuffle."},
+ {q:"Comparing median and max task time helps detect skew.",o:["True","False"],a:0,e:"True: a large gap indicates a straggler task."},
+ {q:"An empty Storage tab after calling cache() can be normal before an action runs.",o:["True","False"],a:0,e:"True: cache is lazy and materialises on the first action."},
+ {q:"You can always reach a cluster job's UI at localhost:4040 from your laptop.",o:["True","False"],a:1,e:"False: the UI runs on the driver node; use a proxy or tunnel."},
+ {q:"Spill metrics indicate memory pressure.",o:["True","False"],a:0,e:"True: spilling means data did not fit in memory."},
+ {q:"The Environment tab can reveal that a config you set never took effect.",o:["True","False"],a:0,e:"True: it shows the effective configuration."},
+ {q:"spark.sql.shuffle.partitions defaults to 200 and affects shuffle task count.",o:["True","False"],a:0,e:"True: it controls how many tasks a shuffle stage creates."},
+ {q:"The number of tasks in a stage equals the number of partitions processed.",o:["True","False"],a:0,e:"True: one task per partition."}
+];
+var examStarted=false,examTimer=null,secondsLeft=900;
+function renderExam(){
+  var box=document.getElementById("examBox");box.innerHTML="";
+  exam.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="e"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="exam'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function fmt(s){var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x;}
+function startExam(){
+  if(examStarted)return;examStarted=true;secondsLeft=900;
+  renderExam();
+  document.getElementById("examBox").classList.remove("hidden");
+  document.getElementById("examSubmitBtn").classList.remove("hidden");
+  document.getElementById("startBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  var lbl=document.getElementById("examTimerLabel");lbl.classList.remove("warn");
+  examTimer=setInterval(function(){
+    secondsLeft--;lbl.innerText=fmt(secondsLeft);
+    if(secondsLeft<=60)lbl.classList.add("warn");
+    if(secondsLeft<=0)submitExam();
+  },1000);
+}
+function submitExam(){
+  if(!examStarted)return;
+  clearInterval(examTimer);examStarted=false;
+  var score=0;
+  exam.forEach(function(item,i){
+    var sel=document.querySelector('input[name="exam'+i+'"]:checked');
+    var chosen=sel?Number(sel.value):-1;
+    var ok=chosen===item.a;if(ok)score++;
+    var d=document.getElementById("e"+i);d.classList.add(ok?"correct":"wrong");
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML="Your answer: <b>"+(chosen>=0?item.o[chosen]:"—")+"</b> · Correct: <b>"+item.o[item.a]+"</b><br>"+item.e;
+    d.appendChild(ex);
+  });
+  var total=exam.length,pct=Math.round(score/total*100),m=mood(pct);
+  var pass=pct>=60?"<span style='color:var(--good)'>PASS</span>":"<span style='color:var(--bad)'>FAIL</span>";
+  var r=document.getElementById("examResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Marks: "+score+" / "+total+" · "+pct+"% · "+pass+" — "+m[1];
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  soundFor(pct);
+  if(STORAGE_OK){var h=sGet("examHist")||"";sSet("examHist",h+new Date().toLocaleString()+": "+pct+"%\n");}
+}
+function restartExam(){
+  clearInterval(examTimer);examStarted=false;secondsLeft=900;
+  document.getElementById("examBox").innerHTML="";
+  document.getElementById("examBox").classList.add("hidden");
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  document.getElementById("startBtn").classList.remove("hidden");
+  document.getElementById("examTimerLabel").innerText="15:00";
+  document.getElementById("examTimerLabel").classList.remove("warn");
+}
+
+/* ---------- DOUBLE-CLICK-WORD NOTES ---------- */
+var notes=[];
+function loadNotes(){if(!STORAGE_OK)return;try{notes=JSON.parse(sGet("notes")||"[]");}catch(e){notes=[];}}
+function persistNotes(){sSet("notes",JSON.stringify(notes));}
+var activeId=null;
+
+function occIndex(section,range,word){
+  var pre=document.createRange();pre.selectNodeContents(section);
+  try{pre.setEnd(range.startContainer,range.startOffset);}catch(e){return 0;}
+  var before=pre.toString();
+  var m=before.match(new RegExp("\\b"+esc(word)+"\\b","g"));
+  return m?m.length:0;
+}
+function wrapNth(section,word,index,id){
+  var walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+    if(!n.nodeValue||!n.parentElement)return NodeFilter.FILTER_REJECT;
+    if(n.parentElement.closest("script,style"))return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  var re=new RegExp("\\b"+esc(word)+"\\b","g"),count=0,node;
+  while((node=walker.nextNode())){
+    re.lastIndex=0;var m;
+    while((m=re.exec(node.nodeValue))){
+      if(count===index){
+        var r=document.createRange();r.setStart(node,m.index);r.setEnd(node,m.index+word.length);
+        var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+        try{r.surroundContents(span);}catch(e){return false;}
+        return true;
+      }
+      count++;
+    }
+  }
+  return false;
+}
+function restoreHighlights(){
+  notes.forEach(function(n){
+    var sec=document.getElementById(n.sectionId);
+    if(sec)wrapNth(sec,n.word,n.index,n.id);
+  });
+}
+function openPopupAt(rect,noteObj){
+  var p=document.getElementById("notePopup");
+  p.classList.remove("hidden");
+  // popup is position:fixed => use VIEWPORT coords (do NOT add scrollY/scrollX)
+  var top=rect.bottom+6, left=rect.left;
+  if(top>window.innerHeight-180){ top=Math.max(10, rect.top-180); }
+  if(left>window.innerWidth-270){ left=window.innerWidth-270; }
+  if(left<8){ left=8; }
+  p.style.top=top+"px";
+  p.style.left=left+"px";
+  document.getElementById("noteText").value=noteObj.note||"";
+  activeId=noteObj.id;
+  setTimeout(function(){document.getElementById("noteText").focus();},10);
+}
+function closePopup(){
+  var p=document.getElementById("notePopup");p.classList.add("hidden");
+  // if the active note has empty text, remove it + unwrap
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(n&&!n.note){deleteNoteById(activeId);}
+  activeId=null;
+}
+function saveNote(){
+  var txt=document.getElementById("noteText").value.trim();
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(!n)return;
+  if(!txt){deleteNoteById(activeId);document.getElementById("notePopup").classList.add("hidden");activeId=null;return;}
+  n.note=txt;persistNotes();renderNotesList();
+  document.getElementById("notePopup").classList.add("hidden");activeId=null;
+}
+function deleteCurrentNote(){if(activeId!=null){deleteNoteById(activeId);}document.getElementById("notePopup").classList.add("hidden");activeId=null;}
+function deleteNoteById(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(span){var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);}
+  notes=notes.filter(function(x){return x.id!==id;});
+  persistNotes();renderNotesList();
+}
+function clearAllNotes(){
+  document.querySelectorAll(".noted-word").forEach(function(span){
+    var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);
+  });
+  notes=[];persistNotes();renderNotesList();
+}
+function jumpToNote(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(!span){ // highlight missing (e.g. cleared) - re-apply then jump
+    var nn=notes.find(function(x){return x.id===id;});
+    if(nn){var sec=document.getElementById(nn.sectionId);if(sec)wrapNth(sec,nn.word,nn.index,nn.id);}
+    span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  }
+  if(!span)return;
+  var y=span.getBoundingClientRect().top+window.pageYOffset-headerH()-20;
+  window.scrollTo({top:Math.max(0,y),behavior:"smooth"});
+  span.classList.remove("flash");void span.offsetWidth; // restart animation
+  span.classList.add("flash");
+  setTimeout(function(){span.classList.remove("flash");},1700);
+}
+function renderNotesList(){
+  var box=document.getElementById("notesList");if(!box)return;box.innerHTML="";
+  if(!notes.length){box.innerHTML='<p style="font-size:12px;color:var(--muted)">No notes yet.</p>';return;}
+  notes.forEach(function(n){
+    var d=document.createElement("div");d.className="noteItem";d.title="Click to jump to this word";
+    d.innerHTML='<span class="w">'+n.word+'</span> — '+(n.note||"")+
+      '<div class="meta">'+n.sectionTitle+' · '+n.ts+'</div>'+
+      '<div class="acts"><button data-edit="'+n.id+'">Edit</button><button data-del="'+n.id+'">Delete</button></div>';
+    // click the row (but not the Edit/Delete buttons) -> navigate to the word
+    d.addEventListener("click",function(e){ if(e.target.closest("button"))return; jumpToNote(n.id); });
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-del]").forEach(function(b){b.onclick=function(){deleteNoteById(Number(b.getAttribute("data-del")));};});
+  box.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){
+    var id=Number(b.getAttribute("data-edit"));var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+    var n=notes.find(function(x){return x.id===id;});
+    if(span)openPopupAt(span.getBoundingClientRect(),n);else openPopupAt({bottom:100,left:100},n);
+  };});
+}
+function initNotes(){
+  loadNotes();restoreHighlights();renderNotesList();
+  document.addEventListener("dblclick",function(e){
+    // click on an existing noted word -> edit
+    var existing=e.target.closest(".noted-word");
+    if(existing){var id=Number(existing.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n){openPopupAt(existing.getBoundingClientRect(),n);}return;}
+    // must be inside tutorial body, not interactive
+    var host=e.target.closest(".tutorial");
+    if(!host)return;
+    if(e.target.closest("a,button,input,textarea,label,.no-note,.copybtn,pre,code,#toc,aside"))return;
+    var sel=window.getSelection();var word=sel.toString().trim();
+    if(!word||/\s/.test(word))return;
+    word=word.replace(/^[^\w]+|[^\w]+$/g,"");if(!word)return;
+    var range=sel.getRangeAt(0);
+    var sec=(range.startContainer.parentElement||host).closest("section");
+    if(!sec)return;
+    var index=occIndex(sec,range,word);
+    var id=Date.now();
+    var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+    try{
+      range.surroundContents(span);
+    }catch(err){
+      // fallback for selections that surroundContents can't wrap directly
+      try{ span.appendChild(range.extractContents()); range.insertNode(span); }
+      catch(err2){ return; }
+    }
+    sel.removeAllRanges();
+    var noteObj={id:id,word:word,note:"",index:index,sectionId:sec.id,sectionTitle:(sec.querySelector("h2")||{}).innerText||"",ts:new Date().toLocaleString()};
+    notes.push(noteObj);persistNotes();
+    openPopupAt(span.getBoundingClientRect(),noteObj);
+  });
+  // single click on a noted word to view/edit
+  document.addEventListener("click",function(e){
+    var w=e.target.closest(".noted-word");
+    if(w){var id=Number(w.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n)openPopupAt(w.getBoundingClientRect(),n);}
+  });
+}
+
+/* ---------- sparkle trail (reduced-motion aware, throttled) ---------- */
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var lastSpark=0;
+if(!reduce){
+  document.addEventListener("mousemove",function(e){
+    var now=Date.now();if(now-lastSpark<40)return;lastSpark=now;
+    var s=document.createElement("div");s.className="sparkle";
+    s.style.left=e.clientX+"px";s.style.top=e.clientY+"px";
+    document.body.appendChild(s);setTimeout(function(){s.remove();},600);
+  });
+}
+
+/* ---------- navigation: header-aware jump + active highlight ---------- */
+function headerH(){var h=document.querySelector("header");return h?h.offsetHeight:110;}
+function applyScrollOffset(){document.documentElement.style.scrollPaddingTop=(headerH()+14)+"px";}
+function initNav(){
+  applyScrollOffset();
+  window.addEventListener("resize",applyScrollOffset);
+  // intercept TOC clicks so the target always lands BELOW the sticky header
+  document.querySelectorAll("#toc a").forEach(function(a){
+    a.addEventListener("click",function(e){
+      var id=a.getAttribute("href").slice(1);
+      var el=document.getElementById(id);
+      if(!el)return;
+      e.preventDefault();
+      var y=el.getBoundingClientRect().top+window.pageYOffset-headerH()-12;
+      window.scrollTo({top:y,behavior:"smooth"});
+      if(history.replaceState)history.replaceState(null,"","#"+id);
+      setActive(id);
+    });
+  });
+}
+function setActive(id){
+  document.querySelectorAll("#toc a").forEach(function(a){
+    a.classList.toggle("active",a.getAttribute("href")==="#"+id);
+  });
+}
+window.addEventListener("scroll",function(){
+  var h=document.documentElement;
+  var denom=h.scrollHeight-h.clientHeight;
+  document.getElementById("readbar").style.width=(denom>0?h.scrollTop/denom*100:0)+"%";
+  var secs=document.querySelectorAll("main section");
+  var line=headerH()+24,cur=secs[0].id;
+  secs.forEach(function(s){if(s.getBoundingClientRect().top-line<=0)cur=s.id;});
+  // if near the bottom, force-select the last section
+  if((window.innerHeight+window.pageYOffset)>=document.body.offsetHeight-4)cur=secs[secs.length-1].id;
+  setActive(cur);
+});
+
+/* ---------- init ---------- */
+window.onload=function(){
+  renderQuiz();
+  buildProgress();
+  initNotes();
+  initNav();
+  if(!STORAGE_OK){
+    var hint=document.getElementById("storageHint");
+    if(hint) hint.style.display="block";
+  }
+};
+</script>
+</body>
+</html>
