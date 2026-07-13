@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A self-contained classroom tutorial tracing Spark job execution from an action through jobs, DAGs, stages, tasks, and executors.">
+<title>Spark Job Execution — Jobs, Stages, Tasks & DAG</title>
+<style>
+:root{
+  --bg:#f4f7fb;--surface:#ffffff;--surface-2:#eef3f9;--text:#172033;--muted:#52627a;
+  --primary:#155eef;--primary-2:#0b3f9c;--accent:#7c3aed;--success:#087443;--warning:#9a5b00;
+  --danger:#b42318;--border:#c9d5e5;--shadow:0 10px 30px rgba(20,42,78,.10);
+  --code:#0d1526;--code-text:#e8eefc;--note:#fff2a8;--focus:#ffbf47;--header-h:76px;
+}
+html[data-theme="dark"]{
+  --bg:#0b1220;--surface:#111c2f;--surface-2:#17243a;--text:#edf4ff;--muted:#b9c7dc;
+  --primary:#77a7ff;--primary-2:#bed3ff;--accent:#c4a2ff;--success:#6ee7b7;--warning:#ffd37a;
+  --danger:#ff9b93;--border:#33465f;--shadow:0 12px 30px rgba(0,0,0,.32);
+  --code:#070c15;--code-text:#f1f5ff;--note:#6b5810;--focus:#ffd166;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 20px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;line-height:1.65}
+a{color:var(--primary);text-decoration-thickness:2px;text-underline-offset:3px}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.sticky-header{position:sticky;top:0;z-index:1000;min-height:var(--header-h);display:flex;align-items:center;gap:14px;padding:10px clamp(12px,3vw,30px);background:color-mix(in srgb,var(--surface) 95%,transparent);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.brand{min-width:0;flex:1}.brand strong{display:block;font-size:clamp(1rem,2.3vw,1.28rem);line-height:1.25}.brand small{color:var(--muted)}
+.header-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.icon-btn,.btn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;padding:.58rem .82rem;font-weight:750;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}.btn.danger{background:var(--danger);border-color:var(--danger);color:#fff}.btn.ghost{background:transparent}
+.progress-wrap{display:grid;gap:4px;min-width:150px}.progress-meta{font-size:.78rem;color:var(--muted);font-weight:800}.progress-track{height:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px;overflow:hidden}.progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--primary),var(--accent));transition:width .25s}
+.storage-hint{display:none;margin:0;padding:.45rem .8rem;background:#fff7d6;color:#653c00;border-bottom:1px solid #d9b84a;text-align:center;font-weight:700;font-size:.88rem}.storage-hint.show{display:block}
+.layout{max-width:1600px;margin:auto;padding:18px;display:grid;grid-template-columns:260px minmax(0,1fr) 300px;gap:18px;align-items:start}
+.toc,.notes-panel{position:sticky;top:calc(var(--header-h) + 18px);max-height:calc(100vh - var(--header-h) - 36px);overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow)}
+.panel-head{position:sticky;top:0;z-index:2;background:var(--surface);padding:14px;border-bottom:1px solid var(--border)}
+.panel-head h2{font-size:1rem;margin:0 0 6px}.panel-head p{font-size:.8rem;margin:0;color:var(--muted)}
+.toc nav{padding:8px}.toc a{display:block;padding:8px 10px;border-radius:9px;color:var(--text);text-decoration:none;font-size:.88rem;font-weight:650}.toc a:hover,.toc a.active{background:var(--surface-2);color:var(--primary)}
+main{min-width:0}.section-card{scroll-margin-top:calc(var(--header-h) + 20px);background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:clamp(18px,3vw,34px);margin-bottom:20px;overflow:hidden}.section-title-row{display:flex;gap:12px;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:20px}.section-title-row h2{margin:0;font-size:clamp(1.3rem,3vw,2rem);line-height:1.25}.prepared-label{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.82rem;font-weight:800;white-space:nowrap}.prepared-label input{width:18px;height:18px;accent-color:var(--primary)}
+h1{font-size:clamp(2rem,6vw,4rem);line-height:1.05;margin:.2rem 0 1rem;letter-spacing:-.035em}.lede{font-size:clamp(1.05rem,2.4vw,1.32rem);color:var(--muted);max-width:900px}.eyebrow{display:inline-flex;gap:7px;align-items:center;font-weight:850;letter-spacing:.08em;text-transform:uppercase;color:var(--primary);font-size:.78rem}.objective-grid,.two-col,.three-col{display:grid;gap:14px}.objective-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.two-col{grid-template-columns:repeat(2,minmax(0,1fr))}.three-col{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--surface-2);border:1px solid var(--border);border-radius:14px;padding:16px}.card h3,.card h4{margin-top:0}.number-badge{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:999px;background:var(--primary);color:#fff;font-weight:900;margin-right:8px}
+.callout{border-left:5px solid var(--primary);background:var(--surface-2);padding:14px 16px;border-radius:10px;margin:16px 0}.callout strong:first-child{display:block;color:var(--primary);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}.callout.warning{border-left-color:var(--warning)}.callout.warning strong:first-child{color:var(--warning)}.callout.success{border-left-color:var(--success)}.callout.success strong:first-child{color:var(--success)}.callout.danger{border-left-color:var(--danger)}.callout.danger strong:first-child{color:var(--danger)}
+.lifecycle-early{font-size:1.05rem;font-weight:850;background:linear-gradient(135deg,var(--surface-2),transparent);padding:15px;border:1px solid var(--border);border-radius:12px}.lifecycle-early span{color:var(--primary)}
+code{background:var(--surface-2);border-radius:5px;padding:.1em .35em;color:var(--primary-2);font-weight:700}pre{position:relative;background:var(--code);color:var(--code-text);padding:18px;border-radius:14px;overflow:auto;border:1px solid #33415c;line-height:1.55}pre code{background:transparent;color:inherit;padding:0;font-weight:500}.copy-btn{position:absolute;right:10px;top:10px;background:#22314d;color:#fff;border:1px solid #536581;border-radius:8px;padding:.35rem .55rem;font-size:.78rem}
+table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.92rem}caption{text-align:left;font-weight:850;margin-bottom:8px}th,td{border:1px solid var(--border);padding:10px;vertical-align:top;text-align:left}th{background:var(--surface-2)}.table-wrap{overflow-x:auto}.yes{color:var(--success);font-weight:850}.no{color:var(--danger);font-weight:850}
+.diagram{margin:24px 0;background:linear-gradient(145deg,var(--surface-2),var(--surface));border:1px solid var(--border);border-radius:16px;padding:16px}.diagram figcaption{font-weight:900;font-size:1.06rem;margin-bottom:10px}.legend{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.legend span{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;background:var(--surface);border:1px solid var(--border);padding:5px 8px;border-radius:999px}.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}.lg-plan{background:#bcd5ff}.lg-trigger{background:#ffd48b}.lg-run{background:#b9f1d1}.lg-shuffle{background:#f6a7a1}
+.flow-row{display:flex;align-items:stretch;gap:8px;overflow-x:auto;padding:8px 2px}.flow-box{min-width:132px;flex:1;border:2px solid var(--border);border-radius:12px;padding:12px;text-align:center;background:var(--surface);font-weight:800}.flow-box small{display:block;color:var(--muted);font-weight:600;margin-top:4px}.flow-box.plan{border-color:#5b8de3;background:color-mix(in srgb,#bcd5ff 35%,var(--surface))}.flow-box.trigger{border-color:#d28a16;background:color-mix(in srgb,#ffd48b 35%,var(--surface))}.flow-box.run{border-color:#1f9d62;background:color-mix(in srgb,#b9f1d1 35%,var(--surface))}.flow-arrow{min-width:66px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:.76rem;font-weight:850}.flow-arrow b{display:block;color:var(--primary);font-size:1.35rem;line-height:1}.shuffle-boundary{border:3px dashed var(--danger);border-radius:12px;padding:8px;color:var(--danger);font-weight:900;text-align:center;min-width:104px;display:grid;place-items:center}
+.operator-chain{display:flex;align-items:center;gap:7px;overflow-x:auto}.op{min-width:120px;padding:12px;border-radius:10px;border:2px solid var(--primary);background:var(--surface);text-align:center;font-weight:850}.op.stage1{border-color:var(--accent)}.op.stage0{border-color:var(--primary)}.op.action{border-color:var(--warning)}.arrow{min-width:42px;text-align:center;font-weight:900;color:var(--muted)}
+.stage-grid{display:grid;grid-template-columns:1fr 90px 1fr;gap:12px;align-items:stretch}.stage-lane{border:2px solid var(--primary);border-radius:14px;padding:14px;background:var(--surface)}.stage-lane.stage-one{border-color:var(--accent)}.partition-grid,.task-grid,.executor-grid{display:grid;grid-template-columns:repeat(4,minmax(72px,1fr));gap:8px}.stage-one .partition-grid,.stage-one .task-grid{grid-template-columns:repeat(2,minmax(88px,1fr))}.partition,.task,.executor{border:1px solid var(--border);background:var(--surface-2);border-radius:9px;padding:8px;text-align:center;font-weight:800;font-size:.82rem;overflow-wrap:anywhere;word-break:break-word;min-width:0}.task{border-color:var(--success)}.executor{border-color:var(--accent)}.shuffle-column{display:grid;place-items:center;text-align:center;border:3px dashed var(--danger);border-radius:14px;padding:8px;color:var(--danger);font-weight:900;background:color-mix(in srgb,#f6a7a1 16%,var(--surface))}
+.task-map{display:grid;grid-template-columns:1fr 50px 1fr 50px 1fr;gap:8px;align-items:center}.task-map .col{display:grid;gap:8px}.map-arrow{text-align:center;color:var(--primary);font-weight:900;font-size:1.5rem}
+.explain-list li{margin-bottom:8px}.flow-narrative{counter-reset:step;list-style:none;padding:0}.flow-narrative li{counter-increment:step;margin:8px 0;padding-left:42px;position:relative}.flow-narrative li::before{content:counter(step);position:absolute;left:0;top:0;width:28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--primary);color:#fff;font-weight:900}
+.check{border:1px dashed var(--primary);border-radius:12px;padding:12px;margin:15px 0;background:var(--surface-2)}.check button{background:transparent;border:0;color:var(--primary);font-weight:850;padding:0}.check-answer{display:none;margin-top:8px}.check-answer.show{display:block}
+.stage-card{border:2px solid var(--primary);border-radius:16px;padding:18px;margin:18px 0;background:var(--surface)}.stage-card.stage1{border-color:var(--accent)}.metric-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.metric{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}.metric b{display:block;font-size:1.25rem;color:var(--primary)}
+.qa{border:1px solid var(--border);border-radius:12px;margin:10px 0;background:var(--surface)}.qa summary{cursor:pointer;padding:13px 15px;font-weight:850}.qa .answer{padding:0 15px 15px}.tag{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.72rem;margin-right:6px;background:var(--surface-2);border:1px solid var(--border)}
+.quiz-shell,.exam-shell{border:1px solid var(--border);border-radius:16px;padding:14px;background:var(--surface-2)}.question{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin:12px 0}.question.correct{border-left:6px solid var(--success)}.question.wrong{border-left:6px solid var(--danger)}.question h4{margin:0 0 10px}.option{display:flex;gap:9px;align-items:flex-start;padding:8px;border-radius:8px;margin:5px 0}.option:hover{background:var(--surface-2)}.option.correct-answer{background:color-mix(in srgb,var(--success) 18%,var(--surface))}.option.user-wrong{background:color-mix(in srgb,var(--danger) 16%,var(--surface))}.explanation{display:none;margin-top:10px;padding:10px;border-radius:8px;background:var(--surface-2)}.question.reviewed .explanation{display:block}.result-box{display:none;margin-top:14px;padding:15px;border-radius:12px;background:var(--surface);border:2px solid var(--primary)}.result-box.show{display:block}.exam-locked{padding:24px;text-align:center;color:var(--muted)}.timer{font-variant-numeric:tabular-nums;font-size:1.25rem;font-weight:900;padding:.4rem .7rem;border-radius:9px;background:var(--surface);border:1px solid var(--border)}.timer.warning{background:#fff1f0;color:#8c1d18;border-color:#e58b84}.exam-top{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:12px}.print-answer{display:none}
+.notes-list{padding:10px}.note-empty{padding:14px;color:var(--muted);font-size:.88rem}.note-row{border:1px solid var(--border);border-radius:10px;padding:10px;margin:8px 0;background:var(--surface-2);cursor:pointer}.note-row:hover{border-color:var(--primary)}.note-word{font-weight:900;color:var(--primary)}.note-meta{font-size:.72rem;color:var(--muted);margin-top:5px}.note-actions{display:flex;gap:6px;margin-top:8px}.note-actions button{font-size:.74rem;padding:.3rem .5rem;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text)}.noted-word{background:var(--note);color:var(--text);border-bottom:3px solid #e1a400;border-radius:3px;padding:0 2px;cursor:pointer}.noted-word.flash{animation:flashNote 1.4s ease}@keyframes flashNote{0%,100%{box-shadow:none}30%,70%{box-shadow:0 0 0 7px color-mix(in srgb,var(--focus) 55%,transparent)}}
+.note-popup{position:fixed;z-index:2000;width:min(320px,calc(100vw - 24px));display:none;background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.28);padding:12px}.note-popup.show{display:block}.note-popup label{display:block;font-weight:850;margin-bottom:6px}.note-popup input{width:100%;border:1px solid var(--border);border-radius:8px;padding:9px;background:var(--surface);color:var(--text)}.popup-actions{display:flex;gap:7px;margin-top:9px;justify-content:flex-end}.popup-actions button{border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:7px;padding:.4rem .6rem}
+.sparkle{position:fixed;pointer-events:none;z-index:9999;font-size:10px;animation:spark .7s ease-out forwards}@keyframes spark{to{transform:translateY(-18px) scale(0);opacity:0}}
+.mobile-panel-toggle{display:none;position:fixed;bottom:14px;right:14px;z-index:1100;border:0;border-radius:999px;background:var(--primary);color:#fff;padding:.75rem 1rem;font-weight:900;box-shadow:var(--shadow)}
+.kbd{font-family:ui-monospace,monospace;border:1px solid var(--border);box-shadow:inset 0 -1px 0 var(--border);border-radius:5px;padding:1px 5px;background:var(--surface-2)}
+.footer-note{text-align:center;color:var(--muted);padding:18px}
+@media(max-width:1100px){.layout{grid-template-columns:220px minmax(0,1fr)}.notes-panel{position:fixed;right:12px;bottom:70px;top:auto;width:min(360px,calc(100vw - 24px));max-height:70vh;z-index:1050;transform:translateX(calc(100% + 24px));transition:transform .25s}.notes-panel.open{transform:translateX(0)}.mobile-panel-toggle{display:block}}
+@media(max-width:760px){:root{--header-h:104px}.sticky-header{align-items:flex-start}.brand small{display:none}.progress-wrap{min-width:120px}.layout{grid-template-columns:1fr;padding:10px}.toc{position:relative;top:0;max-height:none}.toc nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.objective-grid,.two-col,.three-col{grid-template-columns:1fr}.section-title-row{display:block}.prepared-label{margin-top:10px}.flow-row,.operator-chain{flex-direction:column;overflow:visible}.flow-arrow,.arrow{min-height:42px;transform:rotate(90deg)}.stage-grid{grid-template-columns:1fr}.shuffle-column{min-height:70px}.partition-grid,.task-grid,.executor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.task-map{grid-template-columns:1fr}.task{font-size:.76rem}.map-arrow{transform:rotate(90deg)}.metric-strip{grid-template-columns:repeat(2,1fr)}.header-actions .icon-btn{padding:.42rem .55rem;font-size:.8rem}}
+@media(max-width:430px){:root{--header-h:122px}.sticky-header{flex-wrap:wrap}.brand{flex-basis:100%}.header-actions{width:100%;justify-content:space-between}.progress-wrap{flex:1}.toc nav{grid-template-columns:1fr}.section-card{padding:16px}.metric-strip{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.sparkle{display:none!important}*{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+@media print{.sticky-header,.toc,.notes-panel,.mobile-panel-toggle,.prepared-label,.icon-btn,.btn,.copy-btn,.note-popup,.sparkle,.quiz-actions,.exam-controls,.storage-hint{display:none!important}.layout{display:block;max-width:none;padding:0}.section-card{box-shadow:none;break-inside:avoid;border:1px solid #999}.check-answer,.print-answer,.explanation{display:block!important}.exam-locked{display:none}.question{break-inside:avoid}.question .option.correct-answer{outline:2px solid #000}.result-box{display:block!important}body{background:#fff;color:#000}a{color:#000}}
+</style>
+</head>
+<body>
+<header class="sticky-header">
+  <div class="brand"><strong>Spark Job Execution</strong><small>Jobs • DAG • Stages • Tasks • Executors</small></div>
+  <div class="header-actions">
+    <div class="progress-wrap" aria-label="Course progress">
+      <div class="progress-meta" id="progressText">0 / 16 prepared</div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="Toggle light and dark theme">🌙 Theme</button>
+    <button class="icon-btn" id="muteToggle" type="button" aria-pressed="false">🔊 Sound</button>
+    <button class="icon-btn" id="resetProgress" type="button">Reset</button>
+  </div>
+</header>
+<div class="storage-hint" id="storageHint">Browser storage is blocked. Notes and progress still work for this session, but they will not persist after the page closes.</div>
+<div class="layout">
+<aside class="toc" id="tocPanel" aria-label="Table of contents">
+  <div class="panel-head"><h2>Table of Contents</h2><p>16 sections — links stay clear of the sticky header.</p></div>
+  <nav id="tocNav">
+    <a href="#s1">1. Start Here</a><a href="#s2">2. Why Internals Matter</a><a href="#s3">3. Restaurant Analogy</a><a href="#s4">4. Technical Foundations</a>
+    <a href="#s5">5. Example & Trace Table</a><a href="#s6">6. Stage Walkthrough</a><a href="#s7">7. Code & Spark UI</a><a href="#s8">8. Comparison</a>
+    <a href="#s9">9. Best Practices</a><a href="#s10">10. Edge Cases</a><a href="#s11">11. Troubleshooting</a><a href="#s12">12. Interview Q&A</a>
+    <a href="#s13">13. Practice Quiz</a><a href="#s14">14. Formal Exam</a><a href="#s15">15. Glossary</a><a href="#s16">16. Summary</a>
+  </nav>
+</aside>
+
+<main id="tutorialBody">
+<section class="section-card" id="s1">
+  <div class="section-title-row"><div><span class="eyebrow">Section 1 • Orientation</span><h1>Understanding Spark Job Execution</h1></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s1"> Mark as prepared</label></div>
+  <p class="lede">Follow one word-count pipeline from lazy transformations to Job 0, a DAG, two stages, six tasks, executor work, and the final collected result.</p>
+  <div class="lifecycle-early"><span>Lifecycle stated early:</span> Application → you call an <span>ACTION</span> → <span>JOB</span> → <span>DAG</span> built → cut into <span>STAGES</span> at shuffle boundaries → each stage creates <span>TASKS</span> → executors run them → results return.</div>
+  <h3>Learning objectives</h3>
+  <div class="objective-grid">
+    <div class="card"><span class="number-badge">1</span>Explain exactly when a Job, DAG, Stage, and Task is created.</div>
+    <div class="card"><span class="number-badge">2</span>Trace one RDD pipeline line by line without changing scenarios.</div>
+    <div class="card"><span class="number-badge">3</span>Count stages and tasks from shuffle boundaries and partitions.</div>
+    <div class="card"><span class="number-badge">4</span>Read the Jobs and Stages tabs for this exact run.</div>
+  </div>
+  <h3>Before you start</h3>
+  <p>You should recognize Python functions, SparkContext, RDD transformations, and actions. No cluster is required to understand the tutorial. The code uses four input partitions and two reduce partitions so every diagram and count remains concrete.</p>
+  <div class="callout success"><strong>Memory Hook</strong><b>Remember it as: “Act, Job, Draw, Split, Task”</b> — <b>A</b>ction → <b>J</b>ob → <b>D</b>AG → <b>S</b>tages → <b>T</b>asks.</div>
+  <div class="check"><button type="button" class="check-btn">Check yourself: Do transformations execute before an action?</button><div class="check-answer">No. They record lineage. Actual work begins only after an action requests a result.</div></div>
+</section>
+
+<section class="section-card" id="s2">
+  <div class="section-title-row"><div><span class="eyebrow">Section 2</span><h2>Why Execution Internals Matter</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s2"> Mark as prepared</label></div>
+  <p>A Spark program can contain five transformations yet do no distributed work. Spark records how data should be transformed, then waits for an action. This delay is called <b>lazy evaluation</b>. It allows Spark to examine the whole lineage before scheduling tasks, combine compatible operations, and recover lost data from dependencies.</p>
+  <p>When performance is poor, the source code alone is not enough. A one-line <code>reduceByKey</code> can move data across machines, write shuffle files, create a stage boundary, and produce uneven tasks when a few words dominate the input. Understanding the execution structure tells you where time, network, memory, and disk are being used.</p>
+  <p>The Spark Web UI turns that structure into evidence. The Jobs tab shows action-level work. The Stages tab shows task counts, durations, input, shuffle read, and shuffle write. The Executors tab shows where tasks ran. Reading these views without understanding Job, Stage, Task, and DAG leads to incorrect conclusions—for example, calling every slow item a “job” or assuming each transformation creates a stage.</p>
+  <div class="callout"><strong>Key Point</strong>Transformations create no running Job. They extend the recorded lineage. Calling <code>collect()</code> creates the Job and triggers the scheduler.</div>
+  <div class="callout warning"><strong>Common Confusion</strong>A stage is not one transformation. Several narrow transformations can run as one pipelined stage because each output partition depends on only one input partition.</div>
+  <p><b>Remember it as: code describes first; action demands later.</b></p>
+</section>
+
+<section class="section-card" id="s3">
+  <div class="section-title-row"><div><span class="eyebrow">Section 3</span><h2>Beginner Explanation: Restaurant Order Analogy</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s3"> Mark as prepared</label></div>
+  <p>Imagine a restaurant that has written preparation instructions but has not received a customer order. The instructions describe how to wash ingredients, cut vegetables, discard unsuitable pieces, group ingredients by dish, and plate results. These written instructions resemble Spark transformations: useful plans, but no cooking begins yet.</p>
+  <div class="two-col">
+    <div class="card"><h3>Analogy mapping</h3><ul>
+      <li><b>Restaurant</b> → Spark application.</li><li><b>Customer places order</b> → action is called.</li><li><b>One meal request</b> → Job.</li><li><b>Kitchen route plan</b> → DAG.</li><li><b>Preparation phases</b> → Stages.</li><li><b>Tray assigned to one cook</b> → one Task for one partition.</li><li><b>Passing grouped ingredients</b> → Shuffle.</li><li><b>Cooks and kitchen stations</b> → Executors.</li>
+    </ul></div>
+    <div class="card"><h3>Why the analogy helps</h3><p>The restaurant does not create active cook assignments while writing recipes. It assigns cooks only when an order arrives. Spark behaves the same way: lineage exists before execution; tasks exist when a job is submitted.</p><p>The analogy has a limit: Spark tasks are deterministic program units, can be retried, and are coordinated by schedulers rather than human judgment.</p></div>
+  </div>
+  <h3>Numbered breakdown</h3>
+  <ol class="flow-narrative">
+    <li>The application starts and the recipe—our RDD lineage—is written.</li>
+    <li>The customer calls <code>collect()</code>; this is the action that creates Job 0.</li>
+    <li>The head chef, like the DAGScheduler, reads the recipe dependencies and builds the DAG.</li>
+    <li>The “group ingredients by dish” step needs exchange, so the DAG is split into Stage 0 and Stage 1 at the shuffle.</li>
+    <li>Four source trays create four Stage 0 tasks; two grouped output trays create two Stage 1 tasks.</li>
+    <li>The TaskScheduler sends those tasks to available executors, which run them and return the final word counts.</li>
+  </ol>
+  <div class="callout success"><strong>Remember</strong><b>One order can have several kitchen phases, and each phase can have several cooks.</b> Likewise, one Job can have several Stages, and each Stage can have several Tasks.</div>
+  <div class="check"><button type="button" class="check-btn">Check yourself: In the analogy, what creates the Job?</button><div class="check-answer">The customer placing the order, which maps to calling an action such as <code>collect()</code>.</div></div>
+</section>
+
+<section class="section-card" id="s4">
+  <div class="section-title-row"><div><span class="eyebrow">Section 4</span><h2>Technical Foundations</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s4"> Mark as prepared</label></div>
+  <div class="two-col">
+    <div class="card"><h3>Application</h3><p>The complete Spark program from driver startup until shutdown. It owns a driver and uses executors.</p><p><b>Remember it as: the whole restaurant session.</b></p></div>
+    <div class="card"><h3>Job</h3><p>Execution work created because an action asks Spark for output. A clean run of our <code>collect()</code> creates Job 0.</p><p><b>Remember it as: one customer order.</b></p></div>
+    <div class="card"><h3>DAG</h3><p>A Directed Acyclic Graph of dependency nodes and one-way edges. “Acyclic” means the dependency chain does not loop back to itself.</p><p><b>Remember it as: the route map.</b></p></div>
+    <div class="card"><h3>Stage</h3><p>A set of parallel tasks that can run without crossing another shuffle boundary. The DAG is cut at wide dependencies.</p><p><b>Remember it as: one kitchen phase.</b></p></div>
+    <div class="card"><h3>Task</h3><p>The smallest scheduled unit. One task processes one partition for one stage. Retries may produce multiple attempts for that logical task.</p><p><b>Remember it as: one cook handling one tray.</b></p></div>
+    <div class="card"><h3>Shuffle</h3><p>Redistribution of records so identical keys reach the same downstream partition. It can use network, memory, and disk.</p><p><b>Remember it as: regrouping ingredients between stations.</b></p></div>
+  </div>
+  <h3>Schedulers and dependencies</h3>
+  <p>The <b>DAGScheduler</b> receives the action-level job, studies RDD lineage, identifies shuffle dependencies, and creates stages. The <b>TaskScheduler</b> receives task sets for a stage and sends individual tasks to executors based on available resources and data locality.</p>
+  <p>A <b>narrow dependency</b> means each downstream partition depends on a small number of upstream partitions, often one. Examples in our scenario are <code>flatMap</code>, <code>filter</code>, and <code>map</code>. A <b>wide dependency</b> means one downstream partition needs data from many upstream partitions. <code>reduceByKey</code> creates this wide dependency because the same word can appear in all four input partitions.</p>
+
+  <figure class="diagram" aria-labelledby="d1cap">
+    <figcaption id="d1cap">Diagram 1 — Lifecycle Timeline: When Each Execution Object Appears</figcaption>
+    <div class="legend"><span><i class="lg-plan"></i>Recorded plan</span><span><i class="lg-trigger"></i>Trigger</span><span><i class="lg-run"></i>Scheduled/running</span></div>
+    <p><b>How to read this:</b> Move left to right in time. The action is the dividing point between recording lineage and creating executable work.</p>
+    <div class="flow-row">
+      <div class="flow-box plan">Application starts<small>Driver + SparkContext exist</small></div><div class="flow-arrow"><span>transformations record lineage</span><b>→</b></div>
+      <div class="flow-box trigger">ACTION: collect()<small>Job 0 is created now</small></div><div class="flow-arrow"><span>DAGScheduler reads lineage</span><b>→</b></div>
+      <div class="flow-box plan">DAG built<small>Dependency graph</small></div><div class="flow-arrow"><span>cut at shuffle</span><b>→</b></div>
+      <div class="flow-box run">Stage 0 + Stage 1<small>Two task sets</small></div><div class="flow-arrow"><span>one per partition</span><b>→</b></div>
+      <div class="flow-box run">4 tasks + 2 tasks<small>Six logical tasks</small></div><div class="flow-arrow"><span>scheduled onto</span><b>→</b></div>
+      <div class="flow-box run">Executors run<small>Results return to driver</small></div>
+    </div>
+    <h4>Component-by-component explanation</h4>
+    <ul class="explain-list">
+      <li><b>Application starts box:</b> creates the runtime context; it does not run the word pipeline.</li>
+      <li><b>Transformations arrow:</b> records <code>textFile → flatMap → filter → map → reduceByKey</code> as lineage.</li>
+      <li><b>ACTION box:</b> <code>collect()</code> creates Job 0 and starts execution planning.</li>
+      <li><b>DAGScheduler arrow:</b> converts recorded dependencies into a DAG for this job.</li>
+      <li><b>DAG box:</b> contains the operator dependency chain.</li>
+      <li><b>Cut-at-shuffle arrow:</b> identifies <code>reduceByKey</code> as the wide boundary.</li>
+      <li><b>Stages box:</b> creates Stage 0 before the shuffle and Stage 1 after it.</li>
+      <li><b>One-per-partition arrow:</b> turns stage partitions into tasks.</li>
+      <li><b>Tasks box:</b> contains four tasks in Stage 0 and two tasks in Stage 1.</li>
+      <li><b>Scheduled-onto arrow and Executors box:</b> the TaskScheduler assigns tasks to executor slots; completed results reach the driver.</li>
+    </ul>
+    <h4>Flow narrative</h4><ol class="flow-narrative"><li>The driver starts the application.</li><li>Transformations extend lineage without running.</li><li><code>collect()</code> creates Job 0.</li><li>The DAGScheduler builds the DAG.</li><li>The shuffle cuts it into two stages.</li><li>Partition counts create six tasks.</li><li>Executors run tasks and return results.</li></ol>
+  </figure>
+  <div class="callout warning"><strong>Watch Out</strong>RDD <code>reduceByKey</code> uses its own partitioner or the <code>numPartitions</code> argument. <code>spark.sql.shuffle.partitions</code> controls DataFrame/SQL shuffles, not this RDD example.</div>
+</section>
+
+<section class="section-card" id="s5">
+  <div class="section-title-row"><div><span class="eyebrow">Section 5</span><h2>The Example Scenario and Line-by-Line Trace</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s5"> Mark as prepared</label></div>
+  <p>Our only scenario is a file named <code>words.txt</code>. Spark reads it using four input partitions, splits lines into words, keeps words longer than three characters, converts each word to a pair, counts occurrences with two reduce partitions, and collects the final pairs to the driver.</p>
+  <pre><button class="copy-btn" type="button">Copy</button><code>lines = sc.textFile("words.txt", minPartitions=4)
+words = lines.flatMap(lambda line: line.split())
+long_words = words.filter(lambda word: len(word) &gt; 3)
+pairs = long_words.map(lambda word: (word.lower(), 1))
+counts = pairs.reduceByKey(lambda a, b: a + b, numPartitions=2)
+result = counts.collect()</code></pre>
+  <div class="table-wrap"><table>
+    <caption>Execution trace table — every line of the scenario</caption>
+    <thead><tr><th>Line of code</th><th>Narrow / Wide</th><th>Does it run now?</th><th>What Spark does at this moment</th></tr></thead>
+    <tbody>
+      <tr><td><code>sc.textFile(..., minPartitions=4)</code></td><td>Source / narrow lineage root</td><td class="no">No — lazy, only recorded in the DAG</td><td>Creates an RDD description with four intended input partitions and records how the file will be read.</td></tr>
+      <tr><td><code>flatMap(lambda line: line.split())</code></td><td>Narrow</td><td class="no">No — lazy, only recorded in the DAG</td><td>Adds a per-partition operation that can produce many words from each line. No executor reads the file yet.</td></tr>
+      <tr><td><code>filter(lambda word: len(word) &gt; 3)</code></td><td>Narrow</td><td class="no">No — lazy, only recorded in the DAG</td><td>Adds a row-local test. Each future task can filter its own partition without receiving records from another partition.</td></tr>
+      <tr><td><code>map(lambda word: (word.lower(), 1))</code></td><td>Narrow</td><td class="no">No — lazy, only recorded in the DAG</td><td>Adds a local conversion from each word to a lowercase key-value pair.</td></tr>
+      <tr><td><code>reduceByKey(..., numPartitions=2)</code></td><td>Wide at the shuffle</td><td class="no">No — lazy, only recorded in the DAG</td><td>Records a key aggregation and a shuffle dependency. Spark knows matching words must meet, but it still does not run.</td></tr>
+      <tr><td><code>counts.collect()</code></td><td>Action</td><td class="yes">YES — this creates Job 0 and triggers execution</td><td>The DAGScheduler builds the DAG, splits it into two stages at the reduceByKey shuffle, creates task sets, and begins executor work.</td></tr>
+    </tbody>
+  </table></div>
+
+  <figure class="diagram" aria-labelledby="d2cap">
+    <figcaption id="d2cap">Diagram 2 — Actual DAG of the Word-Count Example</figcaption>
+    <div class="legend"><span><i class="lg-plan"></i>Stage 0 narrow pipeline</span><span><i style="background:#d6b9ff"></i>Stage 1 result pipeline</span><span><i class="lg-shuffle"></i>Shuffle boundary</span><span><i class="lg-trigger"></i>Action</span></div>
+    <p><b>How to read this:</b> Follow the operators left to right. The dashed shuffle boundary appears where identical word keys must be regrouped.</p>
+    <div class="operator-chain">
+      <div class="op stage0">textFile<small><br>4 partitions</small></div><div class="arrow">narrow →</div>
+      <div class="op stage0">flatMap<small><br>split words</small></div><div class="arrow">narrow →</div>
+      <div class="op stage0">filter<small><br>length &gt; 3</small></div><div class="arrow">narrow →</div>
+      <div class="op stage0">map<small><br>(word, 1)</small></div><div class="arrow">shuffle write →</div>
+      <div class="shuffle-boundary">SHUFFLE<br>Stage boundary</div><div class="arrow">shuffle read →</div>
+      <div class="op stage1">reduceByKey<small><br>2 partitions</small></div><div class="arrow">result →</div>
+      <div class="op action">collect<small><br>return to driver</small></div>
+    </div>
+    <h4>Component-by-component explanation</h4>
+    <ul class="explain-list">
+      <li><b>textFile box:</b> describes four source partitions.</li><li><b>Narrow arrow to flatMap:</b> each source partition can split its own lines.</li>
+      <li><b>flatMap box:</b> emits words.</li><li><b>Narrow arrow to filter:</b> each emitted word stays in the same partition pipeline.</li>
+      <li><b>filter box:</b> removes short words.</li><li><b>Narrow arrow to map:</b> surviving words are converted locally.</li>
+      <li><b>map box:</b> creates lowercase <code>(word,1)</code> pairs and performs local combine opportunities.</li>
+      <li><b>Shuffle-write arrow:</b> partitions pairs by destination reduce partition.</li><li><b>Shuffle boundary:</b> separates Stage 0 from Stage 1.</li>
+      <li><b>Shuffle-read arrow:</b> each Stage 1 task fetches its blocks from all Stage 0 tasks.</li><li><b>reduceByKey box:</b> merges counts in two target partitions.</li>
+      <li><b>Result arrow and collect box:</b> final pairs are serialized back to the driver.</li>
+    </ul>
+    <h4>Flow narrative</h4><ol class="flow-narrative"><li>Four source partitions enter Stage 0.</li><li>Narrow operations pipeline inside each task.</li><li>Pairs are partitioned and written as shuffle blocks.</li><li>The stage boundary waits for required map outputs.</li><li>Two Stage 1 tasks read their shuffle blocks.</li><li>Final key counts are returned by collect.</li></ol>
+  </figure>
+  <div class="check"><button type="button" class="check-btn">Check yourself: How many stages are created, and why?</button><div class="check-answer">Two stages. The wide dependency created by <code>reduceByKey</code> introduces one shuffle boundary, splitting the DAG into Stage 0 and Stage 1.</div></div>
+</section>
+
+<section class="section-card" id="s6">
+  <div class="section-title-row"><div><span class="eyebrow">Section 6</span><h2>Stage-by-Stage Walkthrough</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s6"> Mark as prepared</label></div>
+  <div class="callout success"><strong>Worked Numbers</strong>The file has <b>4 input partitions</b>, so Stage 0 has <b>4 tasks</b>. <code>reduceByKey(..., numPartitions=2)</code> creates <b>2 reduce partitions</b>, so Stage 1 has <b>2 tasks</b>. Total logical tasks without retry or speculation: <b>6</b>.</div>
+  <article class="stage-card">
+    <h3>Stage 0 — Read, split, filter, pair, and shuffle-write</h3>
+    <div class="metric-strip"><div class="metric"><b>4</b>input partitions</div><div class="metric"><b>4</b>tasks</div><div class="metric"><b>0</b>shuffle read</div><div class="metric"><b>Yes</b>shuffle write</div></div>
+    <p><b>Code lines:</b> <code>textFile → flatMap → filter → map</code>, plus the map-side part of <code>reduceByKey</code> that prepares shuffle output.</p>
+    <ol>
+      <li>Task 0 reads input partition P0; Tasks 1–3 independently read P1–P3.</li>
+      <li>Inside each task, lines are split, short words are discarded, and surviving words become lowercase pairs.</li>
+      <li>Local combining may reduce repeated keys inside each map partition before network transfer.</li>
+      <li>Each task hashes keys into destination reduce partition R0 or R1 and writes shuffle blocks.</li>
+      <li>Stage 0 finishes after all required shuffle-map outputs are available.</li>
+    </ol>
+    <p><b>Reads:</b> text-file input partitions. <b>Writes:</b> shuffle files for two reduce partitions. <b>Why four tasks?</b> The stage has four source partitions and each task processes one partition.</p>
+  </article>
+  <article class="stage-card stage1">
+    <h3>Stage 1 — Shuffle-read, final reduce, and collect result</h3>
+    <div class="metric-strip"><div class="metric"><b>2</b>reduce partitions</div><div class="metric"><b>2</b>tasks</div><div class="metric"><b>Yes</b>shuffle read</div><div class="metric"><b>Driver</b>final output</div></div>
+    <p><b>Code lines:</b> downstream part of <code>reduceByKey</code> and the <code>collect()</code> result action.</p>
+    <ol>
+      <li>Task 0 for reduce partition R0 fetches its shuffle block from every completed Stage 0 task.</li>
+      <li>Task 1 does the same for reduce partition R1.</li>
+      <li>Each task merges values for identical word keys and creates final <code>(word,count)</code> pairs.</li>
+      <li>The two result partitions are serialized and sent to the driver because <code>collect()</code> requested all results.</li>
+    </ol>
+    <p><b>Reads:</b> shuffle blocks from Stage 0. <b>Writes:</b> final result sent to the driver. <b>Why two tasks?</b> <code>numPartitions=2</code> makes two partitions in the reduced RDD.</p>
+  </article>
+  <div class="callout danger"><strong>Why the boundary exists exactly there</strong>Before <code>reduceByKey</code>, each partition can work independently. To finish a count for the word “spark,” every “spark” pair from all four input partitions must reach the same reduce partition. That many-to-many dependency requires a shuffle, so the DAGScheduler creates a stage boundary.</div>
+
+  <figure class="diagram" aria-labelledby="d3cap">
+    <figcaption id="d3cap">Diagram 3 — Stage Internals: Parallel Tasks and Shuffle Transfer</figcaption>
+    <div class="legend"><span><i class="lg-plan"></i>Stage 0</span><span><i style="background:#d6b9ff"></i>Stage 1</span><span><i class="lg-shuffle"></i>Shuffle data movement</span></div>
+    <p><b>How to read this:</b> Read the left lane from partitions to tasks, cross the central shuffle, then read the right lane from reduce partitions to final output.</p>
+    <div class="stage-grid">
+      <div class="stage-lane"><h4>Stage 0 — 4 tasks</h4><p>Input partitions</p><div class="partition-grid"><div class="partition">P0</div><div class="partition">P1</div><div class="partition">P2</div><div class="partition">P3</div></div><p>1:1 task execution</p><div class="task-grid"><div class="task">T0<br>read/split/filter/map</div><div class="task">T1<br>read/split/filter/map</div><div class="task">T2<br>read/split/filter/map</div><div class="task">T3<br>read/split/filter/map</div></div><p><b>Output arrow:</b> each task writes blocks for R0 and R1.</p></div>
+      <div class="shuffle-column">SHUFFLE<br><small>4 writers → 2 readers</small></div>
+      <div class="stage-lane stage-one"><h4>Stage 1 — 2 tasks</h4><p>Reduce partitions</p><div class="partition-grid"><div class="partition">R0</div><div class="partition">R1</div></div><p>1:1 task execution</p><div class="task-grid"><div class="task">T0<br>fetch + reduce</div><div class="task">T1<br>fetch + reduce</div></div><p><b>Output arrow:</b> both result partitions return to the driver.</p></div>
+    </div>
+    <h4>Component-by-component explanation</h4><ul class="explain-list">
+      <li><b>P0–P3 boxes:</b> four text-file partitions.</li><li><b>Stage 0 T0–T3 boxes:</b> one task for each source partition.</li><li><b>Stage 0 output statement:</b> every task writes bucketed shuffle blocks.</li><li><b>Shuffle column:</b> data for a key changes partition ownership.</li><li><b>R0–R1 boxes:</b> two partitions selected by <code>numPartitions=2</code>.</li><li><b>Stage 1 T0–T1 boxes:</b> one reduce task for each reduce partition.</li><li><b>Final-output statement:</b> collect sends both partitions to the driver.</li>
+    </ul>
+    <h4>Flow narrative</h4><ol class="flow-narrative"><li>Four partitions create four parallel Stage 0 tasks.</li><li>Each task runs all narrow operators as one pipeline.</li><li>Each map task creates shuffle blocks for two destinations.</li><li>Stage 1 starts when its required blocks are available.</li><li>Two reduce tasks fetch and aggregate their assigned keys.</li><li>The driver receives both result partitions.</li></ol>
+  </figure>
+
+  <figure class="diagram" aria-labelledby="d4cap">
+    <figcaption id="d4cap">Diagram 4 — Task-Level View: One Partition Maps to One Task</figcaption>
+    <div class="legend"><span><i class="lg-plan"></i>Partition</span><span><i class="lg-run"></i>Task</span><span><i style="background:#d6b9ff"></i>Executor slot</span></div>
+    <p><b>How to read this:</b> Follow each row across. P0 creates T0, which is scheduled to an executor slot. The executor can later run another task after the slot becomes free.</p>
+    <div class="task-map">
+      <div class="col"><div class="partition">Partition P0</div><div class="partition">Partition P1</div><div class="partition">Partition P2</div><div class="partition">Partition P3</div></div>
+      <div class="map-arrow">→</div>
+      <div class="col"><div class="task">Stage 0 Task T0</div><div class="task">Stage 0 Task T1</div><div class="task">Stage 0 Task T2</div><div class="task">Stage 0 Task T3</div></div>
+      <div class="map-arrow">→</div>
+      <div class="col"><div class="executor">Executor A • Slot 1</div><div class="executor">Executor A • Slot 2</div><div class="executor">Executor B • Slot 1</div><div class="executor">Executor B • Slot 2</div></div>
+    </div>
+    <h4>Component-by-component explanation</h4><ul class="explain-list">
+      <li><b>Partition boxes P0–P3:</b> the four independent data slices for Stage 0.</li><li><b>First arrows:</b> each partition produces exactly one logical task in this stage.</li><li><b>Task boxes T0–T3:</b> scheduled units containing the Stage 0 operator pipeline.</li><li><b>Second arrows:</b> the TaskScheduler assigns tasks to available executor slots.</li><li><b>Executor boxes:</b> two executors with two slots each can run all four tasks concurrently in this illustration.</li>
+    </ul>
+    <h4>Flow narrative</h4><ol class="flow-narrative"><li>The scheduler enumerates Stage 0 partitions.</li><li>It creates one task for every partition.</li><li>Available slots receive those tasks.</li><li>If only two slots existed, two tasks would wait; the task count would still be four.</li><li>If a task failed, Spark could create another attempt for the same partition.</li></ol>
+  </figure>
+  <div class="check"><button type="button" class="check-btn">Check yourself: If Stage 0 still has four partitions but only two executor slots, how many tasks exist?</button><div class="check-answer">Four tasks exist. Only two can run at one time, so the other two wait for free slots.</div></div>
+</section>
+
+<section class="section-card" id="s7">
+  <div class="section-title-row"><div><span class="eyebrow">Section 7</span><h2>Code and What the Spark UI Shows</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s7"> Mark as prepared</label></div>
+  <pre><button class="copy-btn" type="button">Copy</button><code>from pyspark.sql import SparkSession
+
+spark = (
+    SparkSession.builder
+    .appName("WordExecutionTrace")
+    .master("local[4]")
+    .getOrCreate()
+)
+sc = spark.sparkContext
+
+# Four source partitions. Still lazy.
+lines = sc.textFile("words.txt", minPartitions=4)
+
+# Narrow transformations. Still lazy.
+words = lines.flatMap(lambda line: line.split())
+long_words = words.filter(lambda word: len(word) &gt; 3)
+pairs = long_words.map(lambda word: (word.lower(), 1))
+
+# Wide dependency recorded. Two reduce partitions. Still lazy.
+counts = pairs.reduceByKey(lambda a, b: a + b, numPartitions=2)
+
+# ACTION: creates Job 0 and triggers Stage 0, then Stage 1.
+result = counts.collect()
+print(result)
+
+input("Open http://localhost:4040, inspect the UI, then press Enter...")
+spark.stop()</code></pre>
+  <div class="callout warning"><strong>Watch Out</strong>The <code>input(...)</code> line keeps the local application alive so the live UI remains visible. Without it, the application may stop before you open port 4040.</div>
+  <h3>Expected Jobs tab for a clean run</h3>
+  <div class="table-wrap"><table><thead><tr><th>UI item</th><th>Expected observation</th><th>Why</th></tr></thead><tbody>
+    <tr><td>Completed Jobs</td><td>1 job, normally Job 0</td><td>There is one action: <code>collect()</code>.</td></tr>
+    <tr><td>Stages in Job 0</td><td>2 stages</td><td>One shuffle boundary splits the DAG into a shuffle-map stage and a result stage.</td></tr>
+    <tr><td>Job DAG</td><td>A dependency from Stage 0 to Stage 1</td><td>Stage 1 requires shuffle outputs produced by Stage 0.</td></tr>
+  </tbody></table></div>
+  <h3>Expected Stages tab</h3>
+  <div class="table-wrap"><table><thead><tr><th>Stage</th><th>Tasks</th><th>Reads</th><th>Writes</th></tr></thead><tbody>
+    <tr><td>Stage 0</td><td>4</td><td>Text input</td><td>Shuffle write for R0 and R1</td></tr>
+    <tr><td>Stage 1</td><td>2</td><td>Shuffle read from four map tasks</td><td>Result returned to driver</td></tr>
+  </tbody></table></div>
+  <p>Task IDs and stage IDs are application-scoped counters. If you run another action first, the same logical work may appear under later IDs. Focus on dependency shape and counts, not only the numeric labels.</p>
+  <div class="callout"><strong>Pro Tip</strong>Open the Stage 0 details and compare input size, duration, and shuffle-write size across all four tasks. Large differences suggest uneven source partitions or data skew. Then open Stage 1 and inspect shuffle-read differences between its two tasks.</div>
+</section>
+
+<section class="section-card" id="s8">
+  <div class="section-title-row"><div><span class="eyebrow">Section 8</span><h2>Comparison: Job vs Stage vs Task</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s8"> Mark as prepared</label></div>
+  <div class="table-wrap"><table><thead><tr><th>Concept</th><th>Created when</th><th>Scope</th><th>Our example</th><th>Use the word when...</th></tr></thead><tbody>
+    <tr><td><b>Job</b></td><td>An action is called</td><td>All work needed for that action</td><td>Job 0 from <code>collect()</code></td><td>You are discussing action-level execution.</td></tr>
+    <tr><td><b>Stage</b></td><td>The DAG is divided at shuffle dependencies</td><td>A pipeline of tasks without another internal shuffle boundary</td><td>Stage 0 and Stage 1</td><td>You are discussing a shuffle-separated phase.</td></tr>
+    <tr><td><b>Task</b></td><td>A stage is submitted; one per partition</td><td>Smallest scheduled unit</td><td>4 + 2 = 6 tasks</td><td>You are discussing work on one partition.</td></tr>
+    <tr><td><b>Narrow dependency</b></td><td>Recorded during transformations</td><td>Child partition depends on few parent partitions</td><td>flatMap, filter, map</td><td>No redistribution is required.</td></tr>
+    <tr><td><b>Wide dependency</b></td><td>Recorded during transformations; acted on after action</td><td>Child partition needs many parent partitions</td><td>reduceByKey shuffle</td><td>Data must be redistributed.</td></tr>
+  </tbody></table></div>
+  <p><b>When to pick which word:</b> Say “Job” when referring to the request created by an action. Say “Stage” when referring to one shuffle-bounded execution phase. Say “Task” when referring to one partition’s unit of work. Do not call a transformation a Job, and do not assume one line of code equals one Stage.</p>
+  <div class="callout success"><strong>Memory Hook</strong><b>One action request → one Job; each shuffle cuts Stages; each partition creates a Task.</b></div>
+</section>
+
+<section class="section-card" id="s9">
+  <div class="section-title-row"><div><span class="eyebrow">Section 9</span><h2>Best Practices</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s9"> Mark as prepared</label></div>
+  <div class="two-col">
+    <div class="card"><h3>Do</h3><ol>
+      <li><b>Count actions.</b> Why: every action can create another job and repeat lineage.</li>
+      <li><b>Count shuffle boundaries.</b> Why: they reveal likely stage divisions and expensive data movement.</li>
+      <li><b>Inspect task distributions, not only averages.</b> Why: one straggler can delay a whole stage.</li>
+      <li><b>Choose partition counts deliberately.</b> Why: too few reduce partitions limit parallelism; too many create overhead.</li>
+      <li><b>Use <code>reduceByKey</code> instead of <code>groupByKey</code> for summation.</b> Why: local combining reduces shuffle volume.</li>
+      <li><b>Keep the UI or History Server available.</b> Why: runtime evidence is more reliable than guessing.</li>
+    </ol></div>
+    <div class="card"><h3>Avoid</h3><ol>
+      <li><b>Do not assume transformations run immediately.</b> Why: this causes incorrect timing and debugging conclusions.</li>
+      <li><b>Do not equate executor slots with task count.</b> Why: slots control concurrency, not how many tasks exist.</li>
+      <li><b>Do not collect large output.</b> Why: every result partition is transferred into driver memory.</li>
+      <li><b>Do not tune only by adding memory.</b> Why: skew and poor partitioning may remain unchanged.</li>
+      <li><b>Do not apply <code>spark.sql.shuffle.partitions</code> to RDD APIs.</b> Why: this RDD uses <code>numPartitions</code> or its partitioner.</li>
+      <li><b>Do not count stage IDs as universal constants.</b> Why: IDs depend on earlier actions in the same application.</li>
+    </ol></div>
+  </div>
+  <p><b>Remember it as: Actions, Shuffles, Partitions, Evidence — ASPE.</b></p>
+</section>
+
+<section class="section-card" id="s10">
+  <div class="section-title-row"><div><span class="eyebrow">Section 10</span><h2>Edge Cases and Gotchas</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s10"> Mark as prepared</label></div>
+  <div class="three-col">
+    <div class="card"><h3>Multiple actions</h3><p><code>counts.count()</code> followed by <code>counts.collect()</code> can create two jobs. Without persistence, Spark may recompute the lineage.</p></div>
+    <div class="card"><h3>Caching and skipped stages</h3><p>If <code>counts.persist()</code> has already materialized partitions, later jobs may reuse cached data. The UI may show skipped stages because their outputs are already available.</p></div>
+    <div class="card"><h3>One action, many stages</h3><p>Every additional wide dependency can add another stage boundary. A single action can therefore produce three, five, or more stages.</p></div>
+    <div class="card"><h3>Retries and attempts</h3><p>A stage with four logical tasks may show more attempts if a task fails or speculation launches a duplicate attempt.</p></div>
+    <div class="card"><h3>Local mode is still structured</h3><p><code>local[4]</code> uses one machine but still creates jobs, stages, and tasks. The same concepts apply in a cluster.</p></div>
+    <div class="card"><h3>Input partition request is not always exact</h3><p><code>minPartitions=4</code> is a minimum suggestion. File format, block layout, and implementation can influence actual partitions. Verify with <code>lines.getNumPartitions()</code>.</p></div>
+  </div>
+  <div class="callout warning"><strong>Common Confusion</strong>A shuffle boundary is a dependency boundary, not necessarily a moment when every byte waits globally in all execution modes. Spark can pipeline and fetch available outputs, but Stage 1 still depends on shuffle-map outputs from Stage 0.</div>
+</section>
+
+<section class="section-card" id="s11">
+  <div class="section-title-row"><div><span class="eyebrow">Section 11</span><h2>Troubleshooting</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s11"> Mark as prepared</label></div>
+  <div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+    <tr><td>Nothing appears in Jobs tab</td><td>No action was called, or the wrong application UI is open.</td><td>Call <code>collect()</code>, verify driver logs for the UI URL, and keep the app alive.</td></tr>
+    <tr><td>Port 4040 does not open</td><td>Application ended, another app uses 4040, driver is remote, or firewall blocks access.</td><td>Try 4041+, inspect logs, keep the process running, or use SSH port forwarding.</td></tr>
+    <tr><td>Expected 4 Stage 0 tasks but see another count</td><td>Actual input partition count differs.</td><td>Print <code>lines.getNumPartitions()</code> and inspect file/block layout.</td></tr>
+    <tr><td>Stage 1 has only 2 tasks and cluster is underused</td><td><code>numPartitions=2</code> limits reduce parallelism.</td><td>Increase the reduce partition count based on data size and cluster cores.</td></tr>
+    <tr><td>One Stage 1 task is much slower</td><td>Key or record-size skew.</td><td>Inspect shuffle-read sizes by task; consider key salting, more partitions, or business-specific repartitioning.</td></tr>
+    <tr><td>Driver crashes during collect</td><td>Final result is too large for driver memory.</td><td>Use <code>take</code>, save distributed output, or aggregate further before returning data.</td></tr>
+    <tr><td>More task attempts than partitions</td><td>Task retry or speculative execution.</td><td>Open task details, inspect failed attempts, executor logs, and host stability.</td></tr>
+    <tr><td>Two identical actions repeat work</td><td>Lineage was not cached or checkpointed.</td><td>Persist the reused RDD and materialize it once when reuse justifies memory cost.</td></tr>
+  </tbody></table></div>
+</section>
+
+<section class="section-card" id="s12">
+  <div class="section-title-row"><div><span class="eyebrow">Section 12</span><h2>Interview Questions and Spoken Answers</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s12"> Mark as prepared</label></div>
+  <details class="qa"><summary><span class="tag">Beginner</span>1. What creates a Spark Job?</summary><div class="answer">A Spark Job is created when an action asks for a result. In our example, all transformations remain lazy until <code>collect()</code> is called. That call creates Job 0 and starts scheduling.</div></details>
+  <details class="qa"><summary><span class="tag">Beginner</span>2. What is a Spark Stage?</summary><div class="answer">A Stage is a group of parallel tasks that can execute without crossing another shuffle boundary. Our word-count Job has Stage 0 before the reduce shuffle and Stage 1 after it.</div></details>
+  <details class="qa"><summary><span class="tag">Beginner</span>3. What is a Spark Task?</summary><div class="answer">A Task is the smallest scheduled unit of work. It runs the stage’s operator pipeline for one partition. Four input partitions therefore create four Stage 0 tasks.</div></details>
+  <details class="qa"><summary><span class="tag">Beginner</span>4. What is a DAG?</summary><div class="answer">A DAG is a Directed Acyclic Graph representing transformations and dependencies. The DAGScheduler uses it to identify wide dependencies and divide the job into stages.</div></details>
+  <details class="qa"><summary><span class="tag">Beginner</span>5. Do transformations run immediately?</summary><div class="answer">No. Transformations such as <code>flatMap</code>, <code>filter</code>, and <code>map</code> record lineage. They run only after an action triggers a job.</div></details>
+  <details class="qa"><summary><span class="tag">Intermediate</span>6. Why does reduceByKey create a stage boundary?</summary><div class="answer">The same key can exist in several parent partitions. Spark must redistribute pairs so all values for one key reach the same reduce partition. That wide dependency is a shuffle, which splits stages.</div></details>
+  <details class="qa"><summary><span class="tag">Intermediate</span>7. How many stages and tasks does this tutorial example create?</summary><div class="answer">In a clean run it creates one Job with two Stages. Stage 0 has four tasks because the input has four partitions. Stage 1 has two tasks because <code>reduceByKey</code> uses two result partitions. That is six logical tasks.</div></details>
+  <details class="qa"><summary><span class="tag">Intermediate</span>8. What is the difference between DAGScheduler and TaskScheduler?</summary><div class="answer">The DAGScheduler works at dependency and stage level: it builds the stage graph and submits ready stages. The TaskScheduler works at task level: it assigns task instances to executor slots.</div></details>
+  <details class="qa"><summary><span class="tag">Intermediate</span>9. Why can one Job contain several Stages?</summary><div class="answer">Each wide dependency creates a shuffle boundary. A job with several joins, groupings, or repartitions may have several such boundaries, so one action can require many stages.</div></details>
+  <details class="qa"><summary><span class="tag">Intermediate</span>10. Does having four tasks mean four tasks always run together?</summary><div class="answer">No. Four tasks exist because there are four partitions. Concurrency depends on available executor slots. With two slots, two tasks run while two wait.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>11. Why might the UI show more task attempts than partitions?</summary><div class="answer">A logical task can have multiple attempts because of failure retry or speculative execution. Partition count determines logical tasks; attempts reflect execution history.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>12. How can caching change later job graphs?</summary><div class="answer">After cached partitions are materialized, later jobs can read them instead of recomputing their ancestors. The UI may show skipped stages or a shorter active path because outputs are already available.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>13. Why is reduceByKey preferred over groupByKey for counting?</summary><div class="answer">reduceByKey can combine repeated keys locally before shuffle, which reduces network and disk data. groupByKey transfers all values and usually has a larger shuffle footprint.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>14. How would you diagnose a skewed reduce stage?</summary><div class="answer">I would compare task duration and shuffle-read size within the same stage. A few tasks that are much larger than the median suggest hot keys or uneven record sizes. I would then inspect keys and choose salting, partition changes, or domain-specific aggregation.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>15. Is spark.sql.shuffle.partitions relevant to this RDD reduceByKey?</summary><div class="answer">No. That setting controls Spark SQL and DataFrame shuffle partition defaults. This RDD operation uses its partitioner or the explicit <code>numPartitions=2</code> argument.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>16. What does a shuffle-map task write?</summary><div class="answer">It writes partitioned shuffle blocks, one logical bucket per downstream reduce partition, often with local combine and sorting behavior depending on the shuffle implementation. Reduce tasks later fetch their assigned blocks.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>17. Why can stage IDs differ from the tutorial?</summary><div class="answer">Stage IDs are counters within an application. If another action or internal operation ran earlier, the same logical stages may receive later numbers. The dependency pattern and task counts are more meaningful than fixed IDs.</div></details>
+  <details class="qa"><summary><span class="tag">Advanced</span>18. What happens if collect returns too much data?</summary><div class="answer">Every result partition is transferred to driver memory. If the result exceeds available driver memory, the driver can slow down or fail. A distributed write or bounded sample is safer.</div></details>
+</section>
+
+<section class="section-card" id="s13">
+  <div class="section-title-row"><div><span class="eyebrow">Section 13</span><h2>Practice MCQ Quiz</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s13"> Mark as prepared</label></div>
+  <p>Fifteen questions test the lifecycle and the exact worked example. Answers remain hidden until you submit.</p>
+  <div class="quiz-shell"><div id="quizQuestions"></div><div class="quiz-actions"><button class="btn primary" id="submitQuiz" type="button">Submit Practice Quiz</button> <button class="btn" id="retryQuiz" type="button" hidden>Retry</button></div><div class="result-box" id="quizResult" aria-live="polite"></div></div>
+</section>
+
+<section class="section-card" id="s14">
+  <div class="section-title-row"><div><span class="eyebrow">Section 14</span><h2>Formal Timed MCQ Exam</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s14"> Mark as prepared</label></div>
+  <p>Fifteen different questions • 15 minutes • 1 mark each • pass mark 60%. The timer starts only when you press Start Test.</p>
+  <div class="exam-shell">
+    <div class="exam-top"><div class="exam-controls"><button class="btn primary" id="startExam" type="button">Start Test</button> <button class="btn" id="restartExam" type="button" hidden>Restart Exam</button></div><div class="timer" id="examTimer">15:00</div></div>
+    <div class="exam-locked" id="examLocked">Questions are locked. Press <b>Start Test</b> to begin.</div>
+    <div id="examQuestions" hidden></div>
+    <div class="exam-controls" id="examSubmitWrap" hidden><button class="btn primary" id="submitExam" type="button">Submit Formal Exam</button></div>
+    <div class="result-box" id="examResult" aria-live="polite"></div>
+  </div>
+</section>
+
+<section class="section-card" id="s15">
+  <div class="section-title-row"><div><span class="eyebrow">Section 15</span><h2>Glossary</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s15"> Mark as prepared</label></div>
+  <div class="two-col">
+    <div class="card"><h3>Action</h3><p>An operation that asks Spark to return or write a result and therefore triggers a Job.</p></div>
+    <div class="card"><h3>Application</h3><p>The complete Spark process containing the driver and associated executors.</p></div>
+    <div class="card"><h3>DAG</h3><p>A Directed Acyclic Graph describing operator dependencies without cycles.</p></div>
+    <div class="card"><h3>DAGScheduler</h3><p>The scheduler that converts a job’s lineage into stages separated by shuffle dependencies.</p></div>
+    <div class="card"><h3>Dependency</h3><p>The relationship describing which parent partitions are needed to compute a child partition.</p></div>
+    <div class="card"><h3>Executor</h3><p>A process that runs tasks and can store application data.</p></div>
+    <div class="card"><h3>Job</h3><p>Action-level execution work.</p></div>
+    <div class="card"><h3>Lazy evaluation</h3><p>Recording transformations until an action requires output.</p></div>
+    <div class="card"><h3>Narrow dependency</h3><p>A dependency where a child partition needs only a small number of parent partitions.</p></div>
+    <div class="card"><h3>Partition</h3><p>A logical slice of data processed by one task in a stage.</p></div>
+    <div class="card"><h3>Shuffle</h3><p>Redistribution of records across partitions, usually through intermediate blocks.</p></div>
+    <div class="card"><h3>Stage</h3><p>A shuffle-bounded set of parallel tasks.</p></div>
+    <div class="card"><h3>Task</h3><p>The smallest scheduled work unit for one partition in one stage.</p></div>
+    <div class="card"><h3>Task attempt</h3><p>One execution attempt of a logical task; retries can create more than one.</p></div>
+    <div class="card"><h3>TaskScheduler</h3><p>The scheduler that assigns task instances to executor resources.</p></div>
+    <div class="card"><h3>Wide dependency</h3><p>A dependency where a child partition needs records from many parent partitions.</p></div>
+  </div>
+</section>
+
+<section class="section-card" id="s16">
+  <div class="section-title-row"><div><span class="eyebrow">Section 16</span><h2>Summary, Cheat List, and What to Learn Next</h2></div><label class="prepared-label"><input type="checkbox" class="prepared" data-section="s16"> Mark as prepared</label></div>
+  <h3>Core summary</h3>
+  <ul>
+    <li>Transformations record lineage; they do not execute the word pipeline.</li>
+    <li><code>collect()</code> creates one Job in the clean example.</li>
+    <li>The DAGScheduler builds the DAG and cuts it at the <code>reduceByKey</code> shuffle.</li>
+    <li>Four input partitions create four Stage 0 tasks.</li>
+    <li>Two reduce partitions create two Stage 1 tasks.</li>
+    <li>The TaskScheduler sends six logical tasks to executor slots.</li>
+  </ul>
+  <div class="callout success"><strong>When Does It Run? Recap</strong>
+    <div><b>When is a Job created?</b> → when an ACTION is called.</div>
+    <div><b>When is the DAG built?</b> → when the job starts, from the recorded lineage.</div>
+    <div><b>When is a Stage created?</b> → when the DAG is cut at a shuffle boundary.</div>
+    <div><b>When is a Task created?</b> → one per partition of a stage, at submit time.</div>
+    <div><b>When does anything ACTUALLY execute?</b> → only after the action; never before.</div>
+  </div>
+  <h3>Cheat list</h3>
+  <div class="two-col"><div class="card"><b>Mnemonic:</b> Act, Job, Draw, Split, Task.<br><b>Hierarchy:</b> Application → Job → Stage → Task.<br><b>Boundary rule:</b> one shuffle creates a split between stages.</div><div class="card"><b>Count rule:</b> one task per partition per stage.<br><b>Example:</b> Stage 0 = 4 tasks; Stage 1 = 2 tasks.<br><b>UI rule:</b> Jobs for overview; Stages for task and shuffle evidence.</div></div>
+  <h3>What to learn next</h3>
+  <p>Continue with Spark partitioners, shuffle file mechanics, persistence and skipped stages, data skew, speculative execution, Spark History Server, and DataFrame physical plans with Exchange operators.</p>
+  <div class="check"><button type="button" class="check-btn">Final check: What single event turns the recorded lineage into executable work?</button><div class="check-answer">Calling an action. In this tutorial, <code>collect()</code> creates Job 0 and triggers the DAG, stages, and tasks.</div></div>
+</section>
+<div class="footer-note">Double-click one word in tutorial text to attach a personal note. Your note list appears in the Notes panel.</div>
+</main>
+
+<aside class="notes-panel" id="notesPanel" aria-label="Personal notes">
+  <div class="panel-head"><h2>📝 Word Notes</h2><p>Double-click one word in tutorial text. Click a note row to jump back to its word.</p><button class="btn danger" id="clearNotes" type="button">Clear all</button></div>
+  <div class="notes-list" id="notesList"></div>
+</aside>
+</div>
+<button class="mobile-panel-toggle" id="notesToggle" type="button">📝 Notes</button>
+
+<div class="note-popup" id="notePopup" role="dialog" aria-modal="false" aria-labelledby="notePopupLabel">
+  <label id="notePopupLabel" for="noteInput">Note for “<span id="popupWord"></span>”</label>
+  <input id="noteInput" type="text" maxlength="240" placeholder="Type a short note about this word">
+  <div class="popup-actions"><button id="deleteNotePopup" type="button">Delete</button><button id="cancelNote" type="button">Cancel</button><button id="saveNote" type="button">Save</button></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+const KEYS={progress:'sparkExecV6Progress',notes:'sparkExecV6Notes',theme:'sparkExecV6Theme',mute:'sparkExecV6Mute'};
+const memoryStore={};
+let storageAvailable=false;
+try{const k='__spark_exec_test__';localStorage.setItem(k,'1');const ok=localStorage.getItem(k)==='1';localStorage.removeItem(k);storageAvailable=ok;}catch(e){storageAvailable=false;}
+if(!storageAvailable) document.getElementById('storageHint').classList.add('show');
+function safeGet(key,fallback){try{if(storageAvailable){const raw=localStorage.getItem(key);return raw===null?fallback:JSON.parse(raw);}return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:fallback;}catch(e){return Object.prototype.hasOwnProperty.call(memoryStore,key)?memoryStore[key]:fallback;}}
+function safeSet(key,value){memoryStore[key]=value;try{if(storageAvailable)localStorage.setItem(key,JSON.stringify(value));}catch(e){storageAvailable=false;document.getElementById('storageHint').classList.add('show');}}
+function safeRemove(key){delete memoryStore[key];try{if(storageAvailable)localStorage.removeItem(key);}catch(e){storageAvailable=false;}}
+
+// Theme and sound
+let muted=!!safeGet(KEYS.mute,false);
+const muteToggle=document.getElementById('muteToggle');
+function refreshMute(){muteToggle.textContent=muted?'🔇 Muted':'🔊 Sound';muteToggle.setAttribute('aria-pressed',String(muted));}
+refreshMute();muteToggle.addEventListener('click',()=>{muted=!muted;safeSet(KEYS.mute,muted);refreshMute();});
+const savedTheme=safeGet(KEYS.theme,'light');document.documentElement.dataset.theme=savedTheme==='dark'?'dark':'light';
+const themeToggle=document.getElementById('themeToggle');
+function refreshTheme(){themeToggle.textContent=document.documentElement.dataset.theme==='dark'?'☀️ Light':'🌙 Dark';}
+refreshTheme();themeToggle.addEventListener('click',()=>{const next=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=next;safeSet(KEYS.theme,next);refreshTheme();});
+function playResultSound(pct){if(muted)return;try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ctx=new AC();const now=ctx.currentTime;const freqs=pct===100?[523,659,784,1047]:pct>=75?[523,659,784]:pct>=60?[440,554]:[330,294];freqs.forEach((f,i)=>{const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type=pct<60?'sine':'triangle';osc.frequency.value=f;gain.gain.setValueAtTime(.0001,now+i*.12);gain.gain.exponentialRampToValueAtTime(.13,now+i*.12+.02);gain.gain.exponentialRampToValueAtTime(.0001,now+i*.12+.18);osc.connect(gain).connect(ctx.destination);osc.start(now+i*.12);osc.stop(now+i*.12+.2);});setTimeout(()=>ctx.close(),1200);}catch(e){}}
+function tier(pct){if(pct===100)return['🤩🎉','Perfect! Flawless run.'];if(pct>=90)return['😄','Excellent - interview-ready!'];if(pct>=75)return['🙂','Well done - solid grasp.'];if(pct>=60)return['😌','Good - revise the misses.'];return['💪','Needs focus - review & retry.'];}
+
+// Progress
+const checks=[...document.querySelectorAll('.prepared')];let progress=safeGet(KEYS.progress,{});if(!progress||typeof progress!=='object')progress={};
+checks.forEach(cb=>{cb.checked=!!progress[cb.dataset.section];cb.addEventListener('change',()=>{progress[cb.dataset.section]=cb.checked;safeSet(KEYS.progress,progress);updateProgress();});});
+function updateProgress(){const done=checks.filter(c=>c.checked).length;document.getElementById('progressText').textContent=`${done} / ${checks.length} prepared`;document.getElementById('progressFill').style.width=`${(done/checks.length)*100}%`;}
+updateProgress();document.getElementById('resetProgress').addEventListener('click',()=>{progress={};checks.forEach(c=>c.checked=false);safeRemove(KEYS.progress);updateProgress();});
+
+// TOC and active section
+const tocLinks=[...document.querySelectorAll('#tocNav a')];tocLinks.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const el=document.querySelector(a.getAttribute('href'));el&&el.scrollIntoView({behavior:'smooth',block:'start'});}));
+const io=new IntersectionObserver(entries=>{const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio)[0];if(!visible)return;tocLinks.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+visible.target.id));},{rootMargin:'-20% 0px -65% 0px',threshold:[0,.1,.5]});document.querySelectorAll('.section-card').forEach(s=>io.observe(s));
+
+// Check yourself and copy
+[...document.querySelectorAll('.check-btn')].forEach(btn=>btn.addEventListener('click',()=>{const a=btn.nextElementSibling;const open=a.classList.toggle('show');btn.setAttribute('aria-expanded',String(open));}));
+[...document.querySelectorAll('.copy-btn')].forEach(btn=>btn.addEventListener('click',async()=>{const text=btn.parentElement.querySelector('code').innerText;try{await navigator.clipboard.writeText(text);btn.textContent='Copied';setTimeout(()=>btn.textContent='Copy',1100);}catch(e){btn.textContent='Select manually';}}));
+
+// Quiz and exam data
+const quizData=[
+{q:'What creates a Spark Job?',o:['Defining an RDD','Calling an action','Creating SparkContext','Opening the Web UI'],a:1,e:'An action requests a result. In this example, collect() creates Job 0.'},
+{q:'How many stages does the clean tutorial run create?',o:['1','2','4','6'],a:1,e:'One shuffle boundary at reduceByKey divides the DAG into two stages.'},
+{q:'How many Stage 0 tasks are created?',o:['2','4','6','Depends on word count'],a:1,e:'The input RDD has four partitions, so Stage 0 has four tasks.'},
+{q:'How many Stage 1 tasks are created?',o:['1','2','4','8'],a:1,e:'reduceByKey uses numPartitions=2, so the reduced RDD has two partitions and Stage 1 has two tasks.'},
+{q:'Which transformation creates the shuffle boundary?',o:['flatMap','filter','map','reduceByKey'],a:3,e:'reduceByKey must bring equal keys together, creating a wide dependency and shuffle.'},
+{q:'What do transformations do before collect()?',o:['Run immediately','Only extend lineage','Create executor processes','Write final output'],a:1,e:'Transformations are lazy; they record how future partitions should be computed.'},
+{q:'Which scheduler splits the DAG into stages?',o:['TaskScheduler','DAGScheduler','Cluster manager only','Python scheduler'],a:1,e:'The DAGScheduler analyzes dependencies and creates stages at shuffle boundaries.'},
+{q:'One task normally processes what?',o:['One application','One job','One partition in one stage','All executor partitions'],a:2,e:'A task is created per partition for a submitted stage.'},
+{q:'What does Stage 0 write in this example?',o:['Only final driver output','Shuffle blocks','A cached DataFrame','No output'],a:1,e:'Stage 0 partitions key-value pairs and writes shuffle blocks for Stage 1.'},
+{q:'What does Stage 1 read?',o:['Only the text file','Shuffle blocks from Stage 0','Driver logs','Environment variables'],a:1,e:'Its reduce tasks fetch assigned shuffle blocks produced by all map tasks.'},
+{q:'If only two executor slots exist, how many Stage 0 tasks still exist?',o:['2','4','6','0'],a:1,e:'Partition count determines four tasks; only two can run concurrently.'},
+{q:'Which setting controls the two reduce partitions in this RDD code?',o:['spark.sql.shuffle.partitions','numPartitions=2','local[4]','minPartitions=4'],a:1,e:'RDD reduceByKey uses its numPartitions argument or partitioner.'},
+{q:'What is the correct lifecycle after the action?',o:['Task → Stage → DAG → Job','Job → DAG → Stages → Tasks','DAG → Application → Job → Task','Stage → Job → Executor → DAG'],a:1,e:'The action creates a Job; the DAG is built; it is cut into stages; tasks are created per partition.'},
+{q:'Why can several narrow transformations stay in one stage?',o:['They use no Python','They can pipeline without redistribution','They always use one partition','They are actions'],a:1,e:'Narrow dependencies allow each partition to proceed without a shuffle.'},
+{q:'Where does collect() send the final result?',o:['To every executor','To the driver','To HDFS automatically','To the cluster manager'],a:1,e:'collect() transfers all result partitions to driver memory.'}
+];
+const examData=[
+{q:'When is the DAG for this Job constructed from lineage?',o:['Before SparkContext exists','When the job starts after the action','After executors shut down','Only when the UI opens'],a:1,e:'The DAGScheduler builds the job DAG after the action creates the Job.'},
+{q:'What is the total number of logical tasks across both stages?',o:['2','4','6','8'],a:2,e:'Stage 0 has four tasks and Stage 1 has two, totaling six logical tasks.'},
+{q:'Which phrase best defines a Stage?',o:['One Python statement','All work in an application','A shuffle-bounded set of parallel tasks','One executor process'],a:2,e:'A stage groups tasks that can run without another shuffle dependency inside the stage.'},
+{q:'Why is flatMap a narrow transformation here?',o:['It always emits one row','Each output partition depends on its own input partition','It performs a global sort','It uses two reducers'],a:1,e:'Each task can split lines in its own partition without exchanging data with another partition.'},
+{q:'What would a second collect() usually create if the RDD is not cached?',o:['No new work','Another Job that may recompute lineage','A new application only','Only a new executor'],a:1,e:'Each action creates a Job, and uncached lineage may be recomputed.'},
+{q:'Why can the Stages tab show more attempts than tasks?',o:['Every task is counted twice','Retries or speculation created additional attempts','DAGs are cyclic','The driver is a partition'],a:1,e:'Logical tasks can be retried or speculatively duplicated, producing extra attempts.'},
+{q:'What changes if there are four tasks but only one executor slot?',o:['Task count becomes one','Stage count becomes four','Tasks run mostly sequentially','The shuffle disappears'],a:2,e:'The stage still has four tasks, but only one can run at a time.'},
+{q:'Which UI evidence most directly helps detect reduce-side skew?',o:['Theme color','Task duration and shuffle-read size distribution','Application name','Driver port number'],a:1,e:'Outlier reduce tasks with much larger shuffle reads or durations suggest skew.'},
+{q:'What is a shuffle-map output?',o:['A final chart','Partitioned intermediate blocks for downstream reducers','A SparkSession property','A driver stack trace'],a:1,e:'Stage 0 tasks write bucketed intermediate blocks that reduce tasks fetch.'},
+{q:'Why is collect dangerous for large result sets?',o:['It disables lazy evaluation permanently','It transfers all final partitions to driver memory','It deletes shuffle files first','It forces one input partition'],a:1,e:'The driver must hold the complete collected result, which can exhaust memory.'},
+{q:'If another wide transformation is added after reduceByKey, what is likely?',o:['Fewer stages','Another shuffle boundary and another stage','No Job','All tasks become actions'],a:1,e:'Each additional wide dependency can introduce another stage boundary.'},
+{q:'What does caching potentially cause in a later Job?',o:['Skipped stages because outputs are reusable','More input partitions by definition','A cyclic DAG','No TaskScheduler'],a:0,e:'Materialized cached data can let Spark skip recomputing ancestor stages.'},
+{q:'Which statement about stage IDs is accurate?',o:['They are always 0 and 1 worldwide','They depend on earlier activity in the application','They equal partition numbers','They reset for every task'],a:1,e:'Stage IDs are counters within an application, so earlier actions can shift the numbers.'},
+{q:'Why can reduceByKey shuffle less data than groupByKey for counting?',o:['It removes all keys','It can combine values locally before shuffle','It avoids every task','It always uses one reducer'],a:1,e:'Map-side combining can reduce the number or size of values sent across the network.'},
+{q:'Which sentence is fully correct?',o:['Transformations create tasks immediately','An action creates a Job; stages are cut at shuffles; tasks map to partitions','Each Stage has one Task','Executors create the DAG'],a:1,e:'This sentence states the correct creation order and responsibilities.'}
+];
+function renderQuestions(data,container,prefix){container.innerHTML=data.map((x,i)=>`<article class="question" data-index="${i}"><h4>${i+1}. ${x.q}</h4>${x.o.map((op,j)=>`<label class="option"><input type="radio" name="${prefix}${i}" value="${j}"> <span>${op}</span></label>`).join('')}<div class="explanation"></div><div class="print-answer"><b>Correct answer:</b> ${x.o[x.a]} — ${x.e}</div></article>`).join('');}
+function review(data,container,prefix){let score=0;[...container.querySelectorAll('.question')].forEach((qEl,i)=>{const picked=container.querySelector(`input[name="${prefix}${i}"]:checked`);const selected=picked?Number(picked.value):-1;const correct=selected===data[i].a;if(correct)score++;qEl.classList.add('reviewed',correct?'correct':'wrong');[...qEl.querySelectorAll('.option')].forEach((lab,j)=>{if(j===data[i].a)lab.classList.add('correct-answer');if(j===selected&&j!==data[i].a)lab.classList.add('user-wrong');lab.querySelector('input').disabled=true;});const userText=selected>=0?data[i].o[selected]:'Not answered';qEl.querySelector('.explanation').innerHTML=`<b>Your answer:</b> ${userText}<br><b>Correct answer:</b> ${data[i].o[data[i].a]}<br><b>Explanation:</b> ${data[i].e}`;});return score;}
+function resetReviewed(container){container.querySelectorAll('.question').forEach(q=>{q.classList.remove('reviewed','correct','wrong');q.querySelectorAll('.option').forEach(l=>l.classList.remove('correct-answer','user-wrong'));q.querySelectorAll('input').forEach(i=>{i.disabled=false;i.checked=false;});q.querySelector('.explanation').innerHTML='';});}
+const quizContainer=document.getElementById('quizQuestions');renderQuestions(quizData,quizContainer,'quiz');
+document.getElementById('submitQuiz').addEventListener('click',()=>{const score=review(quizData,quizContainer,'quiz');const pct=Math.round(score/quizData.length*100),[emoji,msg]=tier(pct);const box=document.getElementById('quizResult');box.classList.add('show');box.innerHTML=`<h3>${emoji} ${msg}</h3><p><b>Score:</b> ${score}/${quizData.length} (${pct}%)</p>`;document.getElementById('submitQuiz').hidden=true;document.getElementById('retryQuiz').hidden=false;playResultSound(pct);});
+document.getElementById('retryQuiz').addEventListener('click',()=>{resetReviewed(quizContainer);document.getElementById('quizResult').classList.remove('show');document.getElementById('quizResult').innerHTML='';document.getElementById('submitQuiz').hidden=false;document.getElementById('retryQuiz').hidden=true;});
+
+// Exam
+const examContainer=document.getElementById('examQuestions');renderQuestions(examData,examContainer,'exam');let examSeconds=900,examTimerId=null,examStarted=false,examSubmitted=false;
+function updateTimer(){const m=String(Math.floor(examSeconds/60)).padStart(2,'0'),s=String(examSeconds%60).padStart(2,'0');const el=document.getElementById('examTimer');el.textContent=`${m}:${s}`;el.classList.toggle('warning',examSeconds<=60);}
+function startExam(){examStarted=true;examSubmitted=false;examSeconds=900;updateTimer();document.getElementById('examLocked').hidden=true;examContainer.hidden=false;document.getElementById('examSubmitWrap').hidden=false;document.getElementById('startExam').hidden=true;document.getElementById('restartExam').hidden=true;document.getElementById('examResult').classList.remove('show');examTimerId=setInterval(()=>{examSeconds--;updateTimer();if(examSeconds<=0){clearInterval(examTimerId);submitExam(true);}},1000);}
+function submitExam(auto=false){if(!examStarted||examSubmitted)return;examSubmitted=true;clearInterval(examTimerId);const score=review(examData,examContainer,'exam');const pct=Math.round(score/examData.length*100),passed=pct>=60,[emoji,msg]=tier(pct);const box=document.getElementById('examResult');box.classList.add('show');box.innerHTML=`<h3>${emoji} ${msg}</h3><p><b>Marks:</b> ${score}/${examData.length}</p><p><b>Percentage:</b> ${pct}%</p><p><b>Result:</b> ${passed?'PASS':'FAIL'} (pass mark 60%)${auto?' — auto-submitted when time ended.':''}</p>`;document.getElementById('examSubmitWrap').hidden=true;document.getElementById('restartExam').hidden=false;playResultSound(pct);}
+function restartExam(){clearInterval(examTimerId);examStarted=false;examSubmitted=false;examSeconds=900;updateTimer();resetReviewed(examContainer);examContainer.hidden=true;document.getElementById('examLocked').hidden=false;document.getElementById('examSubmitWrap').hidden=true;document.getElementById('startExam').hidden=false;document.getElementById('restartExam').hidden=true;const box=document.getElementById('examResult');box.classList.remove('show');box.innerHTML='';}
+document.getElementById('startExam').addEventListener('click',startExam);document.getElementById('submitExam').addEventListener('click',()=>submitExam(false));document.getElementById('restartExam').addEventListener('click',restartExam);updateTimer();
+
+// Notes system
+let notes=safeGet(KEYS.notes,[]);if(!Array.isArray(notes))notes=[];
+let activeSpan=null,activeNote=null,newSpan=false;
+const popup=document.getElementById('notePopup'),noteInput=document.getElementById('noteInput'),popupWord=document.getElementById('popupWord'),deletePopup=document.getElementById('deleteNotePopup');
+function textNodesIn(section){const walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT,{acceptNode(node){const p=node.parentElement;if(!p||p.closest('script,style,button,a,input,textarea,label,.notes-panel,.toc,.quiz-shell,.exam-shell,.note-popup,.noted-word'))return NodeFilter.FILTER_REJECT;if(!node.nodeValue.trim())return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT;}});const arr=[];let n;while(n=walker.nextNode())arr.push(n);return arr;}
+function occurrenceIndex(section,word,targetNode,targetOffset){let count=0;const re=new RegExp(`\\b${word.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&')}\\b`,'gi');for(const node of textNodesIn(section)){let m;while((m=re.exec(node.nodeValue))){if(node===targetNode&&m.index===targetOffset)return count;count++;}}return count;}
+function wrapOccurrence(note){if(document.querySelector(`.noted-word[data-note-id="${note.id}"]`))return;const section=document.getElementById(note.sectionId);if(!section)return;let count=0;const escaped=note.word.replace(/[.*+?^${}()|[\\]\\\\]/g,'\\$&');const re=new RegExp(`\\b${escaped}\\b`,'gi');for(const node of textNodesIn(section)){let m;while((m=re.exec(node.nodeValue))){if(count===Number(note.occurrenceIndex||0)){const range=document.createRange();range.setStart(node,m.index);range.setEnd(node,m.index+m[0].length);const span=document.createElement('span');span.className='noted-word';span.dataset.noteId=note.id;span.title=note.note||'Click to edit note';try{range.surroundContents(span);}catch(e){return;}return;}count++;}}}
+function restoreHighlights(){notes.forEach(wrapOccurrence);}
+function sectionInfo(el){const section=el.closest('.section-card');return{section,sectionId:section?section.id:'',sectionTitle:section?section.querySelector('h1,h2')?.textContent.trim()||section.id:''};}
+function positionPopup(span){const r=span.getBoundingClientRect();popup.classList.add('show');const w=popup.offsetWidth||320,h=popup.offsetHeight||160;let left=r.left,top=r.bottom+8;left=Math.max(12,Math.min(left,window.innerWidth-w-12));if(top+h>window.innerHeight-12)top=Math.max(12,r.top-h-8);top=Math.max(12,Math.min(top,window.innerHeight-h-12));popup.style.left=left+'px';popup.style.top=top+'px';}
+function openPopup(span,note,isNew=false){activeSpan=span;activeNote=note||null;newSpan=isNew;popupWord.textContent=span.textContent;noteInput.value=note?.note||'';deletePopup.style.display=note?'inline-block':'none';positionPopup(span);setTimeout(()=>noteInput.focus(),0);}
+function closePopup(removeUnsaved=false){popup.classList.remove('show');if(removeUnsaved&&newSpan&&activeSpan&&!activeNote){activeSpan.replaceWith(document.createTextNode(activeSpan.textContent));}activeSpan=null;activeNote=null;newSpan=false;window.getSelection()?.removeAllRanges();}
+function renderNotes(){const list=document.getElementById('notesList');if(!notes.length){list.innerHTML='<div class="note-empty">No notes yet. Double-click a single word in tutorial text.</div>';return;}list.innerHTML=notes.slice().sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).map(n=>`<div class="note-row" data-note-id="${n.id}" tabindex="0"><div class="note-word">${escapeHtml(n.word)}</div><div>${escapeHtml(n.note||'(empty note)')}</div><div class="note-meta">${escapeHtml(n.sectionTitle)} • ${new Date(n.timestamp).toLocaleString()}</div><div class="note-actions"><button type="button" data-action="edit">Edit</button><button type="button" data-action="delete">Delete</button></div></div>`).join('');}
+function escapeHtml(s){return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+function saveNotes(){safeSet(KEYS.notes,notes);renderNotes();}
+function deleteNote(id){notes=notes.filter(n=>n.id!==id);document.querySelectorAll(`.noted-word[data-note-id="${id}"]`).forEach(span=>span.replaceWith(document.createTextNode(span.textContent)));saveNotes();}
+document.getElementById('tutorialBody').addEventListener('dblclick',e=>{if(e.target.closest('button,a,input,textarea,label,.quiz-shell,.exam-shell,.check,.noted-word,pre,code'))return;const sel=window.getSelection();const word=sel?sel.toString().trim():'';if(!word||/\s/.test(word))return;const range=sel.getRangeAt(0);if(range.collapsed||range.startContainer!==range.endContainer)return;const info=sectionInfo(range.startContainer.parentElement);if(!info.section)return;const idx=occurrenceIndex(info.section,word,range.startContainer,range.startOffset);const span=document.createElement('span');span.className='noted-word';try{range.surroundContents(span);}catch(err){return;}span.dataset.temp='1';const draft={id:'n'+Date.now()+Math.random().toString(16).slice(2),word,note:'',sectionId:info.sectionId,sectionTitle:info.sectionTitle,timestamp:new Date().toISOString(),occurrenceIndex:idx};openPopup(span,draft,true);});
+document.getElementById('tutorialBody').addEventListener('click',e=>{const span=e.target.closest('.noted-word');if(!span)return;const note=notes.find(n=>n.id===span.dataset.noteId);if(note)openPopup(span,note,false);});
+document.getElementById('saveNote').addEventListener('click',()=>{if(!activeSpan||!activeNote)return;const text=noteInput.value.trim();const existing=notes.findIndex(n=>n.id===activeNote.id);activeNote.note=text;activeNote.timestamp=new Date().toISOString();if(existing>=0)notes[existing]=activeNote;else notes.push(activeNote);activeSpan.dataset.noteId=activeNote.id;delete activeSpan.dataset.temp;activeSpan.title=text||'Click to edit note';saveNotes();closePopup(false);});
+document.getElementById('cancelNote').addEventListener('click',()=>closePopup(true));deletePopup.addEventListener('click',()=>{if(activeNote)deleteNote(activeNote.id);closePopup(false);});
+noteInput.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();document.getElementById('saveNote').click();}if(e.key==='Escape')closePopup(true);});
+document.getElementById('notesList').addEventListener('click',e=>{const row=e.target.closest('.note-row');if(!row)return;const id=row.dataset.noteId;const action=e.target.dataset.action;if(action==='delete'){e.stopPropagation();deleteNote(id);return;}const note=notes.find(n=>n.id===id);let span=document.querySelector(`.noted-word[data-note-id="${id}"]`);if(!span&&note){wrapOccurrence(note);span=document.querySelector(`.noted-word[data-note-id="${id}"]`);}if(action==='edit'){e.stopPropagation();if(span&&note)openPopup(span,note,false);return;}if(span){const y=span.getBoundingClientRect().top+window.scrollY-(document.querySelector('.sticky-header').offsetHeight+18);window.scrollTo({top:y,behavior:'smooth'});span.classList.remove('flash');void span.offsetWidth;span.classList.add('flash');setTimeout(()=>span.classList.remove('flash'),1500);}});
+document.getElementById('notesList').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList.contains('note-row')){e.preventDefault();e.target.click();}});
+document.getElementById('clearNotes').addEventListener('click',()=>{notes=[];document.querySelectorAll('.noted-word').forEach(span=>span.replaceWith(document.createTextNode(span.textContent)));safeRemove(KEYS.notes);renderNotes();});
+document.addEventListener('mousedown',e=>{if(popup.classList.contains('show')&&!e.target.closest('.note-popup')&&!e.target.closest('.noted-word'))closePopup(true);});
+restoreHighlights();renderNotes();
+
+// Mobile notes panel
+const notesPanel=document.getElementById('notesPanel');document.getElementById('notesToggle').addEventListener('click',()=>notesPanel.classList.toggle('open'));
+
+// Sparkle trail, throttled and motion-aware
+const reduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;let lastSpark=0;if(!reduceMotion){document.addEventListener('pointermove',e=>{const now=performance.now();if(now-lastSpark<70)return;lastSpark=now;const s=document.createElement('span');s.className='sparkle';s.textContent='✦';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),750);},{passive:true});}
+})();
+</script>
+</body>
+</html>
