@@ -1,0 +1,17 @@
+order_id,table_no,dish,quantity,status
+O1001,T01,Vegetable Biryani,2,PAID
+O1002,T02,Paneer Butter Masala,1,PAID
+O1003,T01,Butter Naan,4,PAID
+O1004,T03,Vegetable Biryani,3,PAID
+O1005,T04,Masala Dosa,2,CANCELLED
+O1006,T02,Butter Naan,3,PAID
+O1007,T05,Paneer Butter Masala,2,PAID
+O1008,T06,Vegetable Biryani,1,PAID
+O1009,T03,Gulab Jamun,4,PAID
+O1010,T07,Butter Naan,2,PAID
+O1011,T08,Masala Dosa,3,PAID
+O1012,T05,Gulab Jamun,2,PAID
+O1013,T09,Vegetable Biryani,2,PENDING
+O1014,T10,Paneer Butter Masala,1,PAID
+O1015,T08,Butter Naan,1,PAID
+O1016,T11,Masala Dosa,2,PAID

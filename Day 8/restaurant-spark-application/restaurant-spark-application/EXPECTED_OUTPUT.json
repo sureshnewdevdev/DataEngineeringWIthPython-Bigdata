@@ -1,0 +1,22 @@
+[
+  {
+    "dish": "Butter Naan",
+    "total_quantity": 10
+  },
+  {
+    "dish": "Gulab Jamun",
+    "total_quantity": 6
+  },
+  {
+    "dish": "Vegetable Biryani",
+    "total_quantity": 6
+  },
+  {
+    "dish": "Masala Dosa",
+    "total_quantity": 5
+  },
+  {
+    "dish": "Paneer Butter Masala",
+    "total_quantity": 4
+  }
+]
