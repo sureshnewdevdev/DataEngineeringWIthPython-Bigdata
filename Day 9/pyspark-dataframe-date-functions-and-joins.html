@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PySpark DataFrame Date Functions and Joins</title>
+<style>
+:root{--accent:#4f46e5;--accent2:#7c3aed;--bg:#f4f6fb;--card:#ffffff;--text:#172033;--muted:#5d667a;--border:#dce1ed;--code:#111827;--codeText:#e5e7eb;--ok:#137333;--bad:#b3261e;--warn:#9a6700;--shadow:0 10px 28px rgba(25,35,60,.08);--font:16px}
+[data-theme="dark"]{--bg:#0f1420;--card:#171e2c;--text:#edf2ff;--muted:#aeb8ce;--border:#303b52;--code:#090d14;--codeText:#e8ecf7;--shadow:0 10px 28px rgba(0,0,0,.28)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;font-size:var(--font)}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.65}a{color:var(--accent)}button,input,select,textarea{font:inherit}.reading-bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--accent),#22c55e);width:0;z-index:1000}.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;gap:.5rem;align-items:center;justify-content:space-between;padding:.65rem 1rem}.brand{font-weight:800}.controls{display:flex;gap:.4rem;flex-wrap:wrap}.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:.5rem .75rem;border-radius:.65rem;cursor:pointer}.btn:hover,.btn:focus{border-color:var(--accent);outline:none}.btn.primary{background:var(--accent);color:white;border-color:var(--accent)}.btn.danger{background:#b3261e;color:#fff;border-color:#b3261e}.btn.small{padding:.3rem .55rem;font-size:.86rem}.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1500px;margin:auto}.sidebar{position:sticky;top:55px;height:calc(100vh - 55px);overflow:auto;padding:1rem;border-right:1px solid var(--border);background:var(--card)}.sidebar h2{font-size:1rem;margin:.25rem 0}.toc a{display:block;text-decoration:none;padding:.38rem .5rem;border-radius:.5rem;color:var(--muted);font-size:.9rem}.toc a:hover{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--text)}.progress-box{padding:.75rem;border:1px solid var(--border);border-radius:.8rem;margin-bottom:1rem}.progress-track{height:10px;background:var(--border);border-radius:999px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#22c55e);width:0}.main{min-width:0;padding:1rem 1.4rem 5rem}.hero{background:linear-gradient(135deg,#312e81,#6d28d9 55%,#0e7490);color:white;padding:clamp(1.4rem,4vw,3.4rem);border-radius:1.25rem;box-shadow:var(--shadow);margin:1rem 0}.hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1.08;margin:.2rem 0}.hero .lead{font-size:1.15rem;max-width:900px}.objective-grid,.strip-grid,.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}.objective,.strip-item,.mini-card{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);padding:.85rem;border-radius:.8rem}.section{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:clamp(1rem,2.5vw,2rem);margin:1rem 0;box-shadow:var(--shadow);transition:.2s}.section:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));transform:translateY(-1px)}.section h2{margin-top:0;font-size:clamp(1.45rem,3vw,2.15rem)}.section h3{margin-top:1.45rem}.prepared{float:right;font-size:.86rem;font-weight:400}.callout{border-left:5px solid var(--accent);padding:.8rem 1rem;border-radius:.6rem;background:color-mix(in srgb,var(--accent) 8%,var(--card));margin:1rem 0}.callout.remember{border-color:#0e7490}.callout.warn{border-color:#d97706}.callout.pro{border-color:#16a34a}.callout.memory{border-color:#db2777}.tag{display:inline-block;padding:.15rem .5rem;border-radius:999px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,var(--accent) 14%,var(--card));color:var(--accent)}.tag.b{color:#0369a1}.tag.i{color:#7c3aed}.tag.a{color:#b91c1c}.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:.75rem}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:.7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:color-mix(in srgb,var(--accent) 8%,var(--card))}code{font-family:Consolas,Monaco,monospace;background:color-mix(in srgb,var(--accent) 9%,var(--card));padding:.1rem .25rem;border-radius:.3rem}.code-card{position:relative;margin:1rem 0}.code-card pre{background:var(--code);color:var(--codeText);padding:1rem;overflow:auto;border-radius:.8rem;margin:0;line-height:1.5}.copy-btn{position:absolute;right:.55rem;top:.55rem}.output{background:color-mix(in srgb,#16a34a 7%,var(--card));border:1px solid color-mix(in srgb,#16a34a 35%,var(--border));padding:.75rem;border-radius:.65rem;white-space:pre-wrap;font-family:Consolas,monospace}.diagram{border:1px solid var(--border);border-radius:.9rem;padding:1rem;background:color-mix(in srgb,var(--accent) 3%,var(--card));margin:1rem 0}.flow{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap}.node{min-width:135px;text-align:center;border:2px solid var(--accent);background:var(--card);padding:.7rem;border-radius:.7rem;font-weight:700}.arrow{font-size:1.5rem;color:var(--accent);font-weight:800}.join-visual{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.8rem}.set{border:3px solid var(--accent);border-radius:50%;width:170px;height:170px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 10%,transparent);font-weight:800}.result-box{border:2px dashed #16a34a;border-radius:.7rem;padding:.75rem;background:color-mix(in srgb,#16a34a 7%,var(--card))}.micro{border:1px dashed var(--border);border-radius:.65rem;padding:.65rem;margin:.7rem 0}.micro summary{cursor:pointer;font-weight:700}.qa-list details{border:1px solid var(--border);border-radius:.7rem;padding:.7rem;margin:.55rem 0}.flashcard{min-height:230px;border:2px solid var(--accent);border-radius:1rem;padding:1.2rem;display:grid;place-items:center;text-align:center;cursor:pointer;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 8%,var(--card)),var(--card))}.flash-answer{display:none}.flashcard.flipped .flash-question{display:none}.flashcard.flipped .flash-answer{display:block}.flash-controls{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.8rem}.rating{display:none;gap:.4rem;justify-content:center;flex-wrap:wrap}.flashcard.flipped+.rating{display:flex}.exercise,.question{border:1px solid var(--border);border-radius:.8rem;padding:1rem;margin:.8rem 0}.question.correct{border-color:#16a34a;background:color-mix(in srgb,#16a34a 6%,var(--card))}.question.wrong{border-color:#dc2626;background:color-mix(in srgb,#dc2626 6%,var(--card))}.option{display:block;padding:.38rem .45rem;border-radius:.45rem}.option:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}.feedback{display:none;margin-top:.7rem;padding:.65rem;border-radius:.55rem;background:color-mix(in srgb,var(--accent) 7%,var(--card))}.result-panel{font-size:1.1rem;border:2px solid var(--accent);padding:1rem;border-radius:.8rem;margin:1rem 0;display:none}.big-emoji{font-size:3rem}.timer{font-weight:800;font-size:1.4rem;padding:.5rem .8rem;border:2px solid var(--accent);display:inline-block;border-radius:.7rem}.timer.warning{color:#b3261e;border-color:#b3261e}.locked{opacity:.55;pointer-events:none}.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}.pair-item{border:1px solid var(--border);padding:.65rem;border-radius:.55rem;cursor:pointer}.pair-item.selected{outline:3px solid var(--accent)}.pair-item.matched{background:color-mix(in srgb,#16a34a 12%,var(--card));cursor:default}.order-list{list-style:none;padding:0}.order-item{display:flex;justify-content:space-between;gap:.4rem;align-items:center;border:1px solid var(--border);padding:.55rem;margin:.4rem 0;border-radius:.55rem}.glossary{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.7rem}.glossary div{border:1px solid var(--border);padding:.7rem;border-radius:.6rem}.term{border-bottom:1px dotted var(--accent);cursor:help}.notes-panel{position:fixed;right:1rem;bottom:1rem;z-index:80;width:min(380px,calc(100vw - 2rem));max-height:65vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:.9rem;box-shadow:0 15px 45px rgba(0,0,0,.2);padding:.8rem}.notes-panel.collapsed .notes-body{display:none}.note-word{background:#fde68a!important;color:#422006!important;border-bottom:3px solid #f97316;border-radius:.2rem;cursor:pointer}.note-popup{position:fixed;z-index:120;background:var(--card);border:1px solid var(--border);box-shadow:0 15px 45px rgba(0,0,0,.25);padding:1rem;border-radius:.8rem;width:min(360px,calc(100vw - 2rem));display:none}.note-popup textarea{width:100%;min-height:90px}.history-item,.note-item{border-bottom:1px solid var(--border);padding:.5rem 0}.xpbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.badge{padding:.25rem .55rem;background:color-mix(in srgb,#f59e0b 18%,var(--card));border:1px solid #f59e0b;border-radius:999px;font-size:.82rem}.certificate{display:none;border:10px double var(--accent);padding:2rem;text-align:center;margin:1rem 0;background:var(--card)}.back-top{position:fixed;right:1rem;bottom:1rem;border-radius:50%;width:45px;height:45px;z-index:60}.notes-panel:not([hidden])~.back-top{bottom:5rem}.spark{position:fixed;pointer-events:none;z-index:999;width:6px;height:6px;border-radius:50%;background:var(--accent);animation:spark .65s forwards}@keyframes spark{to{transform:translateY(-18px) scale(0);opacity:0}}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.checklist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.4rem}.hidden{display:none!important}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}.toc{columns:2}.two-col{grid-template-columns:1fr}}
+@media(max-width:560px){.main{padding:.55rem}.topbar{align-items:flex-start}.toc{columns:1}.join-visual{grid-template-columns:1fr}.set{width:140px;height:140px;margin:auto}.arrow{transform:rotate(90deg)}.pair-grid{grid-template-columns:1fr}.prepared{float:none;display:block;margin-top:.4rem}.notes-panel{bottom:.5rem;right:.5rem;width:calc(100vw - 1rem)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media print{.topbar,.sidebar,.back-top,.notes-panel,.note-popup,.copy-btn,.quiz-actions,.exam-actions,.flash-controls,.rating,.prepared,.reading-bar,.no-print{display:none!important}.layout{display:block}.main{padding:0}.section,.hero{box-shadow:none;break-inside:avoid}.feedback,.result-panel,.certificate{display:block!important}body{background:white;color:black}.certificate{page-break-before:always}}
+</style>
+</head>
+<body>
+<div class="reading-bar" id="readingBar"></div>
+<header class="topbar">
+  <div class="brand">⚡ PySpark Classroom Lab</div>
+  <div class="controls">
+    <button class="btn small" id="themeBtn" aria-label="Toggle theme">🌙 Theme</button>
+    <button class="btn small" id="fontDown" aria-label="Decrease font">A−</button>
+    <button class="btn small" id="fontUp" aria-label="Increase font">A+</button>
+    <button class="btn small" id="soundBtn" aria-label="Toggle result sounds">🔊 Sound</button>
+    <button class="btn small" onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <div class="progress-box storage-feature">
+    <strong id="progressText">0 / 17 prepared</strong>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="btn small" id="resetProgress">Reset progress</button>
+  </div>
+  <h2>Contents</h2>
+  <nav class="toc" id="toc"></nav>
+  <hr>
+  <div class="xpbar storage-feature"><strong>XP: <span id="xp">0</span></strong><span id="badges"></span></div>
+  <div class="storage-feature" style="margin-top:.8rem">
+    <button class="btn small" id="exportData">Download my data</button>
+    <label class="btn small">Import JSON<input id="importData" type="file" accept="application/json" hidden></label>
+  </div>
+  <div class="storage-feature" style="margin-top:.8rem">
+    <strong>Score history</strong><div id="scoreHistory"></div>
+  </div>
+</aside>
+<main class="main" id="tutorialBody">
+<section class="hero content-section" id="title-page" data-title="Title Page">
+  <span class="tag">DataFrame Functions / Joins — Continued</span>
+  <h1>PySpark Date Functions and DataFrame Joins</h1>
+  <p class="lead">Transform raw dates into useful business time features and combine distributed datasets correctly, efficiently, and safely.</p>
+  <div class="objective-grid">
+    <div class="objective">Convert text and Unix time into Spark date and timestamp columns.</div>
+    <div class="objective">Add, subtract, compare, extract, and truncate date/time values.</div>
+    <div class="objective">Predict the rows and columns returned by every major join type.</div>
+    <div class="objective">Use semi and anti joins for existence and exception checks.</div>
+    <div class="objective">Avoid duplicate columns, null-key surprises, and unnecessary shuffle.</div>
+  </div>
+  <h3>Before you start</h3>
+  <div class="strip-grid">
+    <div class="strip-item"><strong>Prerequisites</strong><br>Python basics, SparkSession, DataFrame select/filter/withColumn.</div>
+    <div class="strip-item"><strong>Estimated study</strong><br>90–120 minutes plus practice.</div>
+    <div class="strip-item"><strong>Outcome</strong><br>Build a retail order enrichment pipeline with date logic and joins.</div>
+  </div>
+</section>
+
+<section class="section content-section" id="introduction" data-title="Introduction">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>1. Introduction</h2>
+<p>A business DataFrame rarely arrives ready for analysis. An order date may be stored as the string <code>"2026-07-14"</code>, an event time may be stored as Unix seconds such as <code>1784006400</code>, and useful information such as year, month, or order age may not exist as separate columns. PySpark date functions turn these raw values into typed, queryable information without moving the data out of Spark.</p>
+<p>A second challenge is that business facts are distributed across many datasets. An order row may contain a customer ID but not the customer name. A customer table may contain customer details but not order amounts. A returns table may identify cancelled or returned orders. A <span class="term" title="An operation that combines rows from two datasets according to a condition">join</span> connects these datasets using one or more matching keys.</p>
+<p>These operations matter because inaccurate date parsing silently produces nulls, and an incorrect join can lose valid records, duplicate records, or attach the wrong business details. In a production pipeline, that can produce wrong revenue, wrong customer counts, and wrong SLA reports.</p>
+<div class="two-col">
+<div class="callout warn"><strong>Without date functions</strong><br>Dates remain strings, chronological calculations become unreliable, and month/year reporting requires fragile text slicing.</div>
+<div class="callout pro"><strong>With date functions</strong><br>Spark understands types, validates formats, performs calendar arithmetic, and optimizes expressions through Catalyst.</div>
+<div class="callout warn"><strong>Without correct joins</strong><br>Rows disappear, unmatched records are missed, or one-to-many matches inflate totals.</div>
+<div class="callout pro"><strong>With correct joins</strong><br>The output preserves exactly the business population required by the use case.</div>
+</div>
+<div class="callout memory"><strong>MEMORY HOOK:</strong> Date functions answer <em>“When?”</em>; joins answer <em>“Which related record?”</em></div>
+<details class="micro"><summary>Check yourself: Why is slicing the first four characters of a date string weaker than using <code>year()</code>?</summary><p>Slicing assumes a fixed string format and does not validate the value. <code>year()</code> works on a typed date/timestamp and communicates the intent to Spark.</p></details>
+</section>
+
+<section class="section content-section" id="plain-language" data-title="Plain-Language Explanation">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>2. Plain-Language Explanation</h2>
+<p>Imagine a large railway reservation office. Every ticket has a journey date and time, but tickets may arrive in different written formats. The clerk first converts every written date into one official calendar format. After that, the clerk can ask: “What year is this journey?”, “How many days remain?”, “What is the first day of this month?”, or “Which hour did the train leave?” That clerk represents PySpark’s date functions.</p>
+<p>Now imagine two registers. Register A contains bookings. Register B contains passenger membership details. The booking register has a membership number but not the membership tier. To print a complete report, the clerk matches the number in A with the number in B. The rule used to keep matched and unmatched entries represents the join type.</p>
+<ol>
+<li><strong>Parse:</strong> Convert incoming text or epoch seconds into a date/timestamp type.</li>
+<li><strong>Derive:</strong> Add useful columns such as order year, month, age in days, or month start.</li>
+<li><strong>Choose the population:</strong> Decide whether the report needs only matches, all left records, all records, only existing keys, or only missing keys.</li>
+<li><strong>Match keys:</strong> Compare customer IDs, order IDs, or another business key.</li>
+<li><strong>Validate:</strong> Count rows, check nulls, and confirm whether one key has multiple matches.</li>
+</ol>
+<div class="callout remember"><strong>Analogy mapping:</strong> Ticket text → raw date string; official calendar entry → <code>DateType</code>; booking number → join key; register matching rule → join type; final passenger report → joined DataFrame.</div>
+<div class="callout warn"><strong>Where the analogy breaks:</strong> A human clerk processes a small number of rows sequentially. Spark evaluates expressions lazily and distributes partitions across executors. A join may require a network shuffle when matching keys are spread across machines.</div>
+<p><strong>Mnemonic — P-D-J-V:</strong> <strong>P</strong>arse dates, <strong>D</strong>erive time features, <strong>J</strong>oin related data, <strong>V</strong>alidate the result.</p>
+</section>
+
+<section class="section content-section" id="technical" data-title="Technical Explanation">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>3. Technical Explanation</h2>
+<p>PySpark date functions are Spark SQL expressions that return a <code>Column</code>. They are not normal Python functions that calculate one Python value at a time. Spark adds the expression to the logical plan, Catalyst optimizes the plan, and executors evaluate it across distributed partitions when an action is triggered.</p>
+<p>A DataFrame join creates a new logical relation by applying a join condition between a left and a right DataFrame. The join type controls which matched or unmatched rows survive. Equi-joins compare equality keys; non-equi joins use conditions such as ranges.</p>
+<h3>Key terms</h3>
+<div class="glossary">
+<div><strong>DateType</strong><br>A calendar date without time-of-day.</div><div><strong>TimestampType</strong><br>A date plus time-of-day with Spark session time-zone behavior.</div><div><strong>Unix epoch</strong><br>Seconds elapsed since 1970-01-01 00:00:00 UTC.</div><div><strong>Join key</strong><br>Column or columns used to match records.</div><div><strong>Null</strong><br>A missing or unknown value; normal equality does not match null to null.</div><div><strong>Shuffle</strong><br>Network redistribution of data, commonly required to colocate matching keys.</div><div><strong>Semi join</strong><br>Returns left rows whose key exists on the right, without right columns.</div><div><strong>Anti join</strong><br>Returns left rows whose key does not exist on the right.</div>
+</div>
+<div class="diagram">
+<h3>Diagram 1 — How a PySpark expression and join become distributed work</h3>
+<p><strong>How to read:</strong> Start at the Python code and follow arrows to the final output.</p>
+<div class="flow">
+<div class="node">PySpark code<br><small>withColumn / join</small></div><div class="arrow">→</div>
+<div class="node">Logical plan<br><small>unresolved expressions</small></div><div class="arrow">→</div>
+<div class="node">Catalyst<br><small>resolve + optimize</small></div><div class="arrow">→</div>
+<div class="node">Physical plan<br><small>broadcast/hash/sort-merge</small></div><div class="arrow">→</div>
+<div class="node">Executors<br><small>partition tasks</small></div><div class="arrow">→</div>
+<div class="node">New DataFrame result</div>
+</div>
+<p><strong>Components:</strong> PySpark builds expressions; the logical plan describes intent; Catalyst resolves columns and rewrites the plan; the physical planner chooses execution operators; executors process partitions.</p>
+<ol><li>Your code describes transformations.</li><li>An action such as <code>show()</code> triggers planning and execution.</li><li>Date expressions run inside Spark, not row-by-row in the Python driver.</li><li>A large join may shuffle both sides; a broadcast join can avoid shuffling the large side when the other side is small.</li></ol>
+</div>
+<div class="callout warn"><strong>COMMON CONFUSION:</strong> The standard PySpark function is <code>datediff(end, start)</code>, not <code>date_diff</code>. It returns an integer number of days.</div>
+<div class="callout remember"><strong>Remember it as:</strong> Spark Columns describe work; an action performs the work.</div>
+</section>
+
+<section class="section content-section" id="simple-example" data-title="Simple Example">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>4. Simple Example</h2>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession
+from pyspark.sql.functions import to_date, year, month, datediff, lit
+
+spark = SparkSession.builder.appName("DateDemo").getOrCreate()
+
+data = [
+    (101, "2026-07-01"),
+    (102, "2026-07-10")
+]
+orders = spark.createDataFrame(data, ["order_id", "order_date_text"])
+
+result = (
+    orders
+    .withColumn("order_date", to_date("order_date_text", "yyyy-MM-dd"))
+    .withColumn("order_year", year("order_date"))
+    .withColumn("order_month", month("order_date"))
+    .withColumn("age_on_july_14", datediff(lit("2026-07-14"), "order_date"))
+)
+
+result.show()</code></pre></div>
+<h3>Line-by-line</h3>
+<ol>
+<li><code>to_date(...)</code> converts each valid text value into a real date.</li>
+<li><code>year()</code> extracts 2026 from the typed date.</li>
+<li><code>month()</code> extracts 7.</li>
+<li><code>datediff(end, start)</code> calculates end minus start in calendar days.</li>
+<li><code>show()</code> is the action that triggers the transformations.</li>
+</ol>
+<div class="output">+--------+---------------+----------+----------+-----------+--------------+
+|order_id|order_date_text|order_date|order_year|order_month|age_on_july_14|
++--------+---------------+----------+----------+-----------+--------------+
+|101     |2026-07-01     |2026-07-01|2026      |7          |13            |
+|102     |2026-07-10     |2026-07-10|2026      |7          |4             |
++--------+---------------+----------+----------+-----------+--------------+</div>
+<div class="callout pro"><strong>Why this is better than string slicing:</strong> Invalid formats become visible as null, calendar operations remain meaningful, and downstream joins/filters use typed expressions.</div>
+</section>
+
+<section class="section content-section" id="industry-example" data-title="Industry Example">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>5. Real-Time Industry Example — Retail Order Enrichment</h2>
+<p>An online retailer receives an order fact file every hour. The file contains order ID, customer ID, product ID, order timestamp text, and amount. Separate master datasets contain customer segments and product categories. A returns stream contains order IDs that have been returned.</p>
+<p>The data engineering pipeline must standardize the timestamp, calculate reporting date and month, enrich each order with customer and product information, keep all orders even when a master record is missing, and produce a separate exception dataset containing orders whose customer ID does not exist.</p>
+<div class="diagram">
+<h3>Diagram 2 — Retail workflow</h3>
+<p><strong>Legend:</strong> Blue boxes are source/transform datasets; green boxes are outputs. Follow left to right.</p>
+<div class="flow">
+<div class="node">Orders<br><small>facts</small></div><div class="arrow">→</div>
+<div class="node">Parse timestamp<br><small>to_date / to_timestamp</small></div><div class="arrow">→</div>
+<div class="node">Left join Customers</div><div class="arrow">→</div>
+<div class="node">Left join Products</div><div class="arrow">→</div>
+<div class="node" style="border-color:#16a34a">Curated Orders</div>
+</div>
+<div class="flow" style="margin-top:1rem">
+<div class="node">Orders</div><div class="arrow">→</div><div class="node">Left anti Customers</div><div class="arrow">→</div><div class="node" style="border-color:#16a34a">Unknown Customer Exceptions</div>
+</div>
+<ol><li>Parse the incoming timestamp once.</li><li>Derive date, year, month, and SLA age.</li><li>Use left joins because the fact population must be preserved.</li><li>Use a left anti join to isolate missing customer keys.</li><li>Validate row counts before publishing.</li></ol>
+</div>
+<div class="callout pro"><strong>PRO TIP:</strong> The curated table and the exception table answer different questions. Do not force both into one join result when separate outputs make quality monitoring clearer.</div>
+</section>
+
+<section class="section content-section" id="date-functions" data-title="Date Functions">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>6. Date and Time Functions</h2>
+<div class="table-wrap"><table><thead><tr><th>Function</th><th>Purpose</th><th>Example expression</th><th>Important behavior</th></tr></thead><tbody>
+<tr><td><code>current_date()</code></td><td>Current query date</td><td><code>withColumn("run_date", current_date())</code></td><td>All calls in the same query return the same value.</td></tr>
+<tr><td><code>current_timestamp()</code></td><td>Current query timestamp</td><td><code>withColumn("loaded_at", current_timestamp())</code></td><td>Evaluated consistently at query start.</td></tr>
+<tr><td><code>date_add(start, days)</code></td><td>Add calendar days</td><td><code>date_add("order_date", 7)</code></td><td>Negative days subtract.</td></tr>
+<tr><td><code>date_sub(start, days)</code></td><td>Subtract calendar days</td><td><code>date_sub("order_date", 7)</code></td><td>Negative days add.</td></tr>
+<tr><td><code>datediff(end, start)</code></td><td>Difference in days</td><td><code>datediff(current_date(), "order_date")</code></td><td>Order of arguments controls the sign.</td></tr>
+<tr><td><code>year / month / dayofmonth</code></td><td>Extract date components</td><td><code>year("order_date")</code></td><td>Returns integer columns.</td></tr>
+<tr><td><code>hour / minute / second</code></td><td>Extract time components</td><td><code>hour("event_ts")</code></td><td>Use a timestamp, not a plain date.</td></tr>
+<tr><td><code>from_unixtime(seconds, format)</code></td><td>Epoch seconds to formatted string</td><td><code>from_unixtime("epoch", "yyyy-MM-dd HH:mm:ss")</code></td><td>Returns a string; cast/parse if a timestamp is needed.</td></tr>
+<tr><td><code>unix_timestamp(value, format)</code></td><td>Date/time to epoch seconds</td><td><code>unix_timestamp("event_text", "yyyy-MM-dd HH:mm:ss")</code></td><td>Returns seconds as a long value.</td></tr>
+<tr><td><code>to_date(value, format)</code></td><td>Convert to DateType</td><td><code>to_date("date_text", "dd-MM-yyyy")</code></td><td>Time portion is discarded.</td></tr>
+<tr><td><code>trunc(date, format)</code></td><td>Move date to period start</td><td><code>trunc("order_date", "month")</code></td><td>Useful for monthly/yearly grouping.</td></tr>
+<tr><td><code>months_between(d1, d2)</code></td><td>Approximate month difference</td><td><code>months_between("end_date", "start_date")</code></td><td>Uses a 31-day basis for non-aligned days.</td></tr>
+</tbody></table></div>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql.functions import (
+    current_date, current_timestamp, date_add, date_sub, datediff,
+    year, month, dayofmonth, hour, minute, second,
+    from_unixtime, unix_timestamp, to_date, to_timestamp,
+    trunc, months_between, col, lit
+)
+
+events = spark.createDataFrame([
+    (1, "14-07-2026", "2026-07-14 09:35:42", 1784001942),
+    (2, "28-06-2026", "2026-06-28 18:05:09", 1782650109)
+], ["id", "date_text", "ts_text", "epoch_seconds"])
+
+result = (events
+    .withColumn("business_date", to_date("date_text", "dd-MM-yyyy"))
+    .withColumn("event_ts", to_timestamp("ts_text", "yyyy-MM-dd HH:mm:ss"))
+    .withColumn("run_date", current_date())
+    .withColumn("loaded_at", current_timestamp())
+    .withColumn("plus_7_days", date_add("business_date", 7))
+    .withColumn("minus_7_days", date_sub("business_date", 7))
+    .withColumn("age_days", datediff(current_date(), "business_date"))
+    .withColumn("yyyy", year("business_date"))
+    .withColumn("mm", month("business_date"))
+    .withColumn("dd", dayofmonth("business_date"))
+    .withColumn("hh", hour("event_ts"))
+    .withColumn("mi", minute("event_ts"))
+    .withColumn("ss", second("event_ts"))
+    .withColumn("month_start", trunc("business_date", "month"))
+    .withColumn("epoch_from_text", unix_timestamp("ts_text", "yyyy-MM-dd HH:mm:ss"))
+    .withColumn("text_from_epoch", from_unixtime("epoch_seconds", "yyyy-MM-dd HH:mm:ss"))
+    .withColumn("months_from_jan", months_between("business_date", to_date(lit("2026-01-01"))))
+)
+
+result.show(truncate=False)</code></pre></div>
+<div class="callout warn"><strong>WATCH OUT:</strong> <code>from_unixtime()</code> returns a formatted string. For timestamp operations, wrap the result with <code>to_timestamp()</code> or cast it to <code>timestamp</code>.</div>
+<h3>Function memory tags</h3>
+<ul><li><strong>current_*</strong>: stamp the pipeline run.</li><li><strong>date_add/date_sub</strong>: move the calendar.</li><li><strong>datediff</strong>: count calendar-day distance.</li><li><strong>year/month/day/hour/minute/second</strong>: break a date/time into parts.</li><li><strong>Unix pair</strong>: <code>unix_timestamp</code> moves toward numbers; <code>from_unixtime</code> moves away from numbers.</li><li><strong>trunc</strong>: snap to the start of a period.</li><li><strong>months_between</strong>: measure months, including fractions.</li></ul>
+<details class="micro"><summary>Check yourself: Which function should create a monthly grouping key?</summary><p><code>trunc(date_column, "month")</code> returns the first day of the month as a DateType, making a stable month bucket.</p></details>
+</section>
+
+<section class="section content-section" id="join-foundations" data-title="Join Foundations">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>7. Join Foundations and Syntax</h2>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>customers = spark.createDataFrame([
+    (1, "Asha", "Gold"),
+    (2, "Bala", "Silver"),
+    (3, "Chen", "Gold")
+], ["customer_id", "customer_name", "segment"])
+
+orders = spark.createDataFrame([
+    (101, 1, 1200.0),
+    (102, 2, 800.0),
+    (103, 4, 500.0)
+], ["order_id", "customer_id", "amount"])
+
+# Using a shared key name produces one customer_id column.
+joined = orders.join(customers, on="customer_id", how="left")
+
+# Expression form is required when key names differ or conditions are complex.
+o = orders.alias("o")
+c = customers.alias("c")
+joined2 = o.join(c, o.customer_id == c.customer_id, "left")</code></pre></div>
+<div class="callout remember"><strong>Remember it as:</strong> <code>left.join(right, condition, type)</code>. The left DataFrame is the population you are starting from.</div>
+<div class="callout warn"><strong>Duplicate-column issue:</strong> Joining with an explicit equality expression keeps both key columns. Use aliases and a deliberate <code>select()</code> to avoid ambiguous columns later.</div>
+</section>
+
+<section class="section content-section" id="join-types" data-title="Join Types">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>8. Inner, Left, Right, and Full Joins</h2>
+<div class="table-wrap"><table><thead><tr><th>Join</th><th>Rows retained</th><th>Typical use</th><th>PySpark <code>how</code></th></tr></thead><tbody>
+<tr><td>Inner</td><td>Only matching keys from both sides</td><td>Validated records that require both datasets</td><td><code>"inner"</code></td></tr>
+<tr><td>Left</td><td>All left rows + matching right columns</td><td>Preserve facts while enriching from a dimension</td><td><code>"left"</code> or <code>"left_outer"</code></td></tr>
+<tr><td>Right</td><td>All right rows + matching left columns</td><td>Preserve the right-side population</td><td><code>"right"</code> or <code>"right_outer"</code></td></tr>
+<tr><td>Full</td><td>All rows from both sides</td><td>Reconciliation and mismatch analysis</td><td><code>"full"</code>, <code>"outer"</code>, <code>"full_outer"</code></td></tr>
+</tbody></table></div>
+<div class="diagram">
+<h3>Diagram 3 — Join population rule</h3>
+<p><strong>How to read:</strong> A is orders; B is customers. The text between circles states what survives.</p>
+<div class="join-visual"><div class="set">A<br>Orders</div><div class="result-box"><strong>INNER:</strong> A ∩ B<br><strong>LEFT:</strong> all A<br><strong>RIGHT:</strong> all B<br><strong>FULL:</strong> A ∪ B</div><div class="set">B<br>Customers</div></div>
+<p><strong>Flow narrative:</strong> First evaluate the condition. Matched rows combine. Then the join type decides whether unmatched left and/or unmatched right rows are included with nulls for missing columns.</p>
+</div>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>orders.join(customers, "customer_id", "inner").show()
+orders.join(customers, "customer_id", "left").show()
+orders.join(customers, "customer_id", "right").show()
+orders.join(customers, "customer_id", "full").show()</code></pre></div>
+<div class="output">Expected populations with keys Orders={1,2,4}, Customers={1,2,3}
+INNER → {1,2}
+LEFT  → {1,2,4}
+RIGHT → {1,2,3}
+FULL  → {1,2,3,4}</div>
+</section>
+
+<section class="section content-section" id="semi-anti" data-title="Semi and Anti Joins">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>9. Semi and Anti Joins</h2>
+<p>A <strong>left semi join</strong> asks, “Which left rows have at least one matching key on the right?” It returns only columns from the left. It is an existence filter, not an enrichment join.</p>
+<p>A <strong>left anti join</strong> asks, “Which left rows have no matching key on the right?” It also returns only columns from the left. It is ideal for exception records and data-quality checks.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code># Orders belonging to a known customer.
+known_orders = orders.join(customers, "customer_id", "left_semi")
+
+# Orders whose customer_id is absent from the customer master.
+unknown_customer_orders = orders.join(customers, "customer_id", "left_anti")
+
+# Right anti behavior: swap the DataFrames, then perform left anti.
+customers_without_orders = customers.join(orders, "customer_id", "left_anti")</code></pre></div>
+<div class="output">known_orders customer IDs           → {1,2}
+unknown_customer_orders IDs        → {4}
+customers_without_orders IDs       → {3}</div>
+<div class="callout warn"><strong>Terminology correction:</strong> Spark exposes <code>left_semi</code> and <code>left_anti</code>. There is no single “semi anti” join because semi and anti answer opposite existence questions. A “right anti” result is produced by swapping the inputs and using <code>left_anti</code>.</div>
+<div class="callout memory"><strong>MEMORY HOOK:</strong> <em>SEMI = seen on the right; ANTI = absent on the right.</em></div>
+</section>
+
+<section class="section content-section" id="complete-pipeline" data-title="Complete Pipeline">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>10. Complete Retail Pipeline</h2>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    to_timestamp, to_date, year, month, trunc,
+    datediff, current_date, broadcast, col
+)
+
+spark = SparkSession.builder.appName("RetailDateJoinPipeline").getOrCreate()
+
+orders = spark.createDataFrame([
+    (101, 1, 10, "2026-07-01 10:15:00", 1200.0),
+    (102, 2, 20, "2026-07-10 15:30:00", 800.0),
+    (103, 4, 10, "2026-07-13 18:05:00", 500.0)
+], ["order_id", "customer_id", "product_id", "order_ts_text", "amount"])
+
+customers = spark.createDataFrame([
+    (1, "Asha", "Gold"),
+    (2, "Bala", "Silver"),
+    (3, "Chen", "Gold")
+], ["customer_id", "customer_name", "segment"])
+
+products = spark.createDataFrame([
+    (10, "Laptop Bag", "Accessories"),
+    (20, "Keyboard", "Electronics")
+], ["product_id", "product_name", "category"])
+
+prepared_orders = (orders
+    .withColumn("order_ts", to_timestamp("order_ts_text", "yyyy-MM-dd HH:mm:ss"))
+    .withColumn("order_date", to_date("order_ts"))
+    .withColumn("order_year", year("order_date"))
+    .withColumn("order_month", month("order_date"))
+    .withColumn("month_start", trunc("order_date", "month"))
+    .withColumn("order_age_days", datediff(current_date(), "order_date"))
+)
+
+# Broadcast only when the master tables are genuinely small enough.
+curated = (prepared_orders
+    .join(broadcast(customers), "customer_id", "left")
+    .join(broadcast(products), "product_id", "left")
+    .select(
+        "order_id", "customer_id", "customer_name", "segment",
+        "product_id", "product_name", "category",
+        "order_ts", "order_date", "order_year", "order_month",
+        "month_start", "order_age_days", "amount"
+    )
+)
+
+customer_exceptions = prepared_orders.join(customers, "customer_id", "left_anti")
+
+curated.show(truncate=False)
+customer_exceptions.show(truncate=False)</code></pre></div>
+<h3>What this does and why</h3>
+<ol><li>Parses once, preventing repeated format logic.</li><li>Derives reporting columns while the data is typed.</li><li>Uses left joins to preserve every order.</li><li>Broadcasts only small master data to reduce shuffle.</li><li>Selects columns explicitly to keep a stable schema.</li><li>Creates an anti-join exception output for missing customer keys.</li></ol>
+<div class="callout warn"><strong>What not to do:</strong> Do not convert a large Spark DataFrame to pandas to perform joins. That moves distributed data to the driver and can exhaust memory.</div>
+</section>
+
+<section class="section content-section" id="comparison" data-title="Comparison Table">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>11. Comparison and Selection Guide</h2>
+<div class="table-wrap"><table><thead><tr><th>Need</th><th>Best choice</th><th>Why</th><th>Common wrong choice</th></tr></thead><tbody>
+<tr><td>Keep only fully matched facts</td><td>Inner join</td><td>Unmatched rows are intentionally excluded.</td><td>Left join followed by no null filter.</td></tr>
+<tr><td>Preserve all facts while enriching</td><td>Left join</td><td>The fact table is the required population.</td><td>Inner join, which silently drops unknown keys.</td></tr>
+<tr><td>Reconcile both datasets</td><td>Full join</td><td>Shows left-only, matched, and right-only rows.</td><td>Union, which stacks rather than matches columns.</td></tr>
+<tr><td>Test whether a key exists</td><td>Left semi</td><td>No right-side columns or duplicate expansion are needed.</td><td>Inner join followed by selecting only left columns.</td></tr>
+<tr><td>Find missing references</td><td>Left anti</td><td>Directly expresses “not present.”</td><td>Left join + <code>isNull</code>, which is longer and easier to misuse.</td></tr>
+<tr><td>Get calendar-day difference</td><td><code>datediff</code></td><td>Returns an integer day count.</td><td>Subtracting formatted strings.</td></tr>
+<tr><td>Create a monthly bucket</td><td><code>trunc(date,"month")</code></td><td>Produces a typed month-start date.</td><td>Concatenating year and month strings unnecessarily.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="section content-section" id="best-practices" data-title="Best Practices">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>12. Best Practices</h2>
+<div class="two-col">
+<div><h3>Do</h3><ol><li><strong>Parse once near ingestion.</strong> Why: downstream logic receives consistent types.</li><li><strong>Specify date formats.</strong> Why: explicit formats prevent locale and pattern ambiguity.</li><li><strong>Alias both DataFrames.</strong> Why: column references stay clear in complex conditions.</li><li><strong>Select output columns deliberately.</strong> Why: schemas remain stable and duplicate names disappear.</li><li><strong>Validate cardinality.</strong> Why: duplicate dimension keys can multiply facts.</li><li><strong>Use semi/anti for existence tests.</strong> Why: they state the business intent and return only needed columns.</li><li><strong>Inspect <code>explain()</code>.</strong> Why: the physical plan reveals shuffle and broadcast decisions.</li></ol></div>
+<div><h3>Avoid</h3><ol><li><strong>Using Python UDFs for built-in date logic.</strong> Built-ins are optimized and avoid Python serialization overhead.</li><li><strong>Blindly broadcasting.</strong> A table that is too large can exhaust executor memory.</li><li><strong>Joining on accidental same-name columns.</strong> Match only the intended keys.</li><li><strong>Assuming null equals null.</strong> Standard equality does not match two null keys.</li><li><strong>Ignoring time zones.</strong> Timestamp conversion can shift displayed time under a different session zone.</li><li><strong>Counting rows only after a one-to-many join.</strong> Aggregates may already be inflated.</li></ol></div>
+</div>
+</section>
+
+<section class="section content-section" id="edge-cases" data-title="Edge Cases and Gotchas">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>13. Edge Cases and Gotchas</h2>
+<ol>
+<li><strong>Invalid date text:</strong> <code>to_date()</code> can return null when parsing fails. Track rejected records rather than silently discarding them.</li>
+<li><strong>Argument order:</strong> <code>datediff(end,start)</code> becomes negative when end is earlier than start.</li>
+<li><strong>Month-end math:</strong> <code>months_between()</code> may return a fractional value based on a 31-day month when days are not aligned.</li>
+<li><strong>Date vs timestamp:</strong> <code>to_date()</code> removes the time portion. Use <code>to_timestamp()</code> when hour/minute/second matter.</li>
+<li><strong>Unix units:</strong> The classic functions expect seconds. Millisecond epoch values must be divided by 1000 or handled with an appropriate timestamp function.</li>
+<li><strong>Duplicate right keys:</strong> One left row matching three right rows creates three output rows.</li>
+<li><strong>Null keys:</strong> Null does not match null under ordinary equality. Null-safe equality <code>eqNullSafe()</code> is a separate deliberate choice.</li>
+<li><strong>Right anti:</strong> Spark's DataFrame join API uses left anti. Swap inputs to obtain the right-only population.</li>
+<li><strong>Time zone:</strong> Timestamp parsing and display depend on <code>spark.sql.session.timeZone</code>.</li>
+</ol>
+<div class="callout memory"><strong>Join validation mnemonic — K-C-N-P:</strong> Check <strong>K</strong>eys, <strong>C</strong>ardinality, <strong>N</strong>ulls, and the physical <strong>P</strong>lan.</div>
+</section>
+
+<section class="section content-section" id="troubleshooting" data-title="Troubleshooting">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>14. Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Exact fix</th></tr></thead><tbody>
+<tr><td>Date column is all null</td><td>Format does not match source text</td><td>Inspect samples and pass the correct pattern, such as <code>dd-MM-yyyy</code>.</td></tr>
+<tr><td><code>NameError: datediff is not defined</code></td><td>Function not imported</td><td><code>from pyspark.sql.functions import datediff</code>.</td></tr>
+<tr><td><code>UNRESOLVED_COLUMN</code></td><td>Misspelled or ambiguous column</td><td>Use <code>df.printSchema()</code>, aliases, and qualified references.</td></tr>
+<tr><td><code>AMBIGUOUS_REFERENCE</code></td><td>Both joined DataFrames contain the same column name</td><td>Alias and explicitly select <code>o.column</code> or <code>c.column</code>.</td></tr>
+<tr><td>Joined row count unexpectedly grows</td><td>Duplicate keys create one-to-many/many-to-many matches</td><td>Profile right-key counts and deduplicate only with a valid business rule.</td></tr>
+<tr><td>Unknown IDs disappear</td><td>Inner join used instead of left join</td><td>Use left join and separately track missing master keys.</td></tr>
+<tr><td>Executor out-of-memory after broadcast</td><td>Broadcast side is too large</td><td>Remove forced broadcast, reduce columns, or use a normal shuffle join.</td></tr>
+<tr><td>Timestamp differs by hours</td><td>Session time-zone mismatch</td><td>Set and document <code>spark.sql.session.timeZone</code>.</td></tr>
+<tr><td><code>Unsupported join type 'right_anti'</code></td><td>No direct right anti alias</td><td>Swap DataFrames and use <code>left_anti</code>.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="section content-section" id="interview" data-title="Interview Q&A">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>15. Interview Questions and Answers</h2>
+<div class="flashcard" id="flashcard" tabindex="0" role="button" aria-label="Flip interview flashcard"><div class="flash-question"></div><div class="flash-answer"></div></div>
+<div class="rating storage-feature"><button class="btn small recall" data-days="0">Again</button><button class="btn small recall" data-days="1">Hard</button><button class="btn small recall" data-days="3">Good</button><button class="btn small recall" data-days="7">Easy</button></div>
+<div class="flash-controls"><button class="btn" id="prevCard">Previous</button><button class="btn" id="flipCard">Flip</button><button class="btn" id="nextCard">Next</button><button class="btn" id="shuffleCards">Shuffle</button><button class="btn storage-feature" id="dueCards">Due today</button><button class="btn storage-feature" id="resetSchedule">Reset schedule</button></div>
+<div class="qa-list" id="qaList"></div>
+</section>
+
+<section class="section content-section" id="exercises" data-title="Active Exercises">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>16. Active Practice Exercises</h2>
+<h3>A. Fill in the blank</h3>
+<div class="exercise"><p>1. Calculate days between run date and order date:</p><code>______(current_date(), "order_date")</code><br><input class="fill-answer" data-answer="datediff"><button class="btn small check-fill">Check</button><button class="btn small reveal-fill">Reveal</button><span class="exercise-feedback"></span></div>
+<div class="exercise"><p>2. Keep orders with no matching customer:</p><code>orders.join(customers, "customer_id", "______")</code><br><input class="fill-answer" data-answer="left_anti"><button class="btn small check-fill">Check</button><button class="btn small reveal-fill">Reveal</button><span class="exercise-feedback"></span></div>
+<h3>B. Match term to meaning</h3>
+<p>Click a term, then click its matching meaning.</p><div class="pair-grid" id="matching"></div><p id="matchFeedback"></p>
+<h3>C. Put the pipeline in order</h3>
+<ul class="order-list" id="orderList"></ul><button class="btn" id="checkOrder">Check order</button><button class="btn" id="revealOrder">Reveal</button><span id="orderFeedback"></span>
+</section>
+
+<section class="section content-section" id="quiz" data-title="Practice Quiz">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>17. Interactive Practice Quiz</h2>
+<p>15 questions are drawn and shuffled. Mark confidence as Sure or Unsure before submission.</p>
+<div id="quizQuestions"></div>
+<div class="quiz-actions"><button class="btn primary" id="submitQuiz">Submit Practice Quiz</button> <button class="btn hidden" id="retryQuiz">Retry and reshuffle</button> <button class="btn hidden" id="wrongOnly">Review wrong answers only</button></div>
+<div class="result-panel" id="quizResult"></div>
+</section>
+
+<section class="section content-section" id="exam" data-title="Formal Exam">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>18. Formal MCQ Exam</h2>
+<p>15 questions × 1 mark. Pass mark: 60%. Timer: 15 minutes. No negative marking.</p>
+<div class="exam-actions"><button class="btn primary" id="startExam">Start Test</button> <span class="timer" id="timer">15:00</span></div>
+<div id="examQuestions" class="hidden"></div>
+<div class="exam-actions"><button class="btn primary hidden" id="submitExam">Submit Exam</button> <button class="btn hidden" id="restartExam">Restart Exam</button> <button class="btn hidden" id="weakRetry">Practice my weak areas</button></div>
+<div class="result-panel" id="examResult"></div>
+<div id="weakArea"></div>
+</section>
+
+<section class="section content-section" id="glossary" data-title="Glossary">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>19. Glossary</h2>
+<div class="glossary">
+<div><strong>Anti join</strong><br>Left rows with no right-side match.</div><div><strong>Broadcast join</strong><br>Copies a small relation to executors to avoid shuffling a large relation.</div><div><strong>Cardinality</strong><br>The number and multiplicity of key matches.</div><div><strong>Catalyst</strong><br>Spark SQL's query optimizer.</div><div><strong>DateType</strong><br>Calendar date without time.</div><div><strong>Epoch</strong><br>Reference point used for numeric time values.</div><div><strong>Full join</strong><br>All matched and unmatched rows from both sides.</div><div><strong>Inner join</strong><br>Only matched rows.</div><div><strong>Left join</strong><br>All left rows and matching right data.</div><div><strong>Null</strong><br>Missing or unknown value.</div><div><strong>Semi join</strong><br>Left rows having at least one right match.</div><div><strong>Shuffle</strong><br>Network redistribution between partitions.</div><div><strong>TimestampType</strong><br>Date plus time-of-day.</div><div><strong>Unix time</strong><br>Elapsed seconds from the Unix epoch.</div>
+</div>
+</section>
+
+<section class="section content-section" id="summary" data-title="Summary">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>20. Summary and Quick Revision</h2>
+<ul><li>Use typed date/timestamp columns before performing calendar logic.</li><li><code>datediff(end,start)</code> returns calendar-day difference.</li><li><code>trunc(date,"month")</code> creates a stable monthly bucket.</li><li><code>unix_timestamp</code> converts toward epoch seconds; <code>from_unixtime</code> converts from epoch seconds to text.</li><li>Inner keeps matches; left preserves left; right preserves right; full preserves both.</li><li>Left semi is an existence filter; left anti is a missing-reference filter.</li><li>Emulate right anti by swapping inputs.</li><li>Validate join keys, cardinality, nulls, row counts, and the physical plan.</li></ul>
+<div class="callout remember"><strong>One-line cheat list:</strong> Parse → derive → select population → join → validate.</div>
+<h3>What to learn next</h3>
+<div class="flow"><div class="node">Date Functions & Joins</div><div class="arrow">→</div><div class="node">Aggregations & Windows</div><div class="arrow">→</div><div class="node">Join Optimization</div><div class="arrow">→</div><div class="node">Data Quality & Testing</div></div>
+</section>
+
+<section class="section content-section" id="certificate-section" data-title="Certificate">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>Certificate of Completion</h2>
+<p>Enter the learner name after completing the exam.</p>
+<input id="certName" placeholder="Learner name"> <button class="btn primary" id="generateCert">Generate certificate</button>
+<div class="certificate" id="certificate"><h1>Certificate of Completion</h1><p>This certifies that</p><h2 id="certDisplayName"></h2><p>completed the classroom tutorial</p><h2>PySpark DataFrame Date Functions and Joins</h2><p>Best exam score: <strong id="certScore">0%</strong></p><p>Date: <strong id="certDate"></strong></p></div>
+</section>
+</main>
+</div>
+
+<div class="notes-panel storage-feature collapsed" id="notesPanel" hidden><button class="btn small" id="toggleNotes">📝 My Notes</button><div class="notes-body"><p>Double-click a word in the lesson to add a note.</p><div id="notesList"></div><button class="btn small danger" id="clearNotes">Clear all</button></div></div>
+<div class="note-popup storage-feature" id="notePopup"><strong>Note for: <span id="noteWordLabel"></span></strong><textarea id="noteText" placeholder="Type your preparation note..."></textarea><div><button class="btn primary small" id="saveNote">Save</button> <button class="btn small" id="cancelNote">Cancel</button> <button class="btn danger small hidden" id="deleteNote">Delete</button></div></div>
+<button class="btn primary back-top" id="backTop" aria-label="Back to top">↑</button>
+
+<script>
+const CONFIG={topic:'PySpark DataFrame Date Functions and Joins',practiceCount:15,examCount:15,examMinutes:15,passMark:60,marksPerQuestion:1};
+const LS='pyspark_date_joins_v1_';
+let storageOK=false;try{localStorage.setItem(LS+'test','1');storageOK=localStorage.getItem(LS+'test')==='1';localStorage.removeItem(LS+'test')}catch(e){storageOK=false}
+if(!storageOK)document.querySelectorAll('.storage-feature').forEach(e=>e.classList.add('hidden'));
+const get=(k,d)=>{if(!storageOK)return d;try{const v=localStorage.getItem(LS+k);return v===null?d:JSON.parse(v)}catch(e){return d}};
+const set=(k,v)=>{if(storageOK)try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}};
+
+// TOC and preparation tracking
+const sections=[...document.querySelectorAll('.content-section')];const toc=document.getElementById('toc');
+sections.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.textContent=(i+1)+'. '+s.dataset.title;toc.appendChild(a)});
+let progress=get('progress',{});function updateProgress(){let n=0;sections.forEach(s=>{const c=s.querySelector('.prepared-check');if(c){c.checked=!!progress[s.id];if(c.checked)n++}});const total=sections.filter(s=>s.querySelector('.prepared-check')).length;document.getElementById('progressText').textContent=`${n} / ${total} prepared`;document.getElementById('progressFill').style.width=(total?n/total*100:0)+'%';if(n===total&&total){awardBadge('All Topics Prepared');addXP(100)}}
+document.querySelectorAll('.prepared-check').forEach(c=>c.addEventListener('change',e=>{const id=e.target.closest('.content-section').id;progress[id]=e.target.checked;set('progress',progress);updateProgress()}));
+document.getElementById('resetProgress').onclick=()=>{progress={};set('progress',progress);updateProgress()};updateProgress();
+
+// Theme, font, sound
+let theme=get('theme','light');document.documentElement.dataset.theme=theme;document.getElementById('themeBtn').onclick=()=>{theme=theme==='light'?'dark':'light';document.documentElement.dataset.theme=theme;set('theme',theme)};
+let fontSize=get('fontSize',16);document.documentElement.style.setProperty('--font',fontSize+'px');document.getElementById('fontUp').onclick=()=>{fontSize=Math.min(21,fontSize+1);document.documentElement.style.setProperty('--font',fontSize+'px');set('fontSize',fontSize)};document.getElementById('fontDown').onclick=()=>{fontSize=Math.max(13,fontSize-1);document.documentElement.style.setProperty('--font',fontSize+'px');set('fontSize',fontSize)};
+let soundOn=get('soundOn',true);function soundLabel(){document.getElementById('soundBtn').textContent=soundOn?'🔊 Sound':'🔇 Muted'}soundLabel();document.getElementById('soundBtn').onclick=()=>{soundOn=!soundOn;set('soundOn',soundOn);soundLabel()};
+function playTone(pct){if(!soundOn)return;try{const A=window.AudioContext||window.webkitAudioContext;const ac=new A();const notes=pct===100?[523,659,784,1046]:pct>=90?[523,659,784]:pct>=75?[440,554,659]:pct>=60?[392,494]:[261,329];notes.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.connect(g);g.connect(ac.destination);const t=ac.currentTime+i*.16;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.15,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+.28);o.start(t);o.stop(t+.3)});setTimeout(()=>ac.close(),1500)}catch(e){}}
+function mood(p){if(p===100)return['🤩🎉','Perfect! Flawless run.'];if(p>=90)return['😄','Excellent — interview-ready!'];if(p>=75)return['🙂','Well done — solid grasp.'];if(p>=60)return['😌','Good — revise the misses.'];return['💪😤','Needs focus — review and retry.']}
+
+// Reading progress and resume
+window.addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById('readingBar').style.width=(h?scrollY/h*100:0)+'%';let current=sections[0].id;sections.forEach(s=>{if(s.getBoundingClientRect().top<160)current=s.id});set('lastSection',current)});
+document.getElementById('backTop').onclick=()=>scrollTo({top:0,behavior:'smooth'});
+const last=get('lastSection',null);if(last&&location.hash==='')setTimeout(()=>{const el=document.getElementById(last);if(el)el.scrollIntoView()},200);
+
+// Copy buttons
+for(const b of document.querySelectorAll('.copy-btn'))b.onclick=async()=>{const text=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(text);b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1000)}catch(e){b.textContent='Select & copy'}};
+
+// Sparkle trail
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){let lastSpark=0;addEventListener('pointermove',e=>{const now=Date.now();if(now-lastSpark<45)return;lastSpark=now;const s=document.createElement('span');s.className='spark';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),700)})}
+
+// XP, badges, history
+let xp=get('xp',0),badges=get('badges',[]),history=get('history',[]);function renderGame(){document.getElementById('xp').textContent=xp;document.getElementById('badges').innerHTML=badges.map(b=>`<span class="badge">${b}</span>`).join(' ')}function addXP(n){if(!storageOK)return;xp+=n;set('xp',xp);renderGame()}function awardBadge(b){if(!storageOK||badges.includes(b))return;badges.push(b);set('badges',badges);renderGame()}function addHistory(type,pct){if(!storageOK)return;history.unshift({date:new Date().toLocaleString(),type,pct});history=history.slice(0,10);set('history',history);renderHistory()}function renderHistory(){document.getElementById('scoreHistory').innerHTML=history.length?history.map(h=>`<div class="history-item">${h.type}: <strong>${h.pct}%</strong><br><small>${h.date}</small></div>`).join(''):'<small>No attempts yet.</small>'}renderGame();renderHistory();
+
+// Interview Q&A and flashcards
+const qa=[
+['Beginner','What is current_date()?','It returns the current calendar date as a Spark DateType column. Every use inside the same query returns the same query-start value, which keeps a run internally consistent.'],
+['Beginner','What is the difference between current_date() and current_timestamp()?','current_date returns only year-month-day. current_timestamp returns date and time, so it is appropriate for audit columns such as loaded_at.'],
+['Beginner','What does datediff(end, start) return?','It returns the number of calendar days from start to end. Reversing the arguments reverses the sign.'],
+['Beginner','Why use to_date() instead of keeping a string?','A DateType supports calendar arithmetic, extraction, validation, and type-aware optimization. A string only contains characters and can be formatted inconsistently.'],
+['Beginner','What is an inner join?','An inner join returns only records that satisfy the join condition on both sides. Unmatched rows from either side are excluded.'],
+['Beginner','What is a left join?','A left join preserves every row from the left DataFrame. Matching right columns are added; when no match exists, right columns are null.'],
+['Intermediate','What is the difference between left semi and inner join?','Both require a match, but left semi returns only left rows and left columns. An inner join adds right columns and can multiply rows when several right matches exist.'],
+['Intermediate','What is a left anti join used for?','It returns left rows without a match on the right. Common uses are invalid foreign keys, missing master records, and records not yet processed.'],
+['Intermediate','How do you perform a right anti join in PySpark?','Swap the inputs and perform a left anti join. For right-only customers, use customers.join(orders, key, "left_anti").'],
+['Intermediate','What does trunc(date, "month") do?','It returns the first day of the date’s month as a date. This provides a consistent typed key for monthly grouping.'],
+['Intermediate','What is the difference between from_unixtime and unix_timestamp?','unix_timestamp converts a date/time value toward epoch seconds. from_unixtime converts epoch seconds into a formatted string.'],
+['Intermediate','Why can a join increase row count?','A left key can match multiple right rows, creating one output row for each combination. Duplicate keys on both sides can create a many-to-many explosion.'],
+['Advanced','How does Spark normally execute a large equi-join?','Spark may use sort-merge join, redistributing rows by key and sorting partitions. The actual strategy depends on statistics, configuration, and the optimizer.'],
+['Advanced','When is broadcast join appropriate?','When one relation is small enough to copy safely to executors. This avoids shuffling the large relation, but forcing a large broadcast can cause memory pressure.'],
+['Advanced','How do null keys behave in an equality join?','Ordinary equality does not treat null as equal to null. Use null-safe equality only when that behavior is a deliberate business requirement.'],
+['Advanced','Why is months_between sometimes fractional?','When dates do not share the same day-of-month or both month-end status, Spark calculates a fraction using a 31-day month basis.'],
+['Advanced','Why prefer built-in date functions over a Python UDF?','Built-ins are visible to Catalyst, run efficiently in Spark execution, and avoid Python serialization. A Python UDF is harder to optimize and usually slower.'],
+['Advanced','How should join correctness be validated?','Check key uniqueness, expected row counts, unmatched counts, null rates, and aggregates before and after the join. Also inspect the physical plan for unintended Cartesian or expensive shuffle behavior.']
+];
+const qaList=document.getElementById('qaList');qa.forEach(([lvl,q,a])=>{const d=document.createElement('details');d.innerHTML=`<summary><span class="tag ${lvl[0].toLowerCase()}">${lvl}</span> ${q}</summary><p>${a}</p>`;qaList.appendChild(d)});
+let flashOrder=qa.map((_,i)=>i),flashPos=0,cardFlipped=false,schedule=get('schedule',{});function showCard(){const [l,q,a]=qa[flashOrder[flashPos]];const fc=document.getElementById('flashcard');fc.classList.remove('flipped');cardFlipped=false;fc.querySelector('.flash-question').innerHTML=`<span class="tag">${l}</span><h3>${q}</h3><small>Click to reveal</small>`;fc.querySelector('.flash-answer').innerHTML=`<p>${a}</p>`}function flip(){cardFlipped=!cardFlipped;document.getElementById('flashcard').classList.toggle('flipped',cardFlipped)}document.getElementById('flashcard').onclick=flip;document.getElementById('flashcard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}};document.getElementById('flipCard').onclick=flip;document.getElementById('nextCard').onclick=()=>{flashPos=(flashPos+1)%flashOrder.length;showCard()};document.getElementById('prevCard').onclick=()=>{flashPos=(flashPos-1+flashOrder.length)%flashOrder.length;showCard()};document.getElementById('shuffleCards').onclick=()=>{flashOrder.sort(()=>Math.random()-.5);flashPos=0;showCard()};document.querySelectorAll('.recall').forEach(b=>b.onclick=()=>{const idx=flashOrder[flashPos],days=+b.dataset.days;const due=new Date();due.setDate(due.getDate()+days);schedule[idx]={due:due.toISOString(),ease:days};set('schedule',schedule);addXP(days>=3?5:2);document.getElementById('nextCard').click()});document.getElementById('dueCards').onclick=()=>{const now=new Date();const due=qa.map((_,i)=>i).filter(i=>!schedule[i]||new Date(schedule[i].due)<=now);flashOrder=due.length?due:qa.map((_,i)=>i);flashPos=0;showCard()};document.getElementById('resetSchedule').onclick=()=>{schedule={};set('schedule',schedule);flashOrder=qa.map((_,i)=>i);flashPos=0;showCard()};showCard();
+
+// Exercises
+for(const b of document.querySelectorAll('.check-fill'))b.onclick=()=>{const ex=b.closest('.exercise'),inp=ex.querySelector('.fill-answer'),fb=ex.querySelector('.exercise-feedback'),ok=inp.value.trim().toLowerCase()===inp.dataset.answer.toLowerCase();fb.textContent=ok?' ✅ Correct.':' ❌ Review the exact function/join name.';if(ok)addXP(5)};for(const b of document.querySelectorAll('.reveal-fill'))b.onclick=()=>{const ex=b.closest('.exercise'),inp=ex.querySelector('.fill-answer');inp.value=inp.dataset.answer;ex.querySelector('.exercise-feedback').textContent=' Answer revealed.'};
+const pairs=[['datediff','Days from start to end'],['left_semi','Left rows with an existing right key'],['left_anti','Left rows without a right key'],['trunc','Start of a calendar period']];const match=document.getElementById('matching');let terms=pairs.map((p,i)=>({id:i,text:p[0],side:'t'})).sort(()=>Math.random()-.5),defs=pairs.map((p,i)=>({id:i,text:p[1],side:'d'})).sort(()=>Math.random()-.5),selected=null,matched=0;[...terms,...defs].forEach(x=>{const e=document.createElement('div');e.className='pair-item';e.textContent=x.text;e.dataset.id=x.id;e.dataset.side=x.side;e.onclick=()=>{if(e.classList.contains('matched'))return;if(!selected){selected=e;e.classList.add('selected')}else{if(selected.dataset.side!==e.dataset.side&&selected.dataset.id===e.dataset.id){selected.classList.add('matched');e.classList.add('matched');selected.classList.remove('selected');matched++;if(matched===pairs.length){document.getElementById('matchFeedback').textContent='✅ All pairs matched.';addXP(20)}}else{selected.classList.remove('selected');document.getElementById('matchFeedback').textContent='Try a different pair.'}selected=null}};match.appendChild(e)});
+const correctOrder=['Read source data','Parse date and timestamp columns','Derive reporting columns','Join dimensions','Validate and publish'];let order=[...correctOrder].sort(()=>Math.random()-.5);function renderOrder(){const ul=document.getElementById('orderList');ul.innerHTML='';order.forEach((x,i)=>{const li=document.createElement('li');li.className='order-item';li.innerHTML=`<span>${i+1}. ${x}</span><span><button class="btn small up">↑</button><button class="btn small down">↓</button></span>`;li.querySelector('.up').onclick=()=>{if(i){[order[i-1],order[i]]=[order[i],order[i-1]];renderOrder()}};li.querySelector('.down').onclick=()=>{if(i<order.length-1){[order[i+1],order[i]]=[order[i],order[i+1]];renderOrder()}};ul.appendChild(li)})}renderOrder();document.getElementById('checkOrder').onclick=()=>{const ok=order.every((x,i)=>x===correctOrder[i]);document.getElementById('orderFeedback').textContent=ok?' ✅ Correct pipeline order.':' ❌ Revisit parse-before-derive and validate-after-join.';if(ok)addXP(15)};document.getElementById('revealOrder').onclick=()=>{order=[...correctOrder];renderOrder();document.getElementById('orderFeedback').textContent=' Correct order revealed.'};
+
+// Question bank
+const bank=[
+{t:'Date Basics',q:'Which function returns the query-start calendar date?',o:['current_date()','current_timestamp()','to_date()','date_add()'],a:0,e:'current_date() returns a DateType value for the current query date.'},
+{t:'Date Basics',q:'Which function returns date and time for the query start?',o:['current_date()','current_timestamp()','unix_timestamp()','hour()'],a:1,e:'current_timestamp() returns a TimestampType column.'},
+{t:'Date Arithmetic',q:'What does date_add(order_date, 7) do?',o:['Adds seven months','Adds seven calendar days','Extracts day 7','Converts to epoch'],a:1,e:'date_add moves a date forward by the specified number of days.'},
+{t:'Date Arithmetic',q:'What does date_sub(order_date, 3) do?',o:['Subtracts three days','Subtracts three months','Returns day number','Truncates to month'],a:0,e:'date_sub moves a date backward by the specified number of days.'},
+{t:'Date Arithmetic',q:'Which call calculates run_date minus order_date in days?',o:['datediff("order_date","run_date")','datediff("run_date","order_date")','date_sub("run_date","order_date")','months_between("run_date","order_date")'],a:1,e:'datediff uses end first and start second.'},
+{t:'Date Extraction',q:'Which function extracts the calendar year?',o:['year()','month()','trunc()','to_date()'],a:0,e:'year() returns the year component as an integer.'},
+{t:'Date Extraction',q:'Which function extracts the day number within a month?',o:['dayofmonth()','datediff()','second()','date_add()'],a:0,e:'dayofmonth returns an integer from 1 through 31 when valid.'},
+{t:'Date Extraction',q:'Which type should be used when hour() must return meaningful data?',o:['A timestamp column','A boolean column','An array column','A plain date only'],a:0,e:'Hour is a time-of-day component, so use a timestamp.'},
+{t:'Parsing',q:'What is the primary output type of to_date()?',o:['StringType','DateType','LongType','BooleanType'],a:1,e:'to_date converts a compatible value into DateType.'},
+{t:'Unix Time',q:'What does unix_timestamp commonly return?',o:['Epoch seconds','A DateType','A formatted string only','A month number'],a:0,e:'unix_timestamp returns seconds from the Unix epoch.'},
+{t:'Unix Time',q:'What does from_unixtime normally return?',o:['A formatted string','An array','A boolean','A join key'],a:0,e:'from_unixtime converts epoch seconds to a formatted string.'},
+{t:'Period Functions',q:'Which expression produces the first day of an order month?',o:['trunc("order_date","month")','month("order_date")','date_sub("order_date",1)','dayofmonth("order_date")'],a:0,e:'trunc with month snaps the date to the month start.'},
+{t:'Period Functions',q:'Why can months_between return a fraction?',o:['It always divides by 10','Non-aligned days use a 31-day basis','It counts hours only','It parses strings lexically'],a:1,e:'Spark uses a 31-day basis when dates are not aligned by day or both month-end.'},
+{t:'Join Basics',q:'Which join keeps only matching keys?',o:['Inner','Left','Full','Left anti'],a:0,e:'Inner join excludes unmatched rows from both inputs.'},
+{t:'Join Basics',q:'Which join preserves every row from the left DataFrame?',o:['Left','Inner','Left semi','Cross'],a:0,e:'Left outer join keeps all left rows and fills missing right values with null.'},
+{t:'Join Basics',q:'Which join preserves every row from both DataFrames?',o:['Full outer','Inner','Left semi','Left anti'],a:0,e:'Full outer returns matched, left-only, and right-only rows.'},
+{t:'Join Basics',q:'Which join preserves the right-side population?',o:['Right outer','Left outer','Inner only','Left anti'],a:0,e:'Right outer keeps every right row.'},
+{t:'Semi/Anti',q:'Which join returns left rows whose keys exist on the right, without right columns?',o:['Left semi','Inner','Full','Left anti'],a:0,e:'Left semi is an existence filter returning left columns only.'},
+{t:'Semi/Anti',q:'Which join returns left rows whose keys are absent on the right?',o:['Left anti','Left semi','Inner','Right outer'],a:0,e:'Left anti directly selects unmatched left records.'},
+{t:'Semi/Anti',q:'How is right anti behavior normally expressed in the DataFrame API?',o:['Swap inputs and use left_anti','Use inner then distinct','Use full then count','Use right_outer only'],a:0,e:'The desired right population becomes the left input, followed by left_anti.'},
+{t:'Join Correctness',q:'Why can a join multiply fact rows?',o:['Multiple matching right keys','DateType cannot join','current_date changes per row','trunc duplicates rows'],a:0,e:'Each matching pair becomes an output row, so duplicate keys can multiply records.'},
+{t:'Join Correctness',q:'What happens to unmatched right columns in a left join?',o:['They become null','They become zero automatically','The left row is removed','They become arrays'],a:0,e:'The left row survives and unavailable right values are represented by null.'},
+{t:'Join Correctness',q:'What is a good first validation after a fact-to-dimension join?',o:['Compare row counts and key cardinality','Convert everything to pandas','Delete nulls immediately','Force a cross join'],a:0,e:'Row count and cardinality checks reveal dropped or multiplied facts.'},
+{t:'Optimization',q:'When is broadcast join most appropriate?',o:['When one DataFrame is small enough for each executor','Whenever both tables are huge','Only for cross joins','Only after collect()'],a:0,e:'Broadcasting a small side avoids shuffling the large side.'},
+{t:'Optimization',q:'What is a risk of forcing broadcast on a large table?',o:['Executor memory pressure','Dates become strings','All joins become anti joins','The schema disappears'],a:0,e:'Every executor must hold the broadcast relation, so an oversized broadcast can exhaust memory.'},
+{t:'Optimization',q:'Why prefer built-in date functions to a Python UDF?',o:['Catalyst can optimize built-ins','UDFs always return dates','Built-ins run only on driver','UDFs prevent nulls'],a:0,e:'Built-in expressions remain visible to Spark planning and avoid Python serialization overhead.'},
+{t:'Nulls',q:'Under ordinary equality, how do null join keys behave?',o:['Null does not equal null','Null always equals null','Null becomes zero','Null creates a cross join'],a:0,e:'SQL three-valued logic treats null as unknown, so ordinary equality does not match two nulls.'},
+{t:'Schema',q:'How can duplicate column names be managed after an expression join?',o:['Use aliases and explicit select','Call collect()','Convert keys to arrays','Use date_add()'],a:0,e:'Aliases and qualified selects make the output schema deliberate.'},
+{t:'Time Zone',q:'Which configuration affects timestamp interpretation and display?',o:['spark.sql.session.timeZone','spark.executor.cores only','spark.sql.shuffle.partitions only','spark.driver.memory only'],a:0,e:'The Spark SQL session time zone controls timestamp behavior.'},
+{t:'Parsing',q:'A to_date result is null for every row. What is the most likely cause?',o:['The supplied pattern does not match the text','The DataFrame is too small','A left join was used','The month is numeric'],a:0,e:'A mismatched date pattern prevents successful parsing.'}
+];
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
+let quizSet=[],examSet=[],quizMissed=[],examMissed=[],examTimer=null,remaining=CONFIG.examMinutes*60,examStarted=false;
+function buildAttempt(){const ids=shuffle(bank.map((_,i)=>i));quizSet=ids.slice(0,CONFIG.practiceCount);examSet=ids.slice(CONFIG.practiceCount,CONFIG.practiceCount+CONFIG.examCount);renderQuestions('quizQuestions',quizSet,'quiz',true);document.getElementById('examQuestions').innerHTML='';}
+function renderQuestions(target,ids,prefix,confidence=false){const root=document.getElementById(target);root.innerHTML='';ids.forEach((idx,n)=>{const q=bank[idx],order=shuffle(q.o.map((text,i)=>({text,orig:i})));const div=document.createElement('div');div.className='question';div.dataset.bank=idx;div.innerHTML=`<p><strong>${n+1}. ${q.q}</strong> <span class="tag">${q.t}</span></p>`+order.map((x,k)=>`<label class="option"><input type="radio" name="${prefix}_${n}" value="${x.orig}"> ${x.text}</label>`).join('')+(confidence?`<div><small>Confidence: <label><input type="radio" name="conf_${n}" value="sure"> Sure</label> <label><input type="radio" name="conf_${n}" value="unsure"> Unsure</label></small></div>`:'')+`<div class="feedback"></div>`;root.appendChild(div)})}
+function grade(rootId,ids,kind){let correct=0,missed=[];const root=document.getElementById(rootId);[...root.querySelectorAll('.question')].forEach((div,n)=>{const q=bank[ids[n]],sel=div.querySelector('input[type=radio]:checked'),val=sel?+sel.value:null,ok=val===q.a;div.classList.add(ok?'correct':'wrong');if(ok)correct++;else missed.push(ids[n]);const conf=kind==='Quiz'?(div.querySelector(`input[name="conf_${n}"]:checked`)?.value||'not marked'):'';let shaky='';if(kind==='Quiz'&&ok&&conf==='unsure')shaky='<br><strong>Shaky spot:</strong> correct but unsure — revise once.';if(kind==='Quiz'&&!ok&&conf==='sure')shaky='<br><strong>Priority fix:</strong> confident but incorrect.';const fb=div.querySelector('.feedback');fb.style.display='block';fb.innerHTML=`<strong>${ok?'Correct':'Incorrect'}.</strong> Correct answer: ${q.o[q.a]}. ${q.e}${shaky}`});const pct=Math.round(correct/ids.length*100),[emoji,msg]=mood(pct);return{correct,pct,missed,html:`<div class="big-emoji">${emoji}</div><strong>${msg}</strong><br>${correct} / ${ids.length} correct — ${pct}%`}}
+buildAttempt();
+document.getElementById('submitQuiz').onclick=()=>{const r=grade('quizQuestions',quizSet,'Quiz');quizMissed=r.missed;const p=document.getElementById('quizResult');p.style.display='block';p.innerHTML=r.html;document.getElementById('retryQuiz').classList.remove('hidden');document.getElementById('wrongOnly').classList.remove('hidden');document.getElementById('submitQuiz').disabled=true;addXP(r.correct*3);if(r.pct===100)awardBadge('Perfect Score');addHistory('Practice Quiz',r.pct);playTone(r.pct)};
+document.getElementById('retryQuiz').onclick=()=>{buildAttempt();document.getElementById('quizResult').style.display='none';document.getElementById('submitQuiz').disabled=false;document.getElementById('retryQuiz').classList.add('hidden');document.getElementById('wrongOnly').classList.add('hidden')};
+document.getElementById('wrongOnly').onclick=()=>{document.querySelectorAll('#quizQuestions .question').forEach(q=>q.style.display=q.classList.contains('wrong')?'block':'none')};
+function timerText(){const m=String(Math.floor(remaining/60)).padStart(2,'0'),s=String(remaining%60).padStart(2,'0');const el=document.getElementById('timer');el.textContent=`${m}:${s}`;el.classList.toggle('warning',remaining<=60)}
+document.getElementById('startExam').onclick=()=>{examStarted=true;remaining=CONFIG.examMinutes*60;renderQuestions('examQuestions',examSet,'exam',false);document.getElementById('examQuestions').classList.remove('hidden');document.getElementById('submitExam').classList.remove('hidden');document.getElementById('startExam').disabled=true;timerText();examTimer=setInterval(()=>{remaining--;timerText();if(remaining<=0){clearInterval(examTimer);submitExam(true)}},1000)};
+function submitExam(auto=false){if(!examStarted)return;examStarted=false;clearInterval(examTimer);const r=grade('examQuestions',examSet,'Exam');examMissed=r.missed;const marks=r.correct*CONFIG.marksPerQuestion,total=examSet.length*CONFIG.marksPerQuestion,pass=r.pct>=CONFIG.passMark;const counts={};examSet.forEach((id,i)=>{const t=bank[id].t;counts[t]??={c:0,n:0};counts[t].n++;if(!r.missed.includes(id))counts[t].c++});const breakdown=Object.entries(counts).map(([t,x])=>`${t}: ${x.c}/${x.n}`).join('<br>');const p=document.getElementById('examResult');p.style.display='block';p.innerHTML=`${r.html}<br><strong>Marks:</strong> ${marks} / ${total}<br><strong>${pass?'PASS':'NOT YET PASSED'}</strong> (required ${CONFIG.passMark}%)${auto?'<br><em>Auto-submitted when time ended.</em>':''}<hr><strong>Topic breakdown</strong><br>${breakdown}`;document.getElementById('submitExam').classList.add('hidden');document.getElementById('restartExam').classList.remove('hidden');if(examMissed.length)document.getElementById('weakRetry').classList.remove('hidden');addXP(r.correct*5);if(pass)awardBadge('Exam Passed');if(r.pct===100)awardBadge('Perfect Score');let best=Math.max(get('bestExam',0),r.pct);set('bestExam',best);addHistory('Formal Exam',r.pct);playTone(r.pct)}
+document.getElementById('submitExam').onclick=()=>submitExam(false);document.getElementById('restartExam').onclick=()=>{remaining=CONFIG.examMinutes*60;timerText();examStarted=false;examSet=shuffle(examSet);document.getElementById('examQuestions').classList.add('hidden');document.getElementById('examQuestions').innerHTML='';document.getElementById('examResult').style.display='none';document.getElementById('restartExam').classList.add('hidden');document.getElementById('weakRetry').classList.add('hidden');document.getElementById('startExam').disabled=false;document.getElementById('weakArea').innerHTML=''};
+document.getElementById('weakRetry').onclick=()=>{const root=document.getElementById('weakArea');root.innerHTML='<h3>Weak-area mini quiz</h3><div id="weakQuestions"></div><button class="btn primary" id="submitWeak">Submit mini quiz</button><div class="result-panel" id="weakResult"></div>';renderQuestions('weakQuestions',examMissed,'weak',false);document.getElementById('submitWeak').onclick=()=>{const r=grade('weakQuestions',examMissed,'Weak');const p=document.getElementById('weakResult');p.style.display='block';p.innerHTML=r.html;addXP(r.correct*3);playTone(r.pct)}};
+
+// Certificate
+document.getElementById('generateCert').onclick=()=>{const name=document.getElementById('certName').value.trim()||'Learner';document.getElementById('certDisplayName').textContent=name;document.getElementById('certScore').textContent=get('bestExam',0)+'%';document.getElementById('certDate').textContent=new Date().toLocaleDateString();document.getElementById('certificate').style.display='block'};
+
+// Notes: double-click selected word, local-only
+let notes=get('notes',[]),pendingRange=null,editingId=null;const popup=document.getElementById('notePopup');function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}function renderNotes(){const list=document.getElementById('notesList');list.innerHTML=notes.length?notes.map(n=>`<div class="note-item"><strong>${n.word}</strong> — ${n.note}<br><small>${n.section} · ${n.time}</small> <button class="btn small edit-note" data-id="${n.id}">Edit</button> <button class="btn small danger del-note" data-id="${n.id}">Delete</button></div>`).join(''):'<small>No notes yet.</small>';list.querySelectorAll('.edit-note').forEach(b=>b.onclick=()=>openExisting(b.dataset.id));list.querySelectorAll('.del-note').forEach(b=>b.onclick=()=>deleteNoteById(b.dataset.id));document.getElementById('notesPanel').hidden=false}function openPopup(x,y,word,id=null){editingId=id;document.getElementById('noteWordLabel').textContent=word;document.getElementById('noteText').value=id?(notes.find(n=>n.id==id)?.note||''):'';document.getElementById('deleteNote').classList.toggle('hidden',!id);popup.style.left=Math.min(x,innerWidth-380)+'px';popup.style.top=Math.min(y,innerHeight-230)+'px';popup.style.display='block';document.getElementById('noteText').focus()}function openExisting(id){const n=notes.find(x=>x.id==id);if(n)openPopup(innerWidth/2-170,innerHeight/2-100,n.word,id)}function deleteNoteById(id){notes=notes.filter(n=>n.id!=id);set('notes',notes);document.querySelectorAll(`.note-word[data-note-id="${id}"]`).forEach(s=>s.replaceWith(document.createTextNode(s.textContent)));renderNotes();popup.style.display='none'}
+function reapplyNotes(){notes.forEach(n=>{if(document.querySelector(`.note-word[data-note-id="${n.id}"]`))return;const sec=[...document.querySelectorAll('.content-section')].find(s=>s.dataset.title===n.section)||document.getElementById('tutorialBody');const walker=document.createTreeWalker(sec,NodeFilter.SHOW_TEXT,{acceptNode(node){const p=node.parentElement;if(!p||p.closest('script,style,pre,code,button,input,textarea,select,label,a,.note-word,.question,.exercise,.flashcard'))return NodeFilter.FILTER_REJECT;return node.nodeValue.includes(n.word)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP}});const node=walker.nextNode();if(!node)return;const i=node.nodeValue.indexOf(n.word);try{const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+n.word.length);const span=document.createElement('span');span.className='note-word';span.dataset.noteId=n.id;span.title=n.note;r.surroundContents(span)}catch(e){}})}
+if(storageOK){document.getElementById('tutorialBody').addEventListener('dblclick',e=>{if(e.target.closest('button,input,textarea,select,label,a,.question,.exercise,.flashcard'))return;const sel=getSelection();const word=sel.toString().trim();if(!word||/\s/.test(word)||word.length>40)return;const range=sel.rangeCount?sel.getRangeAt(0):null;if(!range||!e.target.closest('.content-section'))return;pendingRange=range.cloneRange();openPopup(e.clientX,e.clientY,word)});document.getElementById('saveNote').onclick=()=>{const word=document.getElementById('noteWordLabel').textContent,note=document.getElementById('noteText').value.trim();if(!note)return;if(editingId){const n=notes.find(x=>x.id==editingId);if(n)n.note=note;document.querySelectorAll(`.note-word[data-note-id="${editingId}"]`).forEach(x=>x.title=note)}else{const id=Date.now().toString();const section=pendingRange?.commonAncestorContainer?.parentElement?.closest('.content-section')?.dataset.title||'Tutorial';notes.push({id,word,note,section,time:new Date().toLocaleString()});try{const span=document.createElement('span');span.className='note-word';span.dataset.noteId=id;span.title=note;pendingRange.surroundContents(span)}catch(e){}}set('notes',notes);popup.style.display='none';pendingRange=null;editingId=null;renderNotes()};document.getElementById('cancelNote').onclick=()=>popup.style.display='none';document.getElementById('deleteNote').onclick=()=>editingId&&deleteNoteById(editingId);document.getElementById('clearNotes').onclick=()=>{notes=[];set('notes',notes);document.querySelectorAll('.note-word').forEach(s=>s.replaceWith(document.createTextNode(s.textContent)));renderNotes()};document.getElementById('toggleNotes').onclick=()=>document.getElementById('notesPanel').classList.toggle('collapsed');document.getElementById('tutorialBody').addEventListener('click',e=>{const w=e.target.closest('.note-word');if(w)openExisting(w.dataset.noteId)});renderNotes();reapplyNotes();}
+
+// Export/import
+if(storageOK){document.getElementById('exportData').onclick=()=>{const payload={progress,notes,history,schedule,xp,badges,bestExam:get('bestExam',0),theme,fontSize,soundOn};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pyspark-date-joins-learning-data.json';a.click();URL.revokeObjectURL(a.href)};document.getElementById('importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);Object.entries(d).forEach(([k,v])=>set(k,v));location.reload()}catch(err){alert('Invalid learning-data JSON file.')}};r.readAsText(f)}}
+</script>
+</body>
+</html>
