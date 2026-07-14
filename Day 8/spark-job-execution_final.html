@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spark Job Execution: Jobs, Stages, Tasks, DAG</title>
+<style>
+  :root{
+    --bg:#eef2f9; --card:#ffffff; --ink:#1a2232; --muted:#5a6478;
+    --brand:#4f46e5; --brand2:#0f766e; --line:#dde5f1; --good:#15803d; --bad:#b91c1c;
+    --mark:#fde68a; --mark-line:#d97706; --shadow:0 10px 24px rgba(20,30,60,.08);
+  }
+  body.dark{
+    --bg:#0f1526; --card:#161d31; --ink:#e7ecf6; --muted:#9aa6bd; --line:#26314b;
+    --shadow:0 10px 24px rgba(0,0,0,.4);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:130px}
+  body{margin:0;font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);
+    color:var(--ink);line-height:1.65}
+  header{background:linear-gradient(135deg,#312e81,#4f46e5 60%,#0f766e);color:#fff;
+    padding:26px 22px;position:sticky;top:0;z-index:30;box-shadow:var(--shadow)}
+  header h1{margin:0 0 6px;font-size:clamp(21px,3vw,32px)}
+  header p{margin:0;color:#dbe4ff}
+  .topbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .topbar button{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.35);
+    padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px}
+  .topbar button:hover{background:rgba(255,255,255,.28)}
+  .layout{max-width:1320px;margin:0 auto;display:grid;
+    grid-template-columns:250px minmax(0,1fr) 260px;gap:16px;padding:16px}
+  nav,aside{position:sticky;top:120px;align-self:start;max-height:calc(100vh - 140px);
+    overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:14px;box-shadow:var(--shadow)}
+  nav a{display:block;color:var(--muted);text-decoration:none;padding:5px 8px;border-radius:8px;
+    font-size:13.5px}
+  nav a:hover,nav a.active{background:var(--brand);color:#fff}
+  main{min-width:0}
+  section{scroll-margin-top:130px;background:var(--card);border:1px solid var(--line);border-radius:14px;
+    padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow);transition:transform .15s}
+  section:hover{transform:translateY(-2px)}
+  h2{margin-top:0;color:var(--brand);font-size:21px}
+  h3{color:var(--brand2)}
+  code,pre{font-family:"Fira Code",Consolas,monospace}
+  pre{background:#0f172a;color:#e6edf3;padding:14px;border-radius:10px;overflow:auto;font-size:13px}
+  .codewrap{position:relative}
+  .copybtn{position:absolute;top:8px;right:8px;background:#1e293b;color:#fff;border:1px solid #334155;
+    border-radius:6px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .callout{border-left:5px solid var(--brand);background:rgba(79,70,229,.07);padding:10px 14px;
+    border-radius:8px;margin:12px 0}
+  .callout.key{border-color:#4f46e5;background:rgba(79,70,229,.08)}
+  .callout.remember{border-color:#0f766e;background:rgba(15,118,110,.08)}
+  .callout.confusion{border-color:#b45309;background:rgba(217,119,6,.09)}
+  .callout.pro{border-color:#7c3aed;background:rgba(124,58,237,.08)}
+  .callout.watch{border-color:#b91c1c;background:rgba(185,28,28,.08)}
+  .callout.hook{border-color:#db2777;background:rgba(219,39,119,.08)}
+  .callout b{display:block;margin-bottom:2px;text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{background:rgba(79,70,229,.1)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-right:6px}
+  .tag.b{background:#dcfce7;color:#166534}.tag.i{background:#fef9c3;color:#854d0e}.tag.a{background:#fee2e2;color:#991b1b}
+  .qa{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
+  /* diagram */
+  .diagram{border:1px dashed var(--line);border-radius:12px;padding:16px;margin:12px 0;background:rgba(79,70,229,.03)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:center}
+  .node{background:var(--brand);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;text-align:center;min-width:96px}
+  .node.alt{background:var(--brand2)}
+  .node.warn{background:#b45309}
+  .arrow{font-size:22px;color:var(--muted)}
+  .legend{font-size:12px;color:var(--muted);margin-top:8px}
+  /* quiz/exam */
+  .q{border:1px solid var(--line);border-radius:10px;padding:12px;margin:10px 0}
+  .q label{display:block;padding:4px 6px;border-radius:6px;cursor:pointer}
+  .q label:hover{background:rgba(79,70,229,.06)}
+  .q.correct{border-color:var(--good);background:rgba(21,128,61,.06)}
+  .q.wrong{border-color:var(--bad);background:rgba(185,28,28,.06)}
+  .expl{font-size:13px;margin-top:6px;padding:6px 8px;border-radius:6px;background:rgba(0,0,0,.03)}
+  .primary{background:var(--brand);color:#fff;border:none;padding:10px 18px;border-radius:9px;cursor:pointer;font-weight:600}
+  .ghost{background:transparent;color:var(--brand);border:1px solid var(--brand);padding:9px 16px;border-radius:9px;cursor:pointer}
+  .result{font-size:17px;font-weight:700;margin:10px 0;padding:12px;border-radius:10px;background:rgba(79,70,229,.08)}
+  .timer{font-weight:700;color:var(--brand)}
+  .timer.warn{color:var(--bad)}
+  .hidden{display:none!important}
+  /* progress */
+  .checkrow{font-size:13px;margin:4px 0}
+  .bar{height:10px;background:var(--line);border-radius:20px;overflow:hidden;margin:8px 0}
+  .bar>div{height:100%;width:0;background:var(--brand);transition:width .25s}
+  /* notes */
+
+  /* clickable diagram boxes + explain panel */
+  .svgwrap{overflow-x:auto;padding:6px 0}
+  svg.chart{width:100%;height:auto;min-width:560px}
+  .hit{cursor:pointer}
+  .hit rect{transition:filter .15s,stroke-width .15s}
+  .hit:hover rect{filter:brightness(.94);stroke-width:2.5}
+  .hit.active rect{stroke-width:3}
+  .explain{margin-top:12px;border:1px solid var(--line);border-left:5px solid var(--brand);
+    border-radius:0 10px 10px 0;padding:12px 14px;background:rgba(79,70,229,.05);min-height:64px}
+  .explain h4{margin:0 0 6px;color:var(--brand);font-size:15px}
+  .explain p{margin:0 0 6px}
+  .explain .hintline{color:var(--muted);font-style:italic}
+  .legend-row{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted);margin-top:8px}
+  .legend-row span{display:flex;align-items:center;gap:6px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .noted-word{background:var(--mark);border-bottom:2px solid var(--mark-line);border-radius:3px;
+    cursor:pointer;padding:0 1px}
+  body.dark .noted-word{color:#1a2232}
+  .noted-word.flash{animation:flashword 1.6s ease}
+  @keyframes flashword{0%,55%{background:#f59e0b;box-shadow:0 0 0 3px rgba(245,158,11,.5)}100%{background:var(--mark);box-shadow:none}}
+  .noteItem{cursor:pointer}
+  .noteItem:hover{border-color:var(--brand)}
+  .noteItem .w{text-decoration:underline dotted}
+  #notePopup{position:fixed;z-index:100;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;box-shadow:var(--shadow);padding:12px;width:250px}
+  #notePopup textarea{width:100%;min-height:60px;border:1px solid var(--line);border-radius:8px;
+    padding:6px;font-family:inherit;background:var(--bg);color:var(--ink)}
+  #notePopup .row{display:flex;gap:6px;margin-top:8px}
+  #notePopup button{flex:1;font-size:12px;padding:6px;border-radius:6px;cursor:pointer;border:1px solid var(--line)}
+  #notePopup .save{background:var(--brand);color:#fff;border:none}
+  #notePopup .del{background:#fee2e2;color:#991b1b;border:none}
+  .noteItem{border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0;font-size:12.5px}
+  .noteItem .w{font-weight:700;color:var(--brand)}
+  .noteItem .meta{color:var(--muted);font-size:11px;margin-top:3px}
+  .noteItem .acts{display:flex;gap:6px;margin-top:6px}
+  .noteItem button{font-size:11px;padding:3px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+  .sparkle{position:fixed;width:7px;height:7px;border-radius:50%;
+    background:radial-gradient(circle,#a78bfa,#4f46e5);pointer-events:none;z-index:200;opacity:.9}
+  .progress-top{position:fixed;top:0;left:0;height:4px;background:var(--brand2);z-index:40;width:0}
+  details summary{cursor:pointer;font-weight:600;color:var(--brand2)}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}nav,aside{position:static;max-height:none}}
+  @media print{
+    header,nav,aside,.topbar,.copybtn,.sparkle,#notePopup,.primary,.ghost,#soundToggle,.progress-top{display:none!important}
+    section{box-shadow:none;break-inside:avoid}
+    .expl,.q.correct,.q.wrong{display:block!important}
+  }
+</style>
+</head>
+<body>
+<div class="progress-top" id="readbar"></div>
+<header>
+  <h1>Spark Job Execution: Jobs, Stages, Tasks &amp; the DAG</h1>
+  <p>Written for beginners. Every new word is explained in simple English. Click any box in a diagram to learn more.</p>
+  <div class="topbar">
+    <button onclick="toggleTheme()">🌓 Theme</button>
+    <button onclick="changeFont(1)">A+</button>
+    <button onclick="changeFont(-1)">A−</button>
+    <button id="soundToggle" onclick="toggleMute()">🔊 Sound: On</button>
+    <button onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav id="toc">
+    <strong>Contents</strong>
+    <a href="#s1">1. What You Will Learn</a>
+    <a href="#s2">2. Why This Matters</a>
+    <a href="#s3">3. A Simple Everyday Comparison</a>
+    <a href="#s4">4. What These Words Mean ⭐</a>
+    <a href="#s5">5. The 5 Main Parts</a>
+    <a href="#s6">6. What Happens First, Second, Third</a>
+    <a href="#s7">7. Our Example, Step by Step</a>
+    <a href="#s8">8. What Sits Inside What</a>
+    <a href="#s9">9. Inside Each Stage</a>
+    <a href="#s10">10. How Data Moves + Getting Results ⭐</a>
+    <a href="#s11">11. Line by Line: Has It Run Yet?</a>
+    <a href="#s12">12. Job vs Stage vs Task</a>
+    <a href="#s13">13. Good Habits and Mistakes</a>
+    <a href="#s14">14. When Things Go Wrong</a>
+    <a href="#s15">15. Interview Questions</a>
+    <a href="#s16">16. Practice Quiz</a>
+    <a href="#s17">17. Timed Test</a>
+    <a href="#s18">18. Summary + Word List</a>
+  </nav>
+
+  <main class="tutorial">
+    <section id="s1">
+      <h2>1. What You Will Learn</h2>
+      <p>When you run Spark code, five things exist behind the scenes: the <b>Application</b>, its <b>Jobs</b>, each job's <b>DAG</b>, the <b>Stages</b> the DAG is cut into, and the <b>Tasks</b> inside each stage. This tutorial takes ONE small example and follows it all the way through, so you can see exactly what each unit is and <i>when</i> it comes into existence.</p>
+      <p><b>Learning objectives:</b></p>
+      <ul>
+        <li>Define Application, Job, DAG, Stage and Task, and say how they nest.</li>
+        <li>State precisely WHEN each one is created - and why nothing runs before the action.</li>
+        <li>Predict the number of jobs, stages and tasks for a given piece of code.</li>
+        <li>Explain why a shuffle forces a new stage.</li>
+      </ul>
+      <div class="callout key"><b>Before you start</b>Prerequisites: you can read a simple PySpark chain (map/filter/reduceByKey). Estimated time: 45-60 min. After this you can whiteboard Spark's execution model in an interview.</div>
+    </section>
+
+    <section id="s2">
+      <h2>2. Why This Matters</h2>
+      <p>Reading Spark code tells you <i>what</i> you asked for. It does not tell you <i>how</i> Spark will run it - and that gap is where every performance problem hides. Two lines of code that look almost identical can produce completely different execution: one runs as a single pass over the data, the other shuffles gigabytes across the network. The only way to tell them apart is to understand the execution model.</p>
+      <p><b>Why it matters.</b> Every Spark interview asks some version of "walk me through what happens when you call an action". Every slow job is debugged by looking at jobs, stages and tasks in the Spark UI. If you cannot say why a job has 3 stages instead of 1, or why one stage has 200 tasks, you cannot tune it. This is the foundational mental model that everything else in Spark sits on.</p>
+      <p><b>The one sentence version.</b> Transformations record a plan; an <b>action</b> triggers a <b>Job</b>; the job's <b>DAG</b> is cut into <b>Stages</b> at every shuffle; each stage becomes one <b>Task</b> per partition; executors run the tasks. Everything below is that sentence, unpacked.</p>
+      <div class="callout hook"><b>Memory hook</b>Remember it as: <b>An action starts a Job. The DAG is the plan. Shuffles cut it into Stages. Partitions cut Stages into Tasks.</b></div>
+    </section>
+
+    <section id="s3">
+      <h2>3. A Simple Everyday Comparison</h2>
+      <p>Imagine a restaurant kitchen. A customer's order arrives at the pass.</p>
+      <ol>
+        <li>The <b>head chef</b> reads the order. He is the <b>Driver</b>. He does no cooking - he plans and coordinates.</li>
+        <li>The order itself - "one full meal" - is a <b>Job</b>. It exists only because the customer <i>ordered</i>. Until someone orders, the kitchen writes nothing down and cooks nothing. That order is the <b>action</b>.</li>
+        <li>The chef writes the recipe: chop, then fry, then plate. That written plan is the <b>DAG</b>.</li>
+        <li>He notices some work cannot start until earlier work is completely finished - you cannot plate until <i>all</i> the frying is done. Those hard boundaries split the recipe into <b>Stages</b>.</li>
+        <li>Inside a stage, the work is handed to individual cooks: "you chop this crate of onions, you chop that one". Each cook with one crate is a <b>Task</b>. The cooks are <b>Executors</b>.</li>
+      </ol>
+      <p>The hard boundary in step 4 is the important one. In Spark, that boundary is a <b>shuffle</b>: a step where data must be regrouped across machines before the next step can begin.</p>
+      <p><b>Where the analogy breaks down:</b> a real chef might start prepping before the order arrives, out of habit. Spark never does. It is strictly lazy - nothing at all happens until the action.</p>
+      <div class="callout remember"><b>Remember it as</b>Order = Job &middot; Recipe = DAG &middot; Phases = Stages &middot; One cook, one crate = Task.</div>
+      <details><summary>Check yourself: the customer never orders. How much cooking happens?</summary><p>None. No action means no job, which means nothing executes - no matter how many transformations you wrote.</p></details>
+    </section>
+
+    <section id="s4">
+      <h2>4. What These Words Mean (Read This First)</h2>
+      <p>Spark uses a lot of unusual words. Each one is a simple idea with a complicated name. Read this table once, and the rest of this tutorial will make sense.</p>
+      <table>
+        <tr><th>The word</th><th>What it actually means</th><th>Everyday comparison</th></tr>
+        <tr><td><b>Driver</b></td><td>The one "boss" process that runs your code, makes the plan, and hands out work. It does not crunch the data itself.</td><td>The head chef reading the order</td></tr>
+        <tr><td><b>Executor</b></td><td>A "worker" process that actually processes the data and can hold it in memory.</td><td>A line cook at their station</td></tr>
+        <tr><td><b>Partition</b></td><td>One <b>slice</b> of your data. Big data is never one lump - it is cut into slices so many machines can work at the same time.</td><td>One crate of onions</td></tr>
+        <tr><td><b>RDD</b></td><td><b>R</b>esilient <b>D</b>istributed <b>D</b>ataset. <i>Dataset</i> = a collection of records. <i>Distributed</i> = split across machines. <i>Resilient</i> = if a piece is lost it can be rebuilt. So: <b>data spread over machines that can heal itself</b>.</td><td>Crates spread over many tables, with a copy of the recipe so any lost crate can be redone</td></tr>
+        <tr><td><b>Transformation</b></td><td>A step that makes new data from old data: <code>map</code>, <code>filter</code>, <code>reduceByKey</code>. It is <b>lazy</b> - it does not run when you write it.</td><td>Writing a line in a recipe</td></tr>
+        <tr><td><b>Action</b></td><td>A step that asks for a real answer or writes a file: <code>collect</code>, <code>count</code>, <code>save</code>. It is <b>not</b> lazy - it makes everything run.</td><td>The customer finally placing the order</td></tr>
+        <tr><td><b>Lazy</b></td><td>"Do it later, not now." Spark writes the step down and waits until an action asks for a result.</td><td>Reading the whole recipe before touching a pan</td></tr>
+        <tr><td><b>Lineage</b></td><td>The <b>list of steps Spark wrote down</b> - its memory of "how was this data made?". Spark keeps it so it can (a) plan and (b) rebuild lost data by redoing the steps.</td><td>The recipe you keep so you can cook the dish again</td></tr>
+        <tr><td><b>DAG</b></td><td><b>D</b>irected <b>A</b>cyclic <b>G</b>raph. <i>Graph</i> = boxes joined by arrows. <i>Directed</i> = arrows point one way. <i>Acyclic</i> = no loops back. So a DAG is just <b>a one-way flow chart of your steps, with no loops</b>. It is a <b>plan</b>, not the work itself.</td><td>The flow chart of cooking steps pinned to the wall</td></tr>
+        <tr><td><b>DAGScheduler</b></td><td>The part of the driver that <b>draws</b> the DAG from the lineage and <b>cuts</b> it into stages.</td><td>The chef turning the recipe into phases</td></tr>
+        <tr><td><b>TaskScheduler</b></td><td>The part of the driver that <b>hands each task to an executor</b>.</td><td>The chef calling out "you take this crate"</td></tr>
+        <tr><td><b>Shuffle</b></td><td>When data must <b>physically move across the network</b> between machines so that related records land together. Slow and expensive - the #1 cause of slow Spark jobs.</td><td>Cooks carrying ingredients across the kitchen to regroup them</td></tr>
+        <tr><td><b>Narrow</b> transformation</td><td>A step where each machine only needs <b>its own slice</b>. No data moves. (map, filter, flatMap)</td><td>Chopping your own crate at your own station</td></tr>
+        <tr><td><b>Wide</b> transformation</td><td>A step that needs data from <b>many slices</b>, so it forces a <b>shuffle</b>. (reduceByKey, groupByKey, join, distinct)</td><td>Gathering every onion in the kitchen into one bowl</td></tr>
+        <tr><td><b>Job</b></td><td>All the work Spark does to answer <b>one action</b>. One action = one job.</td><td>One customer order</td></tr>
+        <tr><td><b>Stage</b></td><td>A chunk of the plan that runs with <b>no shuffle inside it</b>. Spark cuts a new stage at every shuffle.</td><td>A phase of cooking: "all the chopping", then "all the frying"</td></tr>
+        <tr><td><b>Task</b></td><td>The smallest unit of work: <b>one task = one partition</b>. Tasks in a stage run at the same time.</td><td>One cook working one crate</td></tr>
+        <tr><td><b>Pipelining</b></td><td>Running several narrow steps as <b>one single pass</b> over the data instead of several passes. A big speed win.</td><td>Chopping, seasoning and bagging one onion before picking up the next</td></tr>
+        <tr><td><b>Cache / persist</b></td><td>Telling Spark to <b>keep</b> a computed dataset in memory so the next action does not recompute it from scratch.</td><td>Putting prepped ingredients on a shelf to reuse</td></tr>
+        <tr><td><b>reduceByKey</b></td><td>Combines all the values that share the <b>same key</b>, using a function you give it (e.g. <code>a + b</code>). With <code>(spark,1)(spark,1)(spark,1)</code> it produces <code>(spark,3)</code>. It is a <b>wide transformation</b> - it needs every copy of a key together, so it triggers a shuffle. It is <b>lazy</b> and returns a new RDD.</td><td>Gathering every "spark" sticky-note into one pile and counting the pile</td></tr>
+        <tr><td><b>Pre-combine</b> (map-side combine)</td><td>The clever trick <b>inside</b> reduceByKey: each machine adds up its <b>own</b> counts <i>before</i> the shuffle, so <code>(spark,3)</code> travels instead of three separate <code>(spark,1)</code> records. Far less data crosses the network.</td><td>Each cook counts their own crate before walking to the pile</td></tr>
+        <tr><td><b>groupByKey</b></td><td>Also groups by key, but it does <b>NOT</b> pre-combine - it ships <b>every single record</b> over the network and hands you the whole list of values. Much more expensive than reduceByKey for counting/summing.</td><td>Carrying every sticky-note across the room, then counting</td></tr>
+        <tr><td><b>reduce</b> (no "ByKey")</td><td>A completely different thing! <code>reduce</code> is an <b>ACTION</b> that squashes the <b>entire</b> dataset into <b>one single value</b> and returns it to the driver. <code>reduceByKey</code> is a <b>TRANSFORMATION</b> that returns a new RDD with one value <b>per key</b>. Interviewers love this distinction.</td><td>reduce = one grand total. reduceByKey = one total per word.</td></tr>
+        <tr><td><b>SparkSession</b> / <b>SparkContext</b></td><td>The object you create to <b>switch Spark on</b> and talk to it. <code>SparkSession</code> is the modern one; <code>SparkContext</code> is the older core one it wraps. You get one with <code>getOrCreate()</code>.</td><td>Turning on the kitchen and hiring the staff</td></tr>
+        <tr><td><b>DataFrame</b></td><td>A newer, friendlier version of an RDD: data arranged in <b>named columns</b>, like a spreadsheet or SQL table. Same execution model underneath - still jobs, stages and tasks.</td><td>A labelled table instead of a loose pile of records</td></tr>
+        <tr><td><b>Core</b></td><td>One "lane" of an executor. <b>One task runs in one core at a time.</b> An executor with 4 cores can run 4 tasks at once.</td><td>One pair of hands on a cook</td></tr>
+        <tr><td><b>Cluster manager</b></td><td>The software that hands out machines to Spark (YARN, Kubernetes, or Spark's own standalone one). The driver asks it for executors.</td><td>The agency that supplies the cooks</td></tr>
+        <tr><td><b>Local mode</b></td><td>Running Spark on <b>just your own laptop</b>, using its cores as the "cluster". Perfect for learning - no cluster needed.</td><td>Cooking alone in your home kitchen</td></tr>
+        <tr><td><b>Serialize / Deserialize</b></td><td><b>Serialize</b> = turn objects into a stream of bytes so they can be saved to disk or sent over a network. <b>Deserialize</b> = turn those bytes back into usable objects.</td><td>Flat-packing furniture to ship it, then rebuilding it</td></tr>
+        <tr><td><b>Hash</b></td><td>A function that turns any value into a number, and <b>always gives the same number for the same input</b>. That is why every copy of "spark" lands in the same shuffle bucket, on every machine.</td><td>A rule that always sends the same surname to the same queue</td></tr>
+        <tr><td><b>Partitioner</b></td><td>The rule that decides <b>which bucket each record goes to</b> during a shuffle: usually <code>hash(key) % number_of_partitions</code>.</td><td>The person directing each note to the right pile</td></tr>
+        <tr><td><b>Spill</b></td><td>When data is too big to fit in memory, Spark <b>dumps it to disk</b> to carry on. It works, but it is slow - and it shows up as "Spill" in the Spark UI as a warning sign.</td><td>Running out of counter space and stacking crates on the floor</td></tr>
+        <tr><td><b>Straggler</b></td><td>The <b>one slow task</b> holding up an entire stage while all the others have finished. Usually caused by skew.</td><td>The one cook still chopping while everyone waits</td></tr>
+        <tr><td><b>OutOfMemoryError (OOM)</b></td><td>The crash you get when a process is asked to hold more data than it has memory for. The classic cause: calling <code>collect()</code> on huge data and burying the driver.</td><td>Trying to empty a warehouse into a car boot</td></tr>
+        <tr><td><b>spark.sql.shuffle.partitions</b></td><td>The setting that decides <b>how many pieces the data is regrouped into after a shuffle</b> - and therefore how many tasks the next stage has. Defaults to <b>200</b>, which is far too many for small data.</td><td>How many piles you sort the post into</td></tr>
+        <tr><td><b>Broadcast</b></td><td>Sending a <b>small</b> dataset to every executor so a join can happen locally with <b>no shuffle</b>. A key trick for speeding up joins.</td><td>Giving every cook their own copy of the price list</td></tr>
+        <tr><td><b>Parquet</b></td><td>A compact, column-based file format Spark loves. Faster to read than CSV because it can skip columns you do not need.</td><td>A well-indexed filing cabinet vs a pile of paper</td></tr>
+        <tr><td><b>Key-value pair</b></td><td>A two-part record like <code>(word, 1)</code>. The first part is the <b>key</b>, the second the <b>value</b>. Spark groups and counts by key.</td><td>A label and a number on a sticky note</td></tr>
+        <tr><td><b>Skew</b></td><td>When one slice is <b>far bigger</b> than the others, so its task takes forever while the rest sit idle.</td><td>One cook given ten crates while everyone else got one</td></tr>
+      </table>
+
+      <h3>Every command used in this tutorial - what it does, and when it runs</h3>
+      <p>Remember the two types: a <b>transformation</b> waits (it just makes new data). An <b>action</b> runs straight away (it gives you a real answer). Here is every command in this tutorial:</p>
+      <table>
+        <tr><th>Operation</th><th>Type</th><th>Narrow / Wide</th><th>What it does, in plain English</th></tr>
+        <tr><td><code>parallelize(list)</code></td><td>Source</td><td>&mdash;</td><td>Turns a normal Python list into an RDD spread over the cluster. Handy for testing.</td></tr>
+        <tr><td><code>textFile("f.txt")</code></td><td>Source</td><td>Narrow</td><td>Reads a file into an RDD, automatically cut into <b>partitions</b> (slices).</td></tr>
+        <tr><td><code>map(f)</code></td><td>Transformation (lazy)</td><td><b>Narrow</b></td><td>Applies your function to every record. <b>One input &rarr; exactly one output.</b> <code>w</code> becomes <code>(w,1)</code>.</td></tr>
+        <tr><td><code>flatMap(f)</code></td><td>Transformation (lazy)</td><td><b>Narrow</b></td><td>Like map, but <b>one input can produce many outputs</b>, all flattened into one list. A line becomes many words.</td></tr>
+        <tr><td><code>filter(f)</code></td><td>Transformation (lazy)</td><td><b>Narrow</b></td><td>Keeps only records where your test is true. Can shrink data, never grow it.</td></tr>
+        <tr><td><code>mapPartitions(f)</code></td><td>Transformation (lazy)</td><td><b>Narrow</b></td><td>Runs your function <b>once per partition</b> instead of once per record - useful for expensive setup like opening a connection once.</td></tr>
+        <tr><td><code>reduceByKey(f)</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Combines all values sharing a key (e.g. sums them). <b>Pre-combines locally first</b>, so less data travels.</td></tr>
+        <tr><td><code>groupByKey()</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Groups values by key but does <b>NOT</b> pre-combine - ships every record. Slower; prefer reduceByKey.</td></tr>
+        <tr><td><code>sortByKey()</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Sorts records by their key. Sorting needs data compared across machines, hence a shuffle.</td></tr>
+        <tr><td><code>join(other)</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Matches records from two datasets that share a key - like a SQL join. Both sides must be regrouped.</td></tr>
+        <tr><td><code>distinct()</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Removes duplicates. To know a value is a duplicate, all copies must meet - so it shuffles.</td></tr>
+        <tr><td><code>repartition(n)</code></td><td>Transformation (lazy)</td><td><b>WIDE - shuffles</b></td><td>Changes the number of partitions with a <b>full shuffle</b>. Can go up or down. Used to fix skew or add parallelism.</td></tr>
+        <tr><td><code>coalesce(n)</code></td><td>Transformation (lazy)</td><td><b>Narrow</b></td><td><b>Only reduces</b> partitions, by merging neighbours - <b>no full shuffle</b>, so it is cheaper. Use it to write fewer output files.</td></tr>
+        <tr><td><code>cache()</code> / <code>persist()</code></td><td>Hint (lazy)</td><td>&mdash;</td><td>Tells Spark to <b>keep</b> the data in memory after it is first computed, so the next action does not redo all the work.</td></tr>
+        <tr><td><code>collect()</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Brings <b>ALL</b> records back to the driver as a normal list. <b>Dangerous on big data</b> - can crash the driver.</td></tr>
+        <tr><td><code>count()</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Returns how many records there are. Safe - only a single number travels back.</td></tr>
+        <tr><td><code>take(n)</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Returns the first <b>n</b> records. Safe - a peek, not the whole dataset.</td></tr>
+        <tr><td><code>top(n)</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Returns the <b>n largest</b> records. (take = first n; top = biggest n. Not the same!)</td></tr>
+        <tr><td><code>reduce(f)</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Squashes the <b>whole dataset into ONE value</b> (e.g. a grand total) and returns it. <b>Not the same as reduceByKey!</b></td></tr>
+        <tr><td><code>saveAsTextFile()</code> / <code>write.parquet()</code></td><td><b>ACTION</b> (runs now)</td><td>&mdash;</td><td>Each executor writes <b>its own partition straight to storage, in parallel</b>. Nothing passes through the driver - this is what real pipelines use.</td></tr>
+      </table>
+      <div class="callout remember"><b>Remember it as</b>If it gives you back <b>data you can look at</b> (a number, a list, a file) it is an <b>ACTION</b> and it runs now. If it gives you back <b>another dataset</b>, it is a <b>TRANSFORMATION</b> and it is lazy.</div>
+      <div class="callout watch"><b>Watch out - three pairs that are easy to mix up</b>
+        &bull; <code>reduce</code> (ACTION, one value) vs <code>reduceByKey</code> (TRANSFORMATION, one value per key).<br>
+        &bull; <code>take(n)</code> (the first n) vs <code>top(n)</code> (the biggest n).<br>
+        &bull; <code>repartition</code> (full shuffle, up or down) vs <code>coalesce</code> (no full shuffle, down only).</div>
+
+      <div class="callout key"><b>Key point</b>If you remember nothing else from this table: <b>DAG = a one-way flow chart of your steps</b>. <b>Lineage = the written recipe Spark keeps</b>. <b>Shuffle = data moving between machines</b>. Those three unlock everything else.</div>
+      <details><summary>Check yourself: what does the "A" in DAG stand for, and why does it matter?</summary><p><b>Acyclic</b> - meaning "no loops". The arrows never go back to an earlier step, so data always flows forward. That is what lets Spark plan the work as a clean sequence of stages.</p></details>
+    </section>
+
+    <section id="s5">
+      <h2>5. The 5 Main Parts (Technical)</h2>
+      <p>Here are the 5 parts, explained one by one. Every new word is explained as it appears.</p>
+      <ul>
+        <li><b>Application</b> - one complete Spark program: <b>one driver</b> plus its <b>executors</b>, alive from <code>getOrCreate()</code> to <code>stop()</code>. It can run many jobs.</li>
+        <li><b>Driver</b> - the process running your main code. Builds the DAG, schedules work, serves the Web UI. Does not process the bulk data itself.</li>
+        <li><b>Executor</b> - a worker process that actually runs tasks and holds cached data.</li>
+        <li><b>Job</b> - all the work triggered by <b>one action</b>. One action = one job.</li>
+        <li><b>Action</b> - an operation that returns a result or writes output (<code>collect</code>, <code>count</code>, <code>save</code>). It is the trigger.</li>
+        <li><b>Transformation</b> - a lazy operation returning a new RDD/DataFrame (<code>map</code>, <code>filter</code>). Records a step; runs nothing.</li>
+        <li><b>DAG</b> - Directed Acyclic Graph: the operator graph built from the lineage when the job starts. It is a <i>plan</i>.</li>
+        <li><b>Stage</b> - a set of tasks that can run with no shuffle between them. The DAG is cut at every shuffle.</li>
+        <li><b>Task</b> - the smallest unit of work: one task processes <b>one partition</b>.</li>
+        <li><b>Shuffle</b> - redistributing data across the network so related records land together. It is what forces a stage boundary.</li>
+        <li><b>Partition</b> - one slice of the data. The number of partitions decides the number of tasks.</li>
+      </ul>
+      <div class="callout confusion"><b>Common confusion</b>An Application is NOT a Job. The application is the container and the resources (one driver, one set of executors). A job is a unit of work <i>inside</i> it, created every time you call an action.</div>
+    </section>
+
+    <section id="s6">
+      <h2>6. What Happens First, Second, Third</h2>
+      <p>This is the most important part of the whole tutorial. <b>Click any box below</b> to see what happens at that moment.</p>
+      <div class="svgwrap">
+        <svg class="chart" viewBox="0 0 660 620" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Spark execution lifecycle from application start to executors running tasks">
+          <defs><marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#64748b" stroke-width="1.6" stroke-linecap="round"/></marker></defs>
+
+          <g class="hit" onclick="explainBox('app',this)"><rect x="150" y="20" width="360" height="54" rx="9" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+            <text x="330" y="42" text-anchor="middle" font-size="15" font-weight="700" fill="#1e293b">1. Application starts</text>
+            <text x="330" y="62" text-anchor="middle" font-size="12" fill="#475569">SparkContext / driver comes up</text></g>
+          <line x1="330" y1="74" x2="330" y2="94" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('lazy',this)"><rect x="150" y="96" width="360" height="54" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="330" y="118" text-anchor="middle" font-size="15" font-weight="700" fill="#4c1d95">2. Transformations recorded</text>
+            <text x="330" y="138" text-anchor="middle" font-size="12" fill="#5b21b6">Lineage only &mdash; NOTHING runs</text></g>
+          <line x1="330" y1="150" x2="330" y2="170" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('action',this)"><rect x="150" y="172" width="360" height="54" rx="9" fill="#ccfbf1" stroke="#0f766e" stroke-width="2.5"/>
+            <text x="330" y="194" text-anchor="middle" font-size="15" font-weight="700" fill="#134e4a">3. ACTION called: collect()</text>
+            <text x="330" y="214" text-anchor="middle" font-size="12" fill="#115e59">JOB 0 created &mdash; THE TRIGGER</text></g>
+          <line x1="330" y1="226" x2="330" y2="246" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('dag',this)"><rect x="150" y="248" width="360" height="54" rx="9" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="330" y="270" text-anchor="middle" font-size="15" font-weight="700" fill="#4c1d95">4. DAGScheduler builds the DAG</text>
+            <text x="330" y="290" text-anchor="middle" font-size="12" fill="#5b21b6">The plan, from the lineage</text></g>
+          <line x1="330" y1="302" x2="330" y2="322" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('stages',this)"><rect x="150" y="324" width="360" height="54" rx="9" fill="#ffedd5" stroke="#c2410c" stroke-width="1.5"/>
+            <text x="330" y="346" text-anchor="middle" font-size="15" font-weight="700" fill="#7c2d12">5. DAG cut at every SHUFFLE</text>
+            <text x="330" y="366" text-anchor="middle" font-size="12" fill="#9a3412">STAGES created &mdash; here, 2</text></g>
+          <line x1="330" y1="378" x2="330" y2="398" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('tasks',this)"><rect x="150" y="400" width="360" height="54" rx="9" fill="#dbeafe" stroke="#1d4ed8" stroke-width="1.5"/>
+            <text x="330" y="422" text-anchor="middle" font-size="15" font-weight="700" fill="#1e3a8a">6. TaskScheduler creates TASKS</text>
+            <text x="330" y="442" text-anchor="middle" font-size="12" fill="#1d4ed8">One task per partition &mdash; 6 total</text></g>
+          <line x1="330" y1="454" x2="330" y2="474" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar1)"/>
+
+          <g class="hit" onclick="explainBox('exec',this)"><rect x="150" y="476" width="360" height="54" rx="9" fill="#dcfce7" stroke="#15803d" stroke-width="2.5"/>
+            <text x="330" y="498" text-anchor="middle" font-size="15" font-weight="700" fill="#14532d">7. EXECUTORS run the tasks</text>
+            <text x="330" y="518" text-anchor="middle" font-size="12" fill="#166534">Real work finally happens</text></g>
+
+          <rect x="20" y="560" width="14" height="14" rx="3" fill="#ede9fe" stroke="#7c3aed"/>
+          <text x="42" y="572" font-size="12" fill="#64748b">Driver plans (no work yet)</text>
+          <rect x="230" y="560" width="14" height="14" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+          <text x="252" y="572" font-size="12" fill="#64748b">The trigger</text>
+          <rect x="360" y="560" width="14" height="14" rx="3" fill="#dcfce7" stroke="#15803d"/>
+          <text x="382" y="572" font-size="12" fill="#64748b">Actual execution</text>
+        </svg>
+      </div>
+      <div class="explain"><p class="hintline">👆 Click any box in the diagram above to see exactly what happens at that step.</p></div>
+      <div class="callout key"><b>Key point</b>Steps 1-2 execute <b>nothing</b>. The instant the action in step 3 runs, steps 4-7 fire in a cascade. That is the whole model.</div>
+    </section>
+
+    <section id="s7">
+      <h2>7. Our Example, Step by Step</h2>
+      <p>One example, used for the rest of this tutorial - counting long words in a text file:</p>
+      <div class="codewrap">
+        <button class="copybtn" onclick="copyCode(this)">Copy</button>
+        <pre>rdd = sc.textFile("words.txt")            # 4 partitions
+         .flatMap(lambda l: l.split(" "))  # split into words
+         .filter(lambda w: len(w) > 3)     # keep long words
+         .map(lambda w: (w, 1))            # pair with 1
+         .reduceByKey(lambda a, b: a + b)  # count per word  <-- SHUFFLE
+
+rdd.collect()                              # ACTION -> triggers everything</pre>
+      </div>
+      <p><b>Click any operator</b> to see whether it is narrow or wide, and what it does:</p>
+      <div class="svgwrap">
+        <svg class="chart" viewBox="0 0 660 470" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="DAG of the word count example split into two stages at the shuffle">
+          <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#64748b" stroke-width="1.6" stroke-linecap="round"/></marker></defs>
+
+          <rect x="20" y="70" width="290" height="310" rx="14" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="40" y="98" font-size="15" font-weight="700" fill="#4c1d95">STAGE 0</text>
+          <text x="40" y="118" font-size="12" fill="#5b21b6">4 tasks &mdash; one per partition</text>
+
+          <g class="hit" onclick="explainBox('textfile',this)"><rect x="40" y="132" width="250" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="165" y="159" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">textFile("words.txt")</text></g>
+          <line x1="165" y1="176" x2="165" y2="192" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+          <g class="hit" onclick="explainBox('flatmap',this)"><rect x="40" y="194" width="250" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="165" y="221" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">flatMap: split words</text></g>
+          <line x1="165" y1="238" x2="165" y2="254" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+          <g class="hit" onclick="explainBox('filter',this)"><rect x="40" y="256" width="250" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="165" y="283" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">filter: len(w) &gt; 3</text></g>
+          <line x1="165" y1="300" x2="165" y2="316" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+          <g class="hit" onclick="explainBox('map',this)"><rect x="40" y="318" width="250" height="44" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="165" y="345" text-anchor="middle" font-size="14" font-weight="700" fill="#4c1d95">map: (word, 1)</text></g>
+
+          <g class="hit" onclick="explainBox('shuffle',this)"><rect x="316" y="200" width="34" height="70" rx="6" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+            <text x="333" y="243" text-anchor="middle" font-size="18" fill="#7f1d1d">⇄</text></g>
+          <text x="333" y="192" text-anchor="middle" font-size="12" font-weight="700" fill="#b91c1c">SHUFFLE</text>
+          <line x1="292" y1="235" x2="312" y2="235" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+          <line x1="352" y1="235" x2="372" y2="235" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+          <rect x="376" y="70" width="264" height="310" rx="14" fill="none" stroke="#c2410c" stroke-width="1.5" stroke-dasharray="6 4"/>
+          <text x="396" y="98" font-size="15" font-weight="700" fill="#7c2d12">STAGE 1</text>
+          <text x="396" y="118" font-size="12" fill="#9a3412">2 tasks &mdash; one per shuffle part.</text>
+
+          <g class="hit" onclick="explainBox('reduce',this)"><rect x="396" y="180" width="224" height="44" rx="8" fill="#ffedd5" stroke="#c2410c" stroke-width="1.5"/>
+            <text x="508" y="207" text-anchor="middle" font-size="14" font-weight="700" fill="#7c2d12">reduceByKey: a + b</text></g>
+          <line x1="508" y1="224" x2="508" y2="244" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar2)"/>
+
+          <g class="hit" onclick="explainBox('collect',this)"><rect x="396" y="246" width="224" height="56" rx="8" fill="#ccfbf1" stroke="#0f766e" stroke-width="2.5"/>
+            <text x="508" y="268" text-anchor="middle" font-size="14" font-weight="700" fill="#134e4a">collect()</text>
+            <text x="508" y="288" text-anchor="middle" font-size="12" fill="#115e59">ACTION &mdash; creates Job 0</text></g>
+
+          <rect x="20" y="416" width="14" height="14" rx="3" fill="#ede9fe" stroke="#7c3aed"/>
+          <text x="42" y="428" font-size="12" fill="#64748b">Narrow &mdash; no data moves</text>
+          <rect x="230" y="416" width="14" height="14" rx="3" fill="#ffedd5" stroke="#c2410c"/>
+          <text x="252" y="428" font-size="12" fill="#64748b">Wide &mdash; shuffle</text>
+          <rect x="390" y="416" width="14" height="14" rx="3" fill="#ccfbf1" stroke="#0f766e"/>
+          <text x="412" y="428" font-size="12" fill="#64748b">Action &mdash; triggers the job</text>
+        </svg>
+      </div>
+      <div class="explain"><p class="hintline">👆 Click any operator (or the SHUFFLE box) to see what it does and why.</p></div>
+      <div class="callout watch"><b>Watch out</b>The shuffle is the <b>only</b> reason there are two stages. Remove <code>reduceByKey</code> and this job would have exactly one stage.</div>
+    </section>
+
+    <section id="s8">
+      <h2>8. What Sits Inside What</h2>
+      <p>Application contains Jobs &rarr; Jobs contain Stages &rarr; Stages contain Tasks. <b>Click any layer</b> to explore it.</p>
+      <div class="svgwrap">
+        <svg class="chart" viewBox="0 0 660 400" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Nesting of application, job, stages and tasks">
+          <g class="hit" onclick="explainBox('app',this)"><rect x="15" y="15" width="630" height="330" rx="18" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/></g>
+          <text x="36" y="42" font-size="15" font-weight="700" fill="#1e293b">APPLICATION</text>
+          <text x="36" y="60" font-size="12" fill="#475569">one driver + executors &middot; getOrCreate() to stop()</text>
+
+          <g class="hit" onclick="explainBox('job0',this)"><rect x="38" y="76" width="584" height="248" rx="14" fill="#ccfbf1" stroke="#0f766e" stroke-width="1.8"/></g>
+          <text x="58" y="102" font-size="15" font-weight="700" fill="#134e4a">JOB 0</text>
+          <text x="58" y="120" font-size="12" fill="#115e59">created by collect() &middot; one action = one job</text>
+
+          <g class="hit" onclick="explainBox('stage0',this)"><rect x="60" y="136" width="280" height="168" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.6"/></g>
+          <text x="80" y="162" font-size="14" font-weight="700" fill="#4c1d95">STAGE 0</text>
+          <text x="80" y="180" font-size="12" fill="#5b21b6">textFile, flatMap, filter, map</text>
+          <rect x="80" y="196" width="52" height="36" rx="6" fill="#c4b5fd" stroke="#6d28d9"/><text x="106" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">T0</text>
+          <rect x="140" y="196" width="52" height="36" rx="6" fill="#c4b5fd" stroke="#6d28d9"/><text x="166" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">T1</text>
+          <rect x="200" y="196" width="52" height="36" rx="6" fill="#c4b5fd" stroke="#6d28d9"/><text x="226" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">T2</text>
+          <rect x="260" y="196" width="52" height="36" rx="6" fill="#c4b5fd" stroke="#6d28d9"/><text x="286" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#3b0764">T3</text>
+          <text x="80" y="258" font-size="12" fill="#5b21b6">4 partitions &rarr; 4 tasks</text>
+          <text x="80" y="278" font-size="11" fill="#7c3aed">tasks run in parallel</text>
+
+          <g class="hit" onclick="explainBox('stage1',this)"><rect x="360" y="136" width="240" height="168" rx="12" fill="#ffedd5" stroke="#c2410c" stroke-width="1.6"/></g>
+          <text x="380" y="162" font-size="14" font-weight="700" fill="#7c2d12">STAGE 1</text>
+          <text x="380" y="180" font-size="12" fill="#9a3412">reduceByKey, collect</text>
+          <rect x="380" y="196" width="52" height="36" rx="6" fill="#fdba74" stroke="#c2410c"/><text x="406" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#7c2d12">T0</text>
+          <rect x="440" y="196" width="52" height="36" rx="6" fill="#fdba74" stroke="#c2410c"/><text x="466" y="219" text-anchor="middle" font-size="12" font-weight="700" fill="#7c2d12">T1</text>
+          <text x="380" y="258" font-size="12" fill="#9a3412">2 shuffle partitions &rarr; 2 tasks</text>
+          <text x="380" y="278" font-size="11" fill="#c2410c">waits for Stage 0 to finish</text>
+
+          <text x="15" y="370" font-size="13" font-weight="700" fill="#334155">This job = 1 job &middot; 2 stages &middot; 6 tasks. A second action would create JOB 1.</text>
+        </svg>
+      </div>
+      <div class="explain"><p class="hintline">👆 Click the Application, Job, or either Stage to see what it is.</p></div>
+    </section>
+
+    <section id="s9">
+      <h2>9. Inside Each Stage</h2>
+      <h3>Stage 0 - the narrow stage (4 tasks)</h3>
+      <p><b>Which code:</b> <code>textFile &rarr; flatMap &rarr; filter &rarr; map</code>.</p>
+      <p><b>What really happens:</b></p>
+      <ol>
+        <li>The file is already split into <b>4 partitions</b>, so Spark creates <b>4 tasks</b> - one per partition.</li>
+        <li>Each task takes its own partition and runs <b>all four operators in a single pass</b>. Because every step is narrow, a record can stream through read &rarr; split &rarr; filter &rarr; pair without ever stopping. This is called <b>pipelining</b>.</li>
+        <li>No data leaves the machine during this stage. That is what "narrow" means.</li>
+        <li>At the end, each task <b>writes</b> its <code>(word, 1)</code> pairs to local disk, bucketed by word. This is the <b>shuffle write</b>.</li>
+      </ol>
+      <p><b>Why the stage ends here:</b> the next step (<code>reduceByKey</code>) needs all copies of a word together, and they are scattered across all 4 partitions. Data must cross the network - so Spark cuts the stage.</p>
+
+      <h3>Stage 1 - the reduce stage (2 tasks)</h3>
+      <p><b>Which code:</b> <code>reduceByKey &rarr; collect</code>.</p>
+      <p><b>What really happens:</b></p>
+      <ol>
+        <li>Stage 1 <b>cannot start until Stage 0 has completely finished</b> - you cannot total a word's count until every partition has reported.</li>
+        <li>There are <b>2 shuffle partitions</b>, so Spark creates <b>2 tasks</b>.</li>
+        <li>Each task <b>shuffle reads</b> the buckets belonging to its words from every Stage 0 task.</li>
+        <li>It sums the counts per word, and <code>collect()</code> ships the small final result back to the driver.</li>
+      </ol>
+      <div class="callout pro"><b>Pro tip</b>Stages run <b>sequentially</b>; tasks within a stage run <b>in parallel</b>. That single sentence explains most Spark performance behaviour.</div>
+    </section>
+
+    <section id="s10">
+      <h2>10. How Data Moves Between Machines, and How You Get Your Results Back</h2>
+
+      <h3>Part A - Why does data have to move between machines?</h3>
+      <p>Ask yourself: <b>can one machine count how many times the word "spark" appears?</b></p>
+      <p>No - because the word "spark" is scattered. Machine 1 has 3 copies in its slice, Machine 2 has 5, Machine 3 has 2, Machine 4 has 1. No single machine can see the total. To add them up, <b>every copy of "spark" must end up on the SAME machine</b>. The only way to do that is to physically move the records across the network.</p>
+      <p><b>That movement is the shuffle.</b> It is not a mistake in Spark - there is simply no other way. Any operation that must <i>group data by key</i> (count per word, sum per city, join two tables) needs the matching records together first. That is why <code>reduceByKey</code>, <code>groupByKey</code>, <code>join</code>, <code>distinct</code> and <code>sortByKey</code> are all <b>wide</b>: they all require this regrouping.</p>
+      <div class="callout key"><b>Key point</b>A shuffle is required whenever a step needs data from <b>more than one partition at once</b>. Narrow steps (map, filter) look only at their own slice, so they never shuffle.</div>
+
+      <h3>Part B - What actually happens while the data is moving</h3>
+      <p>The shuffle happens in two halves: the <b>write side</b> (end of Stage 0) and the <b>read side</b> (start of Stage 1).</p>
+      <div class="svgwrap">
+        <svg class="chart" viewBox="0 0 660 380" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Shuffle write and shuffle read between stage 0 and stage 1">
+          <defs><marker id="ar3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#64748b" stroke-width="1.6" stroke-linecap="round"/></marker></defs>
+          <text x="20" y="24" font-size="13" font-weight="700" fill="#4c1d95">STAGE 0 tasks (shuffle WRITE)</text>
+          <text x="430" y="24" font-size="13" font-weight="700" fill="#7c2d12">STAGE 1 tasks (shuffle READ)</text>
+
+          <g class="hit" onclick="explainBox('swrite',this)"><rect x="20" y="40" width="150" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="95" y="60" text-anchor="middle" font-size="12" font-weight="700" fill="#4c1d95">Task 0</text>
+            <text x="95" y="78" text-anchor="middle" font-size="11" fill="#5b21b6">(spark,1)(data,1)...</text></g>
+          <g class="hit" onclick="explainBox('swrite',this)"><rect x="20" y="100" width="150" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="95" y="120" text-anchor="middle" font-size="12" font-weight="700" fill="#4c1d95">Task 1</text>
+            <text x="95" y="138" text-anchor="middle" font-size="11" fill="#5b21b6">(spark,1)(hive,1)...</text></g>
+          <g class="hit" onclick="explainBox('swrite',this)"><rect x="20" y="160" width="150" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="95" y="180" text-anchor="middle" font-size="12" font-weight="700" fill="#4c1d95">Task 2</text>
+            <text x="95" y="198" text-anchor="middle" font-size="11" fill="#5b21b6">(data,1)(spark,1)...</text></g>
+          <g class="hit" onclick="explainBox('swrite',this)"><rect x="20" y="220" width="150" height="50" rx="8" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+            <text x="95" y="240" text-anchor="middle" font-size="12" font-weight="700" fill="#4c1d95">Task 3</text>
+            <text x="95" y="258" text-anchor="middle" font-size="11" fill="#5b21b6">(hive,1)(data,1)...</text></g>
+
+          <g class="hit" onclick="explainBox('hash',this)"><rect x="196" y="110" width="130" height="90" rx="8" fill="#fef3c7" stroke="#b45309" stroke-width="1.5"/>
+            <text x="261" y="140" text-anchor="middle" font-size="12" font-weight="700" fill="#78350f">PARTITIONER</text>
+            <text x="261" y="160" text-anchor="middle" font-size="11" fill="#92400e">hash(word) % 2</text>
+            <text x="261" y="178" text-anchor="middle" font-size="11" fill="#92400e">decides the bucket</text></g>
+          <line x1="172" y1="155" x2="192" y2="155" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar3)"/>
+
+          <g class="hit" onclick="explainBox('buckets',this)"><rect x="350" y="70" width="130" height="56" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+            <text x="415" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#7f1d1d">Bucket 0 (disk)</text>
+            <text x="415" y="110" text-anchor="middle" font-size="11" fill="#991b1b">all "spark", "hive"</text></g>
+          <g class="hit" onclick="explainBox('buckets',this)"><rect x="350" y="186" width="130" height="56" rx="8" fill="#fee2e2" stroke="#b91c1c" stroke-width="1.5"/>
+            <text x="415" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="#7f1d1d">Bucket 1 (disk)</text>
+            <text x="415" y="226" text-anchor="middle" font-size="11" fill="#991b1b">all "data"</text></g>
+          <line x1="330" y1="140" x2="346" y2="110" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar3)"/>
+          <line x1="330" y1="170" x2="346" y2="200" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar3)"/>
+
+          <g class="hit" onclick="explainBox('sread',this)"><rect x="505" y="70" width="135" height="56" rx="8" fill="#ffedd5" stroke="#c2410c" stroke-width="1.5"/>
+            <text x="572" y="92" text-anchor="middle" font-size="12" font-weight="700" fill="#7c2d12">S1 Task 0</text>
+            <text x="572" y="110" text-anchor="middle" font-size="11" fill="#9a3412">spark=11, hive=4</text></g>
+          <g class="hit" onclick="explainBox('sread',this)"><rect x="505" y="186" width="135" height="56" rx="8" fill="#ffedd5" stroke="#c2410c" stroke-width="1.5"/>
+            <text x="572" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="#7c2d12">S1 Task 1</text>
+            <text x="572" y="226" text-anchor="middle" font-size="11" fill="#9a3412">data=9</text></g>
+          <line x1="484" y1="98" x2="501" y2="98" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar3)"/>
+          <line x1="484" y1="214" x2="501" y2="214" stroke="#64748b" stroke-width="1.6" marker-end="url(#ar3)"/>
+
+          <text x="20" y="300" font-size="12" fill="#64748b">Same word ALWAYS lands in the same bucket, because the same word always hashes to the same number.</text>
+          <text x="20" y="322" font-size="12" fill="#64748b">That is the whole trick: hashing guarantees every copy of "spark" meets in one place.</text>
+          <text x="20" y="352" font-size="12" font-weight="700" fill="#334155">👆 Click the partitioner, a bucket, or any task to see what it does.</text>
+        </svg>
+      </div>
+      <div class="explain"><p class="hintline">👆 Click any box above (Task, Partitioner, Bucket) to see exactly what happens there.</p></div>
+
+      <p><b>Step by step, what really happens:</b></p>
+      <ol>
+        <li><b>Pre-combine (map-side combine).</b> Before moving anything, each Stage 0 task adds up the counts it already has locally. If Task 0 saw "spark" three times, it sends <code>(spark, 3)</code> - not three separate <code>(spark,1)</code> records. This is why <code>reduceByKey</code> is much cheaper than <code>groupByKey</code>, which skips this step and ships every single record.</li>
+        <li><b>The partitioner decides the destination.</b> For each record, Spark computes <code>hash(key) % numberOfShufflePartitions</code>. The word "spark" always produces the same hash, so it always gets the same bucket number - <b>on every machine</b>. That is the guarantee that makes the whole thing work.</li>
+        <li><b>Shuffle write.</b> Each task writes its records into those buckets as <b>files on its local disk</b>, sorted by bucket. (Disk, not memory - so the data survives even if the reader is slow.) If the data is too big for memory while sorting, Spark <b>spills</b> it to disk, which is slow and shows up as "Spill" in the Spark UI.</li>
+        <li><b>Stage 0 must fully finish.</b> No Stage 1 task can start until <b>every</b> Stage 0 task has written its buckets - because a missing task might still hold a copy of "spark".</li>
+        <li><b>Shuffle read (the network fetch).</b> Each Stage 1 task now goes to <b>every</b> Stage 0 machine and fetches only the bucket that belongs to it. Stage 1 Task 0 pulls Bucket 0 from all four machines. This every reader pulling from every writer over the network - this is the slow part.</li>
+        <li><b>Merge and reduce.</b> The task merges everything it fetched and applies your function (<code>a + b</code>), producing the final count per word.</li>
+      </ol>
+      <div class="callout watch"><b>Watch out - why shuffles are slow</b>Look at what a shuffle costs: <b>serialize</b> records into bytes, <b>write to disk</b>, <b>send over the network</b>, <b>read back</b>, <b>deserialize</b>, and <b>merge</b>. Compare that to a narrow step, which just reads memory on the same machine. This is why "reduce the number of shuffles" is the single most repeated Spark tuning advice.</div>
+
+      <h3>Part B2 - Watch reduceByKey work on real words</h3>
+      <p>Let us actually watch <code>reduceByKey(lambda a, b: a + b)</code> transform the data, step by step. Suppose our text was: <i>"spark data spark hive data spark"</i>, split over 2 machines.</p>
+      <table>
+        <tr><th>Step</th><th>Machine 1 holds</th><th>Machine 2 holds</th><th>What happened</th></tr>
+        <tr><td>After <code>map(w &rarr; (w,1))</code></td><td><code>(spark,1) (data,1) (spark,1)</code></td><td><code>(hive,1) (data,1) (spark,1)</code></td><td>Every word paired with the number 1. Still scattered.</td></tr>
+        <tr><td><b>1. Pre-combine</b> (local)</td><td><code>(spark,2) (data,1)</code></td><td><code>(hive,1) (data,1) (spark,1)</code></td><td>Machine 1 adds its own two "spark"s <b>before</b> anything moves. Less data to send.</td></tr>
+        <tr><td><b>2. Shuffle</b> (network)</td><td colspan="2"><code>spark</code> pairs all go to one task &middot; <code>data</code> pairs all go to one task &middot; <code>hive</code> too</td><td>The partitioner uses <code>hash(word)</code> so the same word always lands together.</td></tr>
+        <tr><td><b>3. Reduce</b> (apply a+b)</td><td colspan="2"><code>spark: 2 + 1 = 3</code> &middot; <code>data: 1 + 1 = 2</code> &middot; <code>hive: 1</code></td><td>Now every copy of a word is in one place, so the sum is finally correct.</td></tr>
+        <tr><td><b>Final RDD</b></td><td colspan="2"><b><code>(spark,3) (data,2) (hive,1)</code></b></td><td>One entry per key. This is still an RDD - <code>collect()</code> then brings it to the driver.</td></tr>
+      </table>
+      <div class="callout confusion"><b>Easy to mix up: reduceByKey and reduce</b>They sound the same and do completely different things:<br>&bull; <code><b>reduceByKey</b></code> is a <b>TRANSFORMATION</b> (lazy). It gives you <b>one value per key</b>: <code>(spark,3) (data,2) (hive,1)</code>.<br>&bull; <code><b>reduce</b></code> is an <b>ACTION</b> (runs now). It squashes <b>everything into ONE value</b>, e.g. the grand total <code>6</code>.<br>If an interviewer asks "is reduceByKey an action?", the answer is <b>no</b> - it returns an RDD.</div>
+      <div class="callout pro"><b>Pro tip - why not groupByKey?</b><code>groupByKey</code> would skip step 1 entirely and ship all six <code>(word,1)</code> records across the network, then hand you lists to add up yourself. <code>reduceByKey</code> pre-combines first, so far less data travels. <b>For counting or summing, always reach for reduceByKey.</b></div>
+
+      <h3>Part C - What happens when you call collect()</h3>
+      <p><code>collect()</code> is an <b>action</b>, so first it does what every action does: it creates the Job and forces all the stages above it to run. But then it does something specific.</p>
+      <p><b>Step by step, what really happens during collect():</b></p>
+      <ol>
+        <li><b>All stages run first.</b> Stage 0, then the shuffle, then Stage 1. collect() cannot return anything until the final stage's tasks finish.</li>
+        <li><b>Each task serializes its result.</b> Every Stage 1 task takes the rows it computed and <b>serializes</b> them (converts the objects into a stream of bytes that can travel over a network).</li>
+        <li><b>Results are sent to the driver.</b> Each task sends its byte-stream back over the network to the <b>driver</b> process - the boss. Not to disk. Not to another executor. <b>To the driver's memory.</b></li>
+        <li><b>The driver deserializes and assembles.</b> The driver turns the bytes back into objects and stitches all the tasks' results together into <b>one single list</b>, in your program's memory.</li>
+        <li><b>You get a normal Python/Scala list.</b> At this moment the data has <b>left Spark entirely</b>. It is no longer distributed, no longer parallel - it is one ordinary list sitting in one process, and you can loop over it like any other list.</li>
+      </ol>
+      <div class="callout watch"><b>Watch out - why collect() crashes jobs</b>Step 4 is the danger. The driver is usually <b>one machine with a few GB of memory</b>. Your data may be <b>terabytes spread across a hundred machines</b>. Asking every machine to ship everything into one process is like emptying a warehouse into a car boot - the driver runs out of memory and dies with <code>OutOfMemoryError</code>. This is the most common beginner mistake in Spark.</div>
+      <p><b>What to do instead:</b></p>
+      <ul>
+        <li><code>take(10)</code> - fetch just a few rows for a peek. <i>Why safe:</i> it only asks for 10 records, not everything.</li>
+        <li><code>count()</code> - get just a number back. <i>Why safe:</i> one integer travels, not the data.</li>
+        <li><code>write.parquet("out/")</code> - each executor writes <b>its own partition directly to storage</b>, in parallel, and nothing passes through the driver at all. <i>This is what real pipelines do.</i></li>
+        <li><code>collect()</code> - only when the result is genuinely small, like our few word counts, or a final aggregated summary.</li>
+      </ul>
+      <div class="callout hook"><b>Memory hook</b><b>Shuffle</b> = data moves <b>sideways</b> (executor &rarr; executor), because keys must meet.<br><b>collect</b> = data moves <b>upwards</b> (executors &rarr; driver), because you asked to see it.<br>Both move data. That is exactly why both are dangerous, and why narrow steps are cheap.</div>
+      <details><summary>Check yourself: why can't Stage 1 start before Stage 0 completely finishes?</summary><p>Because a Stage 0 task that has not finished yet might still be holding copies of a word. If Stage 1 started early it could compute a wrong total. Every writer must finish before any reader can safely read.</p></details>
+    </section>
+
+    <section id="s11">
+      <h2>11. Line by Line: Has It Run Yet?: Does It Run Yet?</h2>
+      <table>
+        <tr><th>Line of code</th><th>Narrow / Wide</th><th>Does it run now?</th><th>What Spark does at this moment</th></tr>
+        <tr><td><code>textFile("words.txt")</code></td><td>Narrow (source)</td><td><b>No</b></td><td>Records the source in the lineage. Notes 4 partitions.</td></tr>
+        <tr><td><code>flatMap(split)</code></td><td>Narrow</td><td><b>No</b> - lazy</td><td>Appends a node to the lineage. Nothing computed.</td></tr>
+        <tr><td><code>filter(len &gt; 3)</code></td><td>Narrow</td><td><b>No</b> - lazy</td><td>Appends a node to the lineage.</td></tr>
+        <tr><td><code>map(w &rarr; (w,1))</code></td><td>Narrow</td><td><b>No</b> - lazy</td><td>Appends a node to the lineage.</td></tr>
+        <tr><td><code>reduceByKey(a+b)</code></td><td><b>Wide</b></td><td><b>No</b> - lazy</td><td>Appends a node, and <i>marks a shuffle dependency</i> - a future stage boundary.</td></tr>
+        <tr><td><code>collect()</code></td><td><b>ACTION</b></td><td><b>YES</b> 🔥</td><td>Creates <b>Job 0</b>. DAGScheduler builds the DAG, cuts it at the shuffle into <b>2 stages</b>, TaskScheduler creates <b>6 tasks</b>, executors run them.</td></tr>
+      </table>
+      <div class="callout confusion"><b>Common confusion</b>Five lines of code and <b>zero</b> execution - until line six. This is why an error inside your <code>map</code> lambda appears at the <code>collect()</code> line: the stack trace points at the action, not at the mistake.</div>
+      <div class="callout hook"><b>Memory hook - "when does it run?"</b>
+        <b>Job</b> created when? &rarr; when an ACTION is called.<br>
+        <b>DAG</b> built when? &rarr; when the job starts, from the lineage.<br>
+        <b>Stage</b> created when? &rarr; when the DAG is cut at a shuffle.<br>
+        <b>Task</b> created when? &rarr; one per partition, when a stage is submitted.<br>
+        <b>Anything actually executes when?</b> &rarr; only after the action. Never before.</div>
+    </section>
+
+    <section id="s12">
+      <h2>12. Job vs Stage vs Task</h2>
+      <table>
+        <tr><th>&nbsp;</th><th>Job</th><th>Stage</th><th>Task</th></tr>
+        <tr><td>Created by</td><td>An action</td><td>A shuffle boundary</td><td>A partition</td></tr>
+        <tr><td>How many?</td><td>= number of actions</td><td>= shuffles + 1</td><td>= partitions in that stage</td></tr>
+        <tr><td>Runs</td><td>Start to finish</td><td><b>Sequentially</b> (in order)</td><td><b>In parallel</b> within a stage</td></tr>
+        <tr><td>In our example</td><td>1</td><td>2</td><td>6 (4 + 2)</td></tr>
+        <tr><td>Where you see it</td><td>Jobs tab</td><td>Stages tab</td><td>Inside a stage</td></tr>
+      </table>
+      <p><b>How to keep the words straight:</b> if you are talking about <i>what the user asked for</i>, say <b>job</b>. If you are talking about <i>a phase of work bounded by data movement</i>, say <b>stage</b>. If you are talking about <i>one machine chewing one slice of data</i>, say <b>task</b>. Interviewers listen for exactly this precision.</p>
+    </section>
+
+    <section id="s13">
+      <h2>13. Good Habits and Common Mistakes</h2>
+      <p><b>Do:</b></p>
+      <ul>
+        <li>Count your actions before you run. <i>Why:</i> each one is a whole extra job that recomputes the chain.</li>
+        <li><code>cache()</code> a DataFrame you reuse across actions. <i>Why:</i> without it, the second action re-runs every stage from scratch.</li>
+        <li>Filter early in the chain. <i>Why:</i> less data reaches the shuffle, which is the expensive part.</li>
+        <li>Count your shuffles to predict your stages. <i>Why:</i> stages = shuffles + 1; fewer shuffles is nearly always faster.</li>
+      </ul>
+      <p><b>Common mistakes:</b></p>
+      <ul>
+        <li>Expecting a transformation to run where you wrote it. <i>Why bad:</i> it is lazy - errors and cost appear at the action.</li>
+        <li>Calling <code>collect()</code> on large data. <i>Why bad:</i> the whole dataset is pulled into driver memory and can crash it.</li>
+        <li>Calling several actions on an uncached chain. <i>Why bad:</i> you silently recompute everything, once per action.</li>
+        <li>Leaving <code>spark.sql.shuffle.partitions</code> at 200 on small data. <i>Why bad:</i> 200 near-empty tasks add pure overhead.</li>
+      </ul>
+    </section>
+
+    <section id="s14">
+      <h2>14. When Things Go Wrong</h2>
+      <table>
+        <tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr>
+        <tr><td>Error points at <code>collect()</code>, not my lambda</td><td>Lazy evaluation - it ran at the action</td><td>Look at the transformations feeding that action</td></tr>
+        <tr><td>Job has far more stages than expected</td><td>Unintended shuffles (groupBy, join, distinct)</td><td>Check the DAG; remove or combine wide ops</td></tr>
+        <tr><td>Same chain runs twice</td><td>Two actions, no cache</td><td><code>cache()</code> before the first action</td></tr>
+        <tr><td>Stage has 200 tiny tasks</td><td>Default shuffle partitions on small data</td><td>Lower <code>spark.sql.shuffle.partitions</code></td></tr>
+        <tr><td>One task takes far longer than the rest</td><td>Data skew - one oversized partition</td><td>Salt the key, repartition, or broadcast join</td></tr>
+        <tr><td>Driver out of memory</td><td><code>collect()</code> on big data</td><td>Aggregate first, or write to storage</td></tr>
+      </table>
+    </section>
+
+    <section id="s15">
+      <h2>15. Interview Questions (15)</h2>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is a Spark application?</b><br>One complete program: a driver plus its executors, alive from getOrCreate() to stop(). It can run many jobs - one per action.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What creates a job?</b><br>An action (collect, count, save). One action equals one job. Transformations create no job.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is a task?</b><br>The smallest unit of work: one task processes exactly one partition, running on one executor core.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is a stage?</b><br>A group of tasks that can run without any shuffle between them. Stages are separated by shuffle boundaries.</div>
+      <div class="qa"><span class="tag b">Beginner</span><b>What is the DAG?</b><br>The Directed Acyclic Graph of operations, built by the DAGScheduler from the recorded lineage when the job starts. It is the execution plan.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>Why are transformations lazy?</b><br>So Spark sees the whole plan before running it: it can push filters earlier, pipeline narrow steps into one pass, skip unneeded work, and rebuild lost partitions from lineage.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>How many stages will my job have?</b><br>Number of shuffles + 1. Each wide transformation (groupByKey, reduceByKey, join, distinct, repartition) adds a boundary.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>How many tasks will a stage have?</b><br>One per partition in that stage. Input partitions for the first stage; spark.sql.shuffle.partitions for a shuffle stage.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>Do stages run in parallel?</b><br>No - dependent stages run sequentially, because a stage needs the previous stage's shuffle output. Tasks *within* a stage run in parallel.</div>
+      <div class="qa"><span class="tag i">Intermediate</span><b>Narrow vs wide dependency?</b><br>Narrow: each output partition depends on one input partition, no data movement (map, filter). Wide: output depends on many input partitions, forcing a shuffle (reduceByKey, join).</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Walk me through what happens when I call collect().</b><br>A job is created. The DAGScheduler builds the DAG from the lineage and cuts it at each shuffle into stages. The TaskScheduler creates one task per partition and sends them to executors. Stage 0's tasks run in parallel, write shuffle files, and only when all finish does Stage 1 read them, reduce, and return results to the driver.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Why does calling two actions run everything twice?</b><br>Each action creates its own job, and jobs recompute from lineage. Caching the DataFrame after the first action lets the second reuse the materialised result instead of recomputing the stages.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>What are DAGScheduler and TaskScheduler?</b><br>The DAGScheduler is driver-side and stage-oriented: it builds the DAG and splits it into stages at shuffles. The TaskScheduler takes each stage's tasks and assigns them to executors.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>How does the DAG give fault tolerance?</b><br>The DAG records the lineage - the recipe for each partition. If a partition is lost, Spark recomputes just that one from its parents rather than replicating all data.</div>
+      <div class="qa"><span class="tag a">Advanced</span><b>Can one action create several jobs?</b><br>Usually one, but some operations internally trigger extra jobs (for example, certain sorts or file-listing steps), so the UI may show more than you expect.</div>
+    </section>
+
+    <section id="s16">
+      <h2>16. Practice Quiz</h2>
+      <p>Answer all questions, then press Submit at the bottom.</p>
+      <div id="quizBox"></div>
+      <button class="primary" onclick="submitQuiz()">Submit Quiz</button>
+      <button class="ghost" onclick="resetQuiz()">Retry</button>
+      <div id="quizResult" class="result hidden"></div>
+    </section>
+
+    <section id="s17">
+      <h2>17. Timed Test</h2>
+      <p>15 questions &middot; 1 mark each &middot; <span id="examTimerLabel" class="timer">15:00</span> &middot; Pass mark 60%.</p>
+      <button class="primary" id="startBtn" onclick="startExam()">Start Test</button>
+      <div id="examBox" class="hidden"></div>
+      <button class="primary hidden" id="examSubmitBtn" onclick="submitExam()">Submit Exam</button>
+      <button class="ghost" id="restartBtn" onclick="restartExam()">Restart Exam</button>
+      <div id="examResult" class="result hidden"></div>
+    </section>
+
+    <section id="s18">
+      <h2>18. Summary + Word List</h2>
+      <p>Transformations record a plan. An <b>action</b> creates a <b>Job</b>. The <b>DAG</b> is built from the lineage, then cut into <b>Stages</b> at every shuffle. Each stage becomes one <b>Task</b> per partition, and executors finally do the work.</p>
+      <p><b>Quick-revision cheat list:</b></p>
+      <ul>
+        <li><b>Application</b> = driver + executors, getOrCreate() &rarr; stop(). Contains many jobs.</li>
+        <li><b>Job</b> created by an <b>action</b>. Jobs = number of actions.</li>
+        <li><b>DAG</b> built by the DAGScheduler when the job starts. It is the plan.</li>
+        <li><b>Stages</b> = shuffles + 1. They run <b>sequentially</b>.</li>
+        <li><b>Tasks</b> = one per partition. They run <b>in parallel</b>.</li>
+        <li>Nothing executes before the action. Ever.</li>
+        <li>Our example: <b>1 job &middot; 2 stages &middot; 6 tasks</b> (4 + 2).</li>
+        <li>Narrow = pipelined in one pass. Wide = shuffle = new stage.</li>
+      </ul>
+      <p><b>Word list - every new word from this tutorial, in one place:</b></p>
+      <ul>
+        <li><b>Action</b> - a step that produces a real result and triggers execution (collect, count, save).</li>
+        <li><b>Application</b> - one whole Spark program: a driver plus its executors.</li>
+        <li><b>Cache</b> - keep a computed dataset in memory so later actions do not recompute it.</li>
+        <li><b>DAG</b> - Directed Acyclic Graph: a one-way flow chart of your steps, with no loops. Spark's plan.</li>
+        <li><b>DAGScheduler</b> - the driver component that builds the DAG and cuts it into stages.</li>
+        <li><b>Driver</b> - the boss process: runs your code, plans, schedules, serves the Web UI.</li>
+        <li><b>Executor</b> - a worker process that runs tasks and holds data.</li>
+        <li><b>Job</b> - all the work triggered by one action.</li>
+        <li><b>Key-value pair</b> - a record like (word, 1); the key is grouped on, the value is combined.</li>
+        <li><b>Lazy</b> - Spark records a step but does not run it until an action demands a result.</li>
+        <li><b>Lineage</b> - the recorded list of steps used to build a dataset; the "recipe" Spark keeps for planning and for rebuilding lost data.</li>
+        <li><b>Narrow transformation</b> - needs only its own partition; no data moves (map, filter, flatMap).</li>
+        <li><b>Partition</b> - one slice of the data; one task processes one partition.</li>
+        <li><b>Pipelining</b> - running several narrow steps in a single pass over the data.</li>
+        <li><b>RDD</b> - Resilient Distributed Dataset: data spread across machines that can rebuild itself.</li>
+        <li><b>reduce</b> - an ACTION that combines the whole dataset into one single value returned to the driver.</li>
+        <li><b>reduceByKey</b> - a lazy WIDE TRANSFORMATION that combines all values sharing a key (e.g. sums them), pre-combining on each machine before the shuffle. Returns a new RDD, one entry per key.</li>
+        <li><b>groupByKey</b> - groups values by key WITHOUT pre-combining, so it shuffles every record. Prefer reduceByKey for aggregations.</li>
+        <li><b>Pre-combine (map-side combine)</b> - adding up values locally before the shuffle so less data travels; what makes reduceByKey efficient.</li>
+        <li><b>Shuffle</b> - moving data across the network so related records land together; expensive.</li>
+        <li><b>Shuffle read / write</b> - the data a task writes for, or collects after, a shuffle.</li>
+        <li><b>Skew</b> - one partition far bigger than the rest, causing one slow straggler task.</li>
+        <li><b>Stage</b> - a chunk of the DAG with no shuffle inside it. Stages run in order.</li>
+        <li><b>Task</b> - the smallest unit of work: one partition, one executor core. Tasks run in parallel.</li>
+        <li><b>TaskScheduler</b> - the driver component that assigns tasks to executors.</li>
+        <li><b>Transformation</b> - a lazy step producing new data (map, filter, reduceByKey).</li>
+        <li><b>Broadcast</b> - sending a small dataset to every executor so a join needs no shuffle.</li>
+        <li><b>Cluster manager</b> - the software (YARN, Kubernetes, standalone) that gives Spark its machines.</li>
+        <li><b>coalesce(n)</b> - reduce partitions without a full shuffle (down only). Cheaper than repartition.</li>
+        <li><b>collect()</b> - ACTION: brings ALL records to the driver. Dangerous on big data.</li>
+        <li><b>Core</b> - one lane of an executor; one task runs in one core.</li>
+        <li><b>count()</b> - ACTION: returns the number of records. Safe.</li>
+        <li><b>DataFrame</b> - RDD data with named columns, like a table. Same jobs/stages/tasks underneath.</li>
+        <li><b>Deserialize</b> - turn bytes back into usable objects.</li>
+        <li><b>distinct()</b> - WIDE transformation: removes duplicates; shuffles.</li>
+        <li><b>filter(f)</b> - NARROW transformation: keeps records passing a test.</li>
+        <li><b>flatMap(f)</b> - NARROW transformation: one input, many outputs, flattened.</li>
+        <li><b>Hash</b> - a function turning a value into a number, always the same for the same input; used by the partitioner.</li>
+        <li><b>join(other)</b> - WIDE transformation: matches records from two datasets by key; shuffles.</li>
+        <li><b>Local mode</b> - running Spark on just your own machine.</li>
+        <li><b>map(f)</b> - NARROW transformation: one input, exactly one output.</li>
+        <li><b>mapPartitions(f)</b> - NARROW transformation: runs once per partition, not per record.</li>
+        <li><b>OutOfMemoryError (OOM)</b> - crash when a process is given more data than it has memory for; classic cause is collect() on big data.</li>
+        <li><b>Parquet</b> - a compact columnar file format Spark reads efficiently.</li>
+        <li><b>Partitioner</b> - the rule deciding which shuffle bucket a record goes to: hash(key) % numPartitions.</li>
+        <li><b>repartition(n)</b> - WIDE transformation: change partition count via a full shuffle (up or down).</li>
+        <li><b>Serialize</b> - turn objects into bytes so they can be stored or sent over a network.</li>
+        <li><b>sortByKey()</b> - WIDE transformation: sorts by key; shuffles.</li>
+        <li><b>spark.sql.shuffle.partitions</b> - setting controlling how many partitions (and tasks) a shuffle produces. Default 200.</li>
+        <li><b>SparkSession / SparkContext</b> - the object that starts Spark; created with getOrCreate().</li>
+        <li><b>Spill</b> - Spark dumping data to disk when it will not fit in memory; slow, a red flag in the UI.</li>
+        <li><b>Straggler</b> - the one slow task holding up a stage, usually caused by skew.</li>
+        <li><b>take(n)</b> - ACTION: returns the first n records (top(n) returns the largest n).</li>
+        <li><b>textFile(path)</b> - reads a file into an RDD, split into partitions.</li>
+        <li><b>top(n)</b> - ACTION: returns the n largest records.</li>
+        <li><b>Wide transformation</b> - needs many partitions, so it forces a shuffle (reduceByKey, join).</li>
+      </ul>
+      <p><b>What to learn next:</b> reading the Spark UI DAG &rarr; fixing skew (salting, broadcast joins) &rarr; tuning shuffle partitions &rarr; caching &amp; persistence.</p>
+    </section>
+  </main>
+
+  <aside>
+    <strong>Preparation</strong>
+    <div class="bar"><div id="progFill"></div></div>
+    <div id="progCount" style="font-size:12px;color:var(--muted)">0 / 16 prepared</div>
+    <div id="progList"></div>
+    <button class="ghost" style="width:100%;margin-top:8px;font-size:12px" onclick="resetProgress()">Reset progress</button>
+    <hr style="border:none;border-top:1px solid var(--line);margin:14px 0">
+    <details id="notesWrap" open>
+      <summary>My Notes</summary>
+      <p style="font-size:11.5px;color:var(--muted)">💡 Double-click any word in the lesson text to attach a note to it.</p>
+      <p id="storageHint" style="display:none;font-size:11.5px;color:#b45309;background:rgba(217,119,6,.1);padding:6px;border-radius:6px">Storage is blocked in this browser, so notes work now but won't be saved after you close the page.</p>
+      <div id="notesList"></div>
+      <button class="ghost" style="width:100%;margin-top:6px;font-size:12px" onclick="clearAllNotes()">Clear all notes</button>
+    </details>
+  </aside>
+</div>
+
+<div id="notePopup" class="hidden">
+  <textarea id="noteText" placeholder="Type your note..."></textarea>
+  <div class="row">
+    <button class="save" onclick="saveNote()">Save</button>
+    <button class="del" onclick="deleteCurrentNote()">Delete</button>
+    <button onclick="closePopup()">Cancel</button>
+  </div>
+</div>
+
+<script>
+/* ---------- storage (feature-detected, all wrapped) ---------- */
+var STORAGE_OK=false;
+try{var _k="__t"+Date.now();localStorage.setItem(_k,"1");localStorage.getItem(_k);localStorage.removeItem(_k);STORAGE_OK=true;}catch(e){STORAGE_OK=false;}
+function sGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function sSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function sDel(k){try{localStorage.removeItem(k);}catch(e){}}
+function esc(s){return s.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");}
+
+/* ---------- theme / font / sound ---------- */
+function toggleTheme(){document.body.classList.toggle("dark");sSet("theme",document.body.classList.contains("dark")?"dark":"light");}
+if(sGet("theme")==="dark")document.body.classList.add("dark");
+var fontStep=0;
+function changeFont(d){fontStep=Math.max(-2,Math.min(4,fontStep+d));document.querySelector("main").style.fontSize=(16+fontStep*1.5)+"px";}
+var muted=false;
+function toggleMute(){muted=!muted;document.getElementById("soundToggle").innerText=muted?"🔇 Sound: Off":"🔊 Sound: On";}
+function beep(freqs){if(muted)return;try{var Ctx=window.AudioContext||window.webkitAudioContext;if(!Ctx)return;var ctx=new Ctx();var t=ctx.currentTime;freqs.forEach(function(f){var o=ctx.createOscillator();var g=ctx.createGain();o.frequency.value=f;o.connect(g);g.connect(ctx.destination);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.2,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);o.start(t);o.stop(t+0.24);t+=0.16;});}catch(e){}}
+function soundFor(p){if(p>=100)beep([523,659,784,1047]);else if(p>=90)beep([659,880]);else if(p>=75)beep([587,740]);else if(p>=60)beep([494,494]);else beep([294,247]);}
+function mood(p){if(p>=100)return["🤩🎉","Perfect! Flawless run."];if(p>=90)return["😄","Excellent - interview-ready!"];if(p>=75)return["🙂","Well done - solid grasp."];if(p>=60)return["😌","Good - revise the misses."];return["💪","Needs focus - review & retry."];}
+
+/* ---------- copy code ---------- */
+function copyCode(btn){var code=btn.nextElementSibling.innerText;navigator.clipboard.writeText(code).then(function(){var o=btn.innerText;btn.innerText="Copied!";setTimeout(function(){btn.innerText=o;},900);});}
+
+/* ---------- progress checklist ---------- */
+var sections=[];
+function buildProgress(){
+  sections=Array.prototype.slice.call(document.querySelectorAll("main section"));
+  var list=document.getElementById("progList");list.innerHTML="";
+  sections.forEach(function(sec,i){
+    var title=(sec.querySelector("h2")||{}).innerText||("Section "+(i+1));
+    var saved=STORAGE_OK && sGet("prep"+i)==="1";
+    var row=document.createElement("label");row.className="checkrow";
+    row.innerHTML='<input type="checkbox" '+(saved?"checked":"")+' data-i="'+i+'"> '+title;
+    row.querySelector("input").addEventListener("change",function(){sSet("prep"+i,this.checked?"1":"0");updateProg();});
+    list.appendChild(row);
+  });
+  updateProg();
+}
+function updateProg(){
+  var boxes=document.querySelectorAll("#progList input");
+  var done=0;boxes.forEach(function(b){if(b.checked)done++;});
+  document.getElementById("progFill").style.width=(boxes.length?done/boxes.length*100:0)+"%";
+  document.getElementById("progCount").innerText=done+" / "+boxes.length+" prepared";
+}
+function resetProgress(){sections.forEach(function(_,i){sDel("prep"+i);});buildProgress();}
+
+/* ---------- QUIZ (15) ---------- */
+var quiz=[
+ {q:"What creates a Spark Job?",o:["A transformation","An action","A partition","An executor"],a:1,e:"An action (collect/count/save) triggers a job. One action = one job."},
+ {q:"How many jobs does one action create?",o:["Zero","One","Two","One per partition"],a:1,e:"One action creates exactly one job."},
+ {q:"When is the DAG built?",o:["When you write the code","When the job starts","At app shutdown","Never"],a:1,e:"The DAGScheduler builds it from the lineage when the job starts."},
+ {q:"Stages are separated by…",o:["Every operator","Shuffle boundaries","Comments","Actions"],a:1,e:"The DAG is cut at each shuffle (wide dependency)."},
+ {q:"How many tasks does a stage have?",o:["One","One per partition","One per executor","200 always"],a:1,e:"One task per partition of that stage."},
+ {q:"Our example has one shuffle. How many stages?",o:["1","2","3","6"],a:1,e:"Stages = shuffles + 1, so 2."},
+ {q:"4 input partitions + 2 shuffle partitions = how many tasks total?",o:["4","2","6","8"],a:2,e:"4 tasks in Stage 0 plus 2 in Stage 1 = 6."},
+ {q:"Do transformations execute when written?",o:["Yes, immediately","No, they are lazy","Only map does","Only on cache"],a:1,e:"They only record lineage; execution waits for an action."},
+ {q:"Tasks within a single stage run…",o:["Sequentially","In parallel","Never","On the driver"],a:1,e:"Tasks in a stage run in parallel on executors."},
+ {q:"Dependent stages run…",o:["In parallel","Sequentially, in order","Randomly","Only once"],a:1,e:"Stage 1 needs Stage 0's shuffle output, so it waits."},
+ {q:"Which is a WIDE transformation?",o:["map","filter","reduceByKey","flatMap"],a:2,e:"reduceByKey shuffles data across the network."},
+ {q:"Which process builds the DAG and splits stages?",o:["TaskScheduler","DAGScheduler","Executor","Cluster manager"],a:1,e:"The DAGScheduler is stage-oriented and driver-side."},
+ {q:"What is an Application in Spark?",o:["One task","A driver plus its executors","One stage","A partition"],a:1,e:"It is the whole program: one driver and its executors."},
+ {q:"Why does an error in a map lambda appear at collect()?",o:["A Spark bug","Because of lazy evaluation","Bad syntax","Wrong Java"],a:1,e:"The transformation only runs when the action triggers it."},
+ {q:"Calling collect() twice on an uncached chain…",o:["Reuses results","Recomputes everything twice","Fails","Creates one job"],a:1,e:"Each action is a new job that recomputes from lineage - cache to avoid it."}
+];
+function renderQuiz(){
+  var box=document.getElementById("quizBox");box.innerHTML="";
+  quiz.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="q"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="quiz'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function submitQuiz(){
+  var score=0;
+  quiz.forEach(function(item,i){
+    var sel=document.querySelector('input[name="quiz'+i+'"]:checked');
+    var d=document.getElementById("q"+i);
+    var ok=sel&&Number(sel.value)===item.a;
+    if(ok)score++;
+    d.classList.remove("correct","wrong");
+    d.classList.add(ok?"correct":"wrong");
+    var old=d.querySelector(".expl");if(old)old.remove();
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML=(ok?"<b style='color:var(--good)'>Correct.</b> ":"<b style='color:var(--bad)'>Correct answer: "+item.o[item.a]+".</b> ")+item.e;
+    d.appendChild(ex);
+  });
+  var pct=Math.round(score/quiz.length*100);var m=mood(pct);
+  var r=document.getElementById("quizResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Quiz score: "+score+"/"+quiz.length+" ("+pct+"%) — "+m[1];
+  soundFor(pct);
+}
+function resetQuiz(){
+  document.querySelectorAll("#quizBox input").forEach(function(x){x.checked=false;});
+  document.querySelectorAll("#quizBox .q").forEach(function(d){d.classList.remove("correct","wrong");var e=d.querySelector(".expl");if(e)e.remove();});
+  document.getElementById("quizResult").classList.add("hidden");
+}
+
+/* ---------- EXAM (15, timed) ---------- */
+var exam=[
+ {q:"Transformations execute immediately when written.",o:["True","False"],a:1,e:"False: they are lazy and only record lineage."},
+ {q:"An action is what creates a Job.",o:["True","False"],a:0,e:"True: one action = one job."},
+ {q:"The number of stages equals the number of shuffles plus one.",o:["True","False"],a:0,e:"True: each shuffle adds a stage boundary."},
+ {q:"A task processes exactly one partition.",o:["True","False"],a:0,e:"True: one task per partition."},
+ {q:"Stages that depend on each other run in parallel.",o:["True","False"],a:1,e:"False: they run sequentially; only tasks within a stage are parallel."},
+ {q:"The DAG is a plan, not execution itself.",o:["True","False"],a:0,e:"True: it is the operator graph the scheduler uses."},
+ {q:"A Spark Application can run many jobs.",o:["True","False"],a:0,e:"True: one job per action, over the app's lifetime."},
+ {q:"filter is a wide transformation.",o:["True","False"],a:1,e:"False: filter is narrow - no data movement."},
+ {q:"The DAGScheduler assigns individual tasks to executors.",o:["True","False"],a:1,e:"False: that is the TaskScheduler's role."},
+ {q:"Narrow operations can be pipelined into a single pass within one task.",o:["True","False"],a:0,e:"True: that is why Stage 0 runs four operators in one pass."},
+ {q:"Stage 1 can begin before Stage 0 finishes.",o:["True","False"],a:1,e:"False: it needs Stage 0's complete shuffle output."},
+ {q:"Caching can prevent recomputation across multiple actions.",o:["True","False"],a:0,e:"True: without it, each action recomputes from lineage."},
+ {q:"Lineage lets Spark rebuild a lost partition without full replication.",o:["True","False"],a:0,e:"True: it recomputes just that partition from its parents."},
+ {q:"Writing five transformations and no action executes nothing.",o:["True","False"],a:0,e:"True: no action means no job, so nothing runs."},
+ {q:"The driver processes the bulk of the data itself.",o:["True","False"],a:1,e:"False: executors do the work; the driver plans and coordinates."}
+];
+var examStarted=false,examTimer=null,secondsLeft=900;
+function renderExam(){
+  var box=document.getElementById("examBox");box.innerHTML="";
+  exam.forEach(function(item,i){
+    var d=document.createElement("div");d.className="q";d.id="e"+i;
+    d.innerHTML="<strong>Q"+(i+1)+". "+item.q+"</strong>"+item.o.map(function(op,j){
+      return '<label class="no-note"><input type="radio" name="exam'+i+'" value="'+j+'"> '+op+'</label>';
+    }).join("");
+    box.appendChild(d);
+  });
+}
+function fmt(s){var m=Math.floor(s/60),x=s%60;return m+":"+(x<10?"0":"")+x;}
+function startExam(){
+  if(examStarted)return;examStarted=true;secondsLeft=900;
+  renderExam();
+  document.getElementById("examBox").classList.remove("hidden");
+  document.getElementById("examSubmitBtn").classList.remove("hidden");
+  document.getElementById("startBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  var lbl=document.getElementById("examTimerLabel");lbl.classList.remove("warn");
+  examTimer=setInterval(function(){
+    secondsLeft--;lbl.innerText=fmt(secondsLeft);
+    if(secondsLeft<=60)lbl.classList.add("warn");
+    if(secondsLeft<=0)submitExam();
+  },1000);
+}
+function submitExam(){
+  if(!examStarted)return;
+  clearInterval(examTimer);examStarted=false;
+  var score=0;
+  exam.forEach(function(item,i){
+    var sel=document.querySelector('input[name="exam'+i+'"]:checked');
+    var chosen=sel?Number(sel.value):-1;
+    var ok=chosen===item.a;if(ok)score++;
+    var d=document.getElementById("e"+i);d.classList.add(ok?"correct":"wrong");
+    var ex=document.createElement("div");ex.className="expl";
+    ex.innerHTML="Your answer: <b>"+(chosen>=0?item.o[chosen]:"—")+"</b> · Correct: <b>"+item.o[item.a]+"</b><br>"+item.e;
+    d.appendChild(ex);
+  });
+  var total=exam.length,pct=Math.round(score/total*100),m=mood(pct);
+  var pass=pct>=60?"<span style='color:var(--good)'>PASS</span>":"<span style='color:var(--bad)'>FAIL</span>";
+  var r=document.getElementById("examResult");r.classList.remove("hidden");
+  r.innerHTML=m[0]+" Marks: "+score+" / "+total+" · "+pct+"% · "+pass+" — "+m[1];
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  soundFor(pct);
+  if(STORAGE_OK){var h=sGet("examHist")||"";sSet("examHist",h+new Date().toLocaleString()+": "+pct+"%\n");}
+}
+function restartExam(){
+  clearInterval(examTimer);examStarted=false;secondsLeft=900;
+  document.getElementById("examBox").innerHTML="";
+  document.getElementById("examBox").classList.add("hidden");
+  document.getElementById("examSubmitBtn").classList.add("hidden");
+  document.getElementById("examResult").classList.add("hidden");
+  document.getElementById("startBtn").classList.remove("hidden");
+  document.getElementById("examTimerLabel").innerText="15:00";
+  document.getElementById("examTimerLabel").classList.remove("warn");
+}
+
+/* ---------- DOUBLE-CLICK-WORD NOTES ---------- */
+var notes=[];
+function loadNotes(){if(!STORAGE_OK)return;try{notes=JSON.parse(sGet("notes")||"[]");}catch(e){notes=[];}}
+function persistNotes(){sSet("notes",JSON.stringify(notes));}
+var activeId=null;
+
+function occIndex(section,range,word){
+  var pre=document.createRange();pre.selectNodeContents(section);
+  try{pre.setEnd(range.startContainer,range.startOffset);}catch(e){return 0;}
+  var before=pre.toString();
+  var m=before.match(new RegExp("\\b"+esc(word)+"\\b","g"));
+  return m?m.length:0;
+}
+function wrapNth(section,word,index,id){
+  var walker=document.createTreeWalker(section,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+    if(!n.nodeValue||!n.parentElement)return NodeFilter.FILTER_REJECT;
+    if(n.parentElement.closest("script,style"))return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;
+  }});
+  var re=new RegExp("\\b"+esc(word)+"\\b","g"),count=0,node;
+  while((node=walker.nextNode())){
+    re.lastIndex=0;var m;
+    while((m=re.exec(node.nodeValue))){
+      if(count===index){
+        var r=document.createRange();r.setStart(node,m.index);r.setEnd(node,m.index+word.length);
+        var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+        try{r.surroundContents(span);}catch(e){return false;}
+        return true;
+      }
+      count++;
+    }
+  }
+  return false;
+}
+function restoreHighlights(){
+  notes.forEach(function(n){
+    var sec=document.getElementById(n.sectionId);
+    if(sec)wrapNth(sec,n.word,n.index,n.id);
+  });
+}
+function openPopupAt(rect,noteObj){
+  var p=document.getElementById("notePopup");
+  p.classList.remove("hidden");
+  // popup is position:fixed => use VIEWPORT coords (do NOT add scrollY/scrollX)
+  var top=rect.bottom+6, left=rect.left;
+  if(top>window.innerHeight-180){ top=Math.max(10, rect.top-180); }
+  if(left>window.innerWidth-270){ left=window.innerWidth-270; }
+  if(left<8){ left=8; }
+  p.style.top=top+"px";
+  p.style.left=left+"px";
+  document.getElementById("noteText").value=noteObj.note||"";
+  activeId=noteObj.id;
+  setTimeout(function(){document.getElementById("noteText").focus();},10);
+}
+function closePopup(){
+  var p=document.getElementById("notePopup");p.classList.add("hidden");
+  // if the active note has empty text, remove it + unwrap
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(n&&!n.note){deleteNoteById(activeId);}
+  activeId=null;
+}
+function saveNote(){
+  var txt=document.getElementById("noteText").value.trim();
+  var n=notes.find(function(x){return x.id===activeId;});
+  if(!n)return;
+  if(!txt){deleteNoteById(activeId);document.getElementById("notePopup").classList.add("hidden");activeId=null;return;}
+  n.note=txt;persistNotes();renderNotesList();
+  document.getElementById("notePopup").classList.add("hidden");activeId=null;
+}
+function deleteCurrentNote(){if(activeId!=null){deleteNoteById(activeId);}document.getElementById("notePopup").classList.add("hidden");activeId=null;}
+function deleteNoteById(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(span){var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);}
+  notes=notes.filter(function(x){return x.id!==id;});
+  persistNotes();renderNotesList();
+}
+function clearAllNotes(){
+  document.querySelectorAll(".noted-word").forEach(function(span){
+    var t=document.createTextNode(span.innerText);span.parentNode.replaceChild(t,span);
+  });
+  notes=[];persistNotes();renderNotesList();
+}
+function jumpToNote(id){
+  var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  if(!span){ // highlight missing (e.g. cleared) - re-apply then jump
+    var nn=notes.find(function(x){return x.id===id;});
+    if(nn){var sec=document.getElementById(nn.sectionId);if(sec)wrapNth(sec,nn.word,nn.index,nn.id);}
+    span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+  }
+  if(!span)return;
+  var y=span.getBoundingClientRect().top+window.pageYOffset-headerH()-20;
+  window.scrollTo({top:Math.max(0,y),behavior:"smooth"});
+  span.classList.remove("flash");void span.offsetWidth; // restart animation
+  span.classList.add("flash");
+  setTimeout(function(){span.classList.remove("flash");},1700);
+}
+function renderNotesList(){
+  var box=document.getElementById("notesList");if(!box)return;box.innerHTML="";
+  if(!notes.length){box.innerHTML='<p style="font-size:12px;color:var(--muted)">No notes yet.</p>';return;}
+  notes.forEach(function(n){
+    var d=document.createElement("div");d.className="noteItem";d.title="Click to jump to this word";
+    d.innerHTML='<span class="w">'+n.word+'</span> — '+(n.note||"")+
+      '<div class="meta">'+n.sectionTitle+' · '+n.ts+'</div>'+
+      '<div class="acts"><button data-edit="'+n.id+'">Edit</button><button data-del="'+n.id+'">Delete</button></div>';
+    // click the row (but not the Edit/Delete buttons) -> navigate to the word
+    d.addEventListener("click",function(e){ if(e.target.closest("button"))return; jumpToNote(n.id); });
+    box.appendChild(d);
+  });
+  box.querySelectorAll("[data-del]").forEach(function(b){b.onclick=function(){deleteNoteById(Number(b.getAttribute("data-del")));};});
+  box.querySelectorAll("[data-edit]").forEach(function(b){b.onclick=function(){
+    var id=Number(b.getAttribute("data-edit"));var span=document.querySelector('.noted-word[data-note-id="'+id+'"]');
+    var n=notes.find(function(x){return x.id===id;});
+    if(span)openPopupAt(span.getBoundingClientRect(),n);else openPopupAt({bottom:100,left:100},n);
+  };});
+}
+function initNotes(){
+  loadNotes();restoreHighlights();renderNotesList();
+  document.addEventListener("dblclick",function(e){
+    // click on an existing noted word -> edit
+    var existing=e.target.closest(".noted-word");
+    if(existing){var id=Number(existing.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n){openPopupAt(existing.getBoundingClientRect(),n);}return;}
+    // must be inside tutorial body, not interactive
+    var host=e.target.closest(".tutorial");
+    if(!host)return;
+    if(e.target.closest("a,button,input,textarea,label,.no-note,.copybtn,pre,code,#toc,aside"))return;
+    var sel=window.getSelection();var word=sel.toString().trim();
+    if(!word||/\s/.test(word))return;
+    word=word.replace(/^[^\w]+|[^\w]+$/g,"");if(!word)return;
+    var range=sel.getRangeAt(0);
+    var sec=(range.startContainer.parentElement||host).closest("section");
+    if(!sec)return;
+    var index=occIndex(sec,range,word);
+    var id=Date.now();
+    var span=document.createElement("span");span.className="noted-word";span.dataset.noteId=id;
+    try{
+      range.surroundContents(span);
+    }catch(err){
+      // fallback for selections that surroundContents can't wrap directly
+      try{ span.appendChild(range.extractContents()); range.insertNode(span); }
+      catch(err2){ return; }
+    }
+    sel.removeAllRanges();
+    var noteObj={id:id,word:word,note:"",index:index,sectionId:sec.id,sectionTitle:(sec.querySelector("h2")||{}).innerText||"",ts:new Date().toLocaleString()};
+    notes.push(noteObj);persistNotes();
+    openPopupAt(span.getBoundingClientRect(),noteObj);
+  });
+  // single click on a noted word to view/edit
+  document.addEventListener("click",function(e){
+    var w=e.target.closest(".noted-word");
+    if(w){var id=Number(w.dataset.noteId);var n=notes.find(function(x){return x.id===id;});if(n)openPopupAt(w.getBoundingClientRect(),n);}
+  });
+}
+
+
+/* ---------- click-to-explain diagram boxes ---------- */
+var EXPLAIN={
+ app:["Application - your whole program","An <b>application</b> is one complete Spark program you run.<br><br><b>Words used here:</b><br>&bull; <b>Driver</b> = the one 'boss' process that runs your main code. It plans the work and hands it out. It does NOT crunch the data itself.<br>&bull; <b>Executor</b> = a 'worker' process. Executors are the ones that actually process the data.<br>&bull; <b>SparkSession / SparkContext</b> = the object you create to start talking to Spark. Think of it as switching Spark on.<br><br>So: <b>application = 1 driver + its executors</b>, alive from <code>getOrCreate()</code> (switch on) until <code>stop()</code> (switch off). One application can run <b>many jobs</b>. An application is NOT a job - the application is the whole session; a job is one piece of work inside it."],
+ lazy:["Lazy = written down, not done yet","When you write <code>map</code> or <code>filter</code>, Spark computes <b>nothing</b>. It just writes the step down on a list.<br><br><b>Words used here:</b><br>&bull; <b>Transformation</b> = a step that makes a new dataset from an old one (map, filter, reduceByKey). It is lazy.<br>&bull; <b>Lazy</b> = 'do it later, not now.' Spark waits.<br>&bull; <b>Lineage</b> = the written-down list of steps. Literally Spark's memory of 'how was this data made?' - like a recipe you keep so you can cook it again.<br><br><b>Why wait?</b> Because seeing all the steps first lets Spark be clever: it can do 4 steps in one pass over the data instead of 4 passes, it can skip work you never asked for, and if a machine dies it can re-cook the lost piece from the recipe (the lineage).<br><br><b>The catch:</b> a mistake inside your <code>map</code> only shows up later, at the action line - because that is when it finally ran."],
+ action:["Action - the button that says GO","This is <b>the trigger</b>. Everything above was planning; this makes Spark actually work.<br><br><b>Words used here:</b><br>&bull; <b>Action</b> = a step that asks for a real answer or writes a file - <code>collect()</code>, <code>count()</code>, <code>save()</code>. Unlike a transformation, it is NOT lazy.<br>&bull; <b>Job</b> = all the work Spark does to answer one action.<br><br><b>The rule: one action = one job.</b> Call an action twice and Spark does the whole thing twice.<br><br><b>No action = no job = nothing ever runs</b>, no matter how many transformations you wrote."],
+ dag:["DAG - the plan Spark draws","<b>DAG</b> stands for <b>D</b>irected <b>A</b>cyclic <b>G</b>raph. That sounds scary. In plain English:<br><br>&bull; <b>Graph</b> = boxes connected by arrows.<br>&bull; <b>Directed</b> = the arrows point one way (step 1 &rarr; step 2 &rarr; step 3).<br>&bull; <b>Acyclic</b> = 'no cycles' - the arrows never loop back to an earlier step. Data always flows forward.<br><br>So a DAG is simply <b>a flow chart of your steps, with one-way arrows and no loops</b>. That's all it is!<br><br><b>DAGScheduler</b> = the part of the driver whose job is to draw this flow chart. It builds the DAG from the <b>lineage</b> (the recipe of steps Spark wrote down earlier) at the moment the job starts.<br><br>Remember: the DAG is a <b>plan</b>. Drawing a plan is not the same as doing the work."],
+ stages:["Stage - a chunk of the plan with no data movement","Spark reads its plan (the DAG) and chops it into chunks. Each chunk is a <b>stage</b>.<br><br><b>Words used here:</b><br>&bull; <b>Shuffle</b> = when data has to physically move between machines over the network so that related records end up together. It is slow and expensive.<br>&bull; <b>Stage</b> = a group of steps that can run <b>without any shuffle inside it</b>.<br><br><b>Where does Spark cut?</b> Exactly at each shuffle. Everything that can run without moving data goes in one stage; the moment data must move, Spark starts a new stage.<br><br><b>The formula: stages = shuffles + 1.</b> Our example shuffles once (at reduceByKey), so it gets 2 stages.<br><br>Stages run <b>one after another</b> (in order), never at the same time - Stage 1 needs Stage 0's output."],
+ tasks:["Task - one worker, one slice of data","When Spark is ready to run a stage, it splits it into <b>tasks</b>.<br><br><b>Words used here:</b><br>&bull; <b>Partition</b> = one slice of your data. Big data is never one lump; it is cut into slices so many machines can work at once. A 4-partition file = 4 slices.<br>&bull; <b>Task</b> = the smallest unit of work: <b>one task processes exactly one partition</b>.<br>&bull; <b>TaskScheduler</b> = the part of the driver that hands each task to an executor.<br>&bull; <b>Core</b> = one 'lane' of an executor. Each task runs in one core.<br><br><b>The formula: tasks in a stage = partitions in that stage.</b><br>Stage 0 reads a 4-partition file &rarr; 4 tasks. Stage 1 has 2 shuffle partitions &rarr; 2 tasks. <b>Total = 6 tasks.</b><br><br>Tasks in the SAME stage all run <b>at the same time</b> (in parallel) - that is where Spark's speed comes from."],
+ exec:["Executors - where work finally happens","Only now does any real computing happen.<br><br><b>Words used here:</b><br>&bull; <b>Executor</b> = a worker process running on a machine. It receives tasks, processes its partition, and can hold data in memory.<br>&bull; <b>Shuffle file</b> = the data an executor writes to disk so another executor can pick it up after the shuffle.<br><br>Everything in the boxes above this one happened on the <b>driver</b> (the boss) and was only <b>planning</b>. This box is where the <b>executors</b> (the workers) finally touch your data."],
+ textfile:["textFile() - read the file","Reads your file and turns it into an <b>RDD</b>.<br><br><b>Words used here:</b><br>&bull; <b>RDD</b> = <b>R</b>esilient <b>D</b>istributed <b>D</b>ataset. Break it down: <i>Dataset</i> = a collection of records. <i>Distributed</i> = it is split across many machines. <i>Resilient</i> = if a piece is lost, Spark can rebuild it. So: <b>a collection of data, spread across machines, that can heal itself</b>.<br>&bull; <b>Partition</b> = one slice of that RDD. Our file has <b>4 partitions</b>, which is exactly why Stage 0 will have 4 tasks.<br><br>This is a <b>narrow</b> step (see the shuffle box) - each slice is read on its own machine, no data moves."],
+ flatmap:["flatMap - one line becomes many words","Takes each line of text and splits it into separate words.<br><br><b>Words used here:</b><br>&bull; <b>flatMap</b> = 'map, then flatten'. One input can produce <b>many</b> outputs, and they all get poured into one big list. The line <code>\"hello big world\"</code> becomes three separate words.<br>&bull; <b>map vs flatMap</b>: map gives exactly one output per input; flatMap can give zero, one, or many.<br>&bull; <b>Narrow</b> = no data moves between machines. Each task works only on its own slice.<br><br>So this is a <b>narrow transformation</b> - cheap, no network traffic."],
+ filter:["filter - throw away short words","Keeps only the records that pass your test. Here: only words longer than 3 letters survive.<br><br><b>Words used here:</b><br>&bull; <b>filter</b> = keep the records where your condition is true; drop the rest. It can shrink the data but never grow it.<br>&bull; <b>Narrow</b> = each machine filters its own slice, alone. Nothing travels.<br><br><b>Good habit:</b> filter <i>early</i>. The less data you carry into the expensive shuffle later, the faster your job runs."],
+ map:["map - pair each word with the number 1","Turns each word <code>w</code> into a pair <code>(w, 1)</code>, e.g. <code>spark</code> becomes <code>(spark, 1)</code>.<br><br><b>Words used here:</b><br>&bull; <b>map</b> = apply a function to every record. Exactly one output per input.<br>&bull; <b>Key-value pair</b> = a two-part record like <code>(word, count)</code>. The first part is the <b>key</b>, the second the <b>value</b>. Spark groups and counts by key.<br>&bull; <b>Pipelining</b> = because textFile, flatMap, filter and map are ALL narrow, Spark runs them as <b>one single pass</b> over the data inside each task - not four separate passes. This is a big speed win."],
+ shuffle:["SHUFFLE - the expensive step that splits the stages","This is the most important box on the page.<br><br><b>What is a shuffle?</b> To count how many times <code>spark</code> appears, every copy of <code>spark</code> must be <b>in one place</b>. But they are scattered across all 4 slices on different machines. So the data has to <b>physically move across the network</b> to regroup. That movement is the <b>shuffle</b>.<br><br><b>Words used here:</b><br>&bull; <b>Wide transformation</b> = a step that needs data from many partitions, so it forces a shuffle (reduceByKey, groupByKey, join, distinct).<br>&bull; <b>Narrow transformation</b> = a step that needs only its own partition; no shuffle (map, filter, flatMap).<br>&bull; <b>Shuffle write</b> = each Stage 0 task saves its pairs to local disk, sorted into buckets by word.<br>&bull; <b>Shuffle read</b> = each Stage 1 task collects the buckets that belong to it.<br><br><b>Why it creates a new stage:</b> Spark cannot carry on in the same stage while data is flying between machines. It must stop, move the data, and start fresh. <b>That is why this job has 2 stages instead of 1.</b><br><br>Shuffles are the #1 cause of slow Spark jobs. Fewer shuffles = faster job."],
+ reduce:["reduceByKey - combine all values that share a key","<b>What it does:</b> it takes every record that has the <b>same key</b> and combines their values using the function you gave it - here <code>a + b</code>.<br><br><b>Concretely:</b> the word \"spark\" appears as <code>(spark,1) (spark,1) (spark,1)</code> scattered around. reduceByKey brings them together and adds the values, giving <b>(spark, 3)</b>. Do that for every word and you have your word count.<br><br><b>Words used here:</b><br>&bull; <b>Key</b> = the first part of the pair (the word). <b>Value</b> = the second part (the count).<br>&bull; <b>Wide transformation</b> = it needs every copy of a key together, so it forces a <b>shuffle</b>. <b>This is the reason a stage boundary exists here.</b><br>&bull; <b>Lazy</b> = like all transformations, it does not run when written - it waits for the action.<br>&bull; <b>Pre-combine (map-side combine)</b> = its secret weapon. Each machine adds up its OWN counts <i>before</i> the shuffle, so <code>(spark,3)</code> travels instead of three separate records. Much less network traffic.<br><br><b>reduceByKey vs groupByKey:</b> both group by key, but groupByKey does NOT pre-combine - it ships every single record across the network. For counting or summing, <b>always prefer reduceByKey</b>.<br><br><b>⚠️ Easy to mix up - reduceByKey vs reduce:</b><br>&bull; <code>reduceByKey</code> = a <b>TRANSFORMATION</b> (lazy). Returns a new RDD with <b>one value per key</b>.<br>&bull; <code>reduce</code> = an <b>ACTION</b> (runs immediately). Squashes the <b>whole dataset into ONE single value</b> and sends it to the driver.<br>Same word, totally different things. Do not mix them up."],
+
+ collect:["collect() - the action that starts everything","Brings the final answer back to the driver so you can see or save it.<br><br><b>Words used here:</b><br>&bull; <b>Action</b> = a step that produces a real result. This is what CREATES the job.<br>&bull; <b>Driver</b> = the boss process where your results land.<br><br><b>This one line is what caused all the work above to happen.</b> Without it, the previous five lines would sit there doing absolutely nothing.<br><br><b>Danger:</b> collect() pulls ALL the data into the driver's memory. It is safe here (a few word counts), but calling collect() on billions of rows will crash the driver. Use <code>take(10)</code> or write to a file instead."],
+ stage0:["Stage 0 - the narrow stage (4 tasks)","<b>What is in it:</b> textFile, flatMap, filter, map - all <b>narrow</b> steps (no data moves between machines).<br><br><b>What happens inside:</b><br>1. The file has <b>4 partitions</b> (slices), so Spark makes <b>4 tasks</b> - one per slice.<br>2. Each task runs all four steps <b>in a single pass</b> over its own slice. This is called <b>pipelining</b>.<br>3. Nothing travels over the network during this stage.<br>4. At the end, each task <b>writes its results to local disk</b>, bucketed by word - the <b>shuffle write</b>.<br><br><b>Why does the stage end here?</b> Because the next step (reduceByKey) needs all copies of a word together, and they are scattered. Data must move - so Spark cuts the stage."],
+ stage1:["Stage 1 - the reduce stage (2 tasks)","<b>What is in it:</b> reduceByKey and collect.<br><br><b>What happens inside:</b><br>1. It <b>cannot start until Stage 0 is 100% finished</b> - you cannot total a word's count until every slice has reported in.<br>2. There are <b>2 shuffle partitions</b>, so Spark makes <b>2 tasks</b>.<br>3. Each task <b>shuffle reads</b> the buckets of words assigned to it, from every Stage 0 task.<br>4. It sums the counts, and collect() sends the small final answer to the driver.<br><br><b>Words used here:</b> <b>shuffle partitions</b> = how many slices the data is regrouped into after a shuffle. Controlled by the setting <code>spark.sql.shuffle.partitions</code> (default 200 - we set it to 2 here for a small example)."],
+ job0:["Job 0 - all the work for one action","A <b>job</b> is everything Spark does to answer <b>one action</b>.<br><br>This job was born the instant <code>collect()</code> was called. It contains <b>2 stages</b> and <b>6 tasks</b> in total.<br><br><b>The rule: one action = one job.</b> If you called <code>collect()</code> and then <code>count()</code>, you would get <b>Job 0 and Job 1</b> - and Spark would redo all the work the second time, unless you <code>cache()</code> the data.<br><br>Jobs live inside the <b>application</b>; stages live inside the job; tasks live inside the stages."],
+ swrite:["Shuffle WRITE - a Stage 0 task saving its work","Each Stage 0 task has finished mapping its own slice and now holds records like <code>(spark,1)(data,1)</code>.<br><br><b>What it does now:</b><br>1. <b>Pre-combines</b> locally: three <code>(spark,1)</code> become one <code>(spark,3)</code>, so less data travels.<br>2. Asks the <b>partitioner</b> which bucket each record belongs to.<br>3. <b>Writes</b> the records into bucket files <b>on its own local disk</b> (not memory, not the network yet).<br><br><b>Words used here:</b> <b>serialize</b> = turn objects into bytes so they can be stored/sent. <b>Spill</b> = if the data is too big for memory while sorting, Spark dumps it to disk - slow, and shown as 'Spill' in the Spark UI.<br><br>This whole step is called the <b>shuffle write</b>."],
+ hash:["The PARTITIONER - how Spark decides where a word goes","This is the trick that makes shuffles work.<br><br>For every record, Spark computes:<br><code>bucket = hash(key) % number_of_shuffle_partitions</code><br><br><b>Words used here:</b> a <b>hash</b> is a function that turns any value into a number, and it is <b>deterministic</b> - the same input <i>always</i> gives the same number. So <code>hash(\"spark\")</code> gives the same result on Machine 1, Machine 2, Machine 3 and Machine 4.<br><br><b>Why that matters:</b> because every machine computes the same bucket for \"spark\", <b>every copy of \"spark\" everywhere is guaranteed to land in the same bucket</b> - and therefore be read by the same Stage 1 task. That is the entire reason a shuffle produces correct counts.<br><br><b>Side effect:</b> if one word is far more common than the rest, its bucket becomes huge and one task does most of the work. That is <b>data skew</b>."],
+ buckets:["A BUCKET - the sorted pile waiting to be collected","After the partitioner decides, each Stage 0 task writes its records into <b>bucket files on local disk</b>. Bucket 0 holds every word that hashed to 0; Bucket 1 holds every word that hashed to 1.<br><br><b>Important:</b> every one of the four Stage 0 tasks creates its <b>own copy</b> of Bucket 0 and Bucket 1. So there are 4 tasks &times; 2 buckets = 8 bucket files in total.<br><br><b>Why disk and not memory?</b> So the data is safe and can be fetched later even if the reading task is slow or an executor is busy. It also means Spark can handle data bigger than memory.<br><br>Nothing has crossed the network yet - that happens next, in the shuffle read."],
+ sread:["Shuffle READ - a Stage 1 task fetching and reducing","Now the data finally travels across the network.<br><br><b>What this task does:</b><br>1. It <b>fetches</b> its bucket from <b>every single Stage 0 task</b> - Task 0 pulls Bucket 0 from all four machines. This all-to-all fetching is the expensive part.<br>2. It <b>deserializes</b> the bytes back into records.<br>3. It <b>merges</b> them and applies your function <code>(a + b)</code>, summing the counts.<br>4. It now holds the <b>final, correct count</b> for its words - because the partitioner guaranteed every copy of those words arrived here.<br><br><b>Words used here:</b> <b>shuffle read</b> = fetching your buckets over the network. <b>deserialize</b> = turn bytes back into usable objects.<br><br>This task could not start until <b>all</b> Stage 0 tasks had finished writing - otherwise a straggler might still be holding a copy of a word, and the count would be wrong."]
+};
+function explainBox(key,el){
+  var d=EXPLAIN[key];if(!d)return;
+  var wrap=el.closest("section");
+  var panel=wrap.querySelector(".explain");if(!panel)return;
+  wrap.querySelectorAll(".hit").forEach(function(h){h.classList.remove("active");});
+  el.classList.add("active");
+  panel.innerHTML="<h4>"+d[0]+"</h4><p>"+d[1]+"</p>";
+}
+
+/* ---------- sparkle trail (reduced-motion aware, throttled) ---------- */
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var lastSpark=0;
+if(!reduce){
+  document.addEventListener("mousemove",function(e){
+    var now=Date.now();if(now-lastSpark<40)return;lastSpark=now;
+    var s=document.createElement("div");s.className="sparkle";
+    s.style.left=e.clientX+"px";s.style.top=e.clientY+"px";
+    document.body.appendChild(s);setTimeout(function(){s.remove();},600);
+  });
+}
+
+/* ---------- navigation: header-aware jump + active highlight ---------- */
+function headerH(){var h=document.querySelector("header");return h?h.offsetHeight:110;}
+function applyScrollOffset(){document.documentElement.style.scrollPaddingTop=(headerH()+14)+"px";}
+function initNav(){
+  applyScrollOffset();
+  window.addEventListener("resize",applyScrollOffset);
+  // intercept TOC clicks so the target always lands BELOW the sticky header
+  document.querySelectorAll("#toc a").forEach(function(a){
+    a.addEventListener("click",function(e){
+      var id=a.getAttribute("href").slice(1);
+      var el=document.getElementById(id);
+      if(!el)return;
+      e.preventDefault();
+      var y=el.getBoundingClientRect().top+window.pageYOffset-headerH()-12;
+      window.scrollTo({top:y,behavior:"smooth"});
+      if(history.replaceState)history.replaceState(null,"","#"+id);
+      setActive(id);
+    });
+  });
+}
+function setActive(id){
+  document.querySelectorAll("#toc a").forEach(function(a){
+    a.classList.toggle("active",a.getAttribute("href")==="#"+id);
+  });
+}
+window.addEventListener("scroll",function(){
+  var h=document.documentElement;
+  var denom=h.scrollHeight-h.clientHeight;
+  document.getElementById("readbar").style.width=(denom>0?h.scrollTop/denom*100:0)+"%";
+  var secs=document.querySelectorAll("main section");
+  var line=headerH()+24,cur=secs[0].id;
+  secs.forEach(function(s){if(s.getBoundingClientRect().top-line<=0)cur=s.id;});
+  // if near the bottom, force-select the last section
+  if((window.innerHeight+window.pageYOffset)>=document.body.offsetHeight-4)cur=secs[secs.length-1].id;
+  setActive(cur);
+});
+
+/* ---------- init ---------- */
+window.onload=function(){
+  renderQuiz();
+  buildProgress();
+  initNotes();
+  initNav();
+  if(!STORAGE_OK){
+    var hint=document.getElementById("storageHint");
+    if(hint) hint.style.display="block";
+  }
+};
+</script>
+</body>
+</html>
