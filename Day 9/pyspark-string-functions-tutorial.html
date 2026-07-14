@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PySpark String Functions Tutorial</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{--b:#2563eb;--g:#0f766e;--bg:#f5f7fb;--card:#fff;--ink:#172033;--line:#d9e2f1;--code:#0b1220}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Segoe UI,Arial,sans-serif;line-height:1.6}
+header{background:linear-gradient(135deg,#1d4ed8,#0f766e);color:white;padding:26px 34px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:30px}header p{margin:6px 0 0;color:#e9f6ff}
+.wrap{display:grid;grid-template-columns:270px 1fr 245px;gap:18px;padding:18px}
+nav,.side{position:sticky;top:110px;align-self:start;max-height:calc(100vh - 130px);overflow:auto}
+nav,.side,.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 20px #14213d12}
+nav{padding:14px}nav a{display:block;padding:8px 10px;border-radius:10px;text-decoration:none;color:#172033;font-size:14px}nav a:hover{background:#eef5ff;color:var(--b)}
+.card{padding:22px;margin-bottom:18px}.card:hover{outline:2px solid #bfdbfe}
+h2{margin-top:0;color:#12315d;border-bottom:2px solid #e7eefb;padding-bottom:8px}h3{color:var(--g)}
+pre{background:var(--code);color:#e5e7eb;padding:16px;border-radius:12px;overflow:auto;font-size:14px}
+code{background:#eef2ff;color:#1e3a8a;padding:2px 5px;border-radius:5px}
+table{width:100%;border-collapse:collapse;margin:12px 0}th,td{border:1px solid var(--line);padding:9px;vertical-align:top}th{background:#eef5ff}
+.note{border-left:5px solid var(--b);background:#eff6ff;padding:12px;border-radius:10px;margin:12px 0}.good{border-left:5px solid #16a34a;background:#ecfdf5;padding:12px;border-radius:10px;margin:12px 0}.warn{border-left:5px solid #f59e0b;background:#fffbeb;padding:12px;border-radius:10px;margin:12px 0}
+.diagram{background:#f8fafc;border:1px dashed #94a3b8;padding:14px;border-radius:12px;font-family:Consolas,monospace;white-space:pre;overflow:auto}
+.badge{display:inline-block;background:#e0f2fe;color:#075985;border-radius:999px;padding:3px 9px;margin:2px;font-size:12px}
+button{background:var(--b);color:white;border:0;border-radius:10px;padding:9px 13px;margin:4px;cursor:pointer}.secondary{background:#475569}
+.progress{height:13px;background:#e2e8f0;border-radius:999px;overflow:hidden}.progress span{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#0f766e)}
+.quizbox{border:1px solid var(--line);border-radius:12px;background:#fbfdff;padding:12px;margin:12px 0}
+textarea{width:100%;min-height:80px;border:1px solid var(--line);border-radius:10px;padding:9px}.noteItem{background:#f8fafc;border:1px solid var(--line);border-radius:10px;margin:7px 0;padding:8px}
+.sparkle{position:fixed;pointer-events:none;color:#60a5fa;animation:f .7s linear forwards;z-index:9999}@keyframes f{to{opacity:0;transform:translateY(-18px) scale(.3)}}
+@media(max-width:1000px){.wrap{grid-template-columns:1fr}nav,.side{position:relative;top:auto;max-height:none}}
+</style>
+</head>
+<body>
+<header>
+<h1>PySpark String Functions Tutorial</h1>
+<p>concat, concat_ws, split, explode, startswith, endswith, initcap, upper, lower, substring, length, lpad, ltrim, rtrim, trim, regexp_extract, regexp_replace</p>
+</header>
+<div class="wrap">
+<nav>
+<b>Topic Menu</b>
+<a href="#s1">1. Introduction</a><a href="#s2">2. Setup</a><a href="#s3">3. Cheat Sheet</a><a href="#s4">4. concat</a><a href="#s5">5. split/explode</a><a href="#s6">6. startswith</a><a href="#s7">7. Case Functions</a><a href="#s8">8. substring/length</a><a href="#s9">9. pad/trim</a><a href="#s10">10. Regex</a><a href="#s11">11. Use Case</a><a href="#s12">12. Interview Q&A</a><a href="#s13">13. Quiz</a>
+</nav>
+<main>
+<section class="card" id="s1">
+<h2>1. Introduction</h2>
+<p>String functions are used to clean, standardize, combine, split, validate, and extract text values in data pipelines. In real data engineering projects, customer names, emails, product codes, order IDs, and campaign tags often arrive in messy string formats.</p>
+<div class="diagram">Raw text data → PySpark string functions → Clean curated columns → Analytics-ready output</div>
+<p><span class="badge">Combine</span><span class="badge">Split</span><span class="badge">Clean</span><span class="badge">Extract</span><span class="badge">Validate</span></p>
+</section>
+
+<section class="card" id="s2">
+<h2>2. Setup and Sample Data</h2>
+<pre><code>pip install pyspark</code></pre>
+<pre><code>from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+spark = (SparkSession.builder
+    .appName("StringFunctionsDemo")
+    .master("local[*]")
+    .getOrCreate())
+
+data = [
+    (1, "  arun kumar  ", "arun.kumar@gmail.com", "ORD-2026-1001", "mobile,charger,cable", "IN-CHN-001"),
+    (2, "PRIYA SHARMA", "priya@company.com", "ORD-2026-1002", "laptop,mouse", "IN-BLR-002"),
+    (3, "ravi reddy", "ravi_reddy@yahoo.com", "RET-2026-1003", "shirt,jeans,shoes", "IN-HYD-003"),
+    (4, "  meena iyer", "meena@retail.org", "ORD-2026-1004", "tablet,cover", "IN-CBE-004")
+]
+columns = ["CustomerID","CustomerName","Email","OrderCode","Items","StoreCode"]
+df = spark.createDataFrame(data, columns)
+df.show(truncate=False)</code></pre>
+</section>
+
+<section class="card" id="s3">
+<h2>3. Function Cheat Sheet</h2>
+<table>
+<tr><th>Function</th><th>Purpose</th><th>Real Use</th></tr>
+<tr><td>concat</td><td>Combines columns directly</td><td>Name + email</td></tr>
+<tr><td>concat_ws</td><td>Combines with separator</td><td>Create business key</td></tr>
+<tr><td>split</td><td>String to array</td><td>Comma-separated items</td></tr>
+<tr><td>explode</td><td>Array to rows</td><td>One item per row</td></tr>
+<tr><td>startswith / endswith</td><td>Prefix/suffix check</td><td>Order or return validation</td></tr>
+<tr><td>initcap / upper / lower</td><td>Case formatting</td><td>Name/email standardization</td></tr>
+<tr><td>substring / length</td><td>Extract/validate fixed text</td><td>Year and city code extraction</td></tr>
+<tr><td>lpad / ltrim / rtrim / trim</td><td>Padding and space cleanup</td><td>Fixed IDs and clean names</td></tr>
+<tr><td>regexp_extract / regexp_replace</td><td>Pattern extraction/replacement</td><td>Email domain, special char cleanup</td></tr>
+</table>
+</section>
+
+<section class="card" id="s4">
+<h2>4. concat and concat_ws</h2>
+<pre><code>df.select(
+    "CustomerID",
+    concat(col("CustomerName"), lit(" - "), col("Email")).alias("CustomerContact")
+).show(truncate=False)
+
+df.select(
+    "CustomerID",
+    concat_ws("-", col("CustomerID"), col("OrderCode")).alias("CustomerOrderKey")
+).show(truncate=False)</code></pre>
+<div class="good">Best practice: Use concat_ws when a separator is required. It makes business keys more readable.</div>
+</section>
+
+<section class="card" id="s5">
+<h2>5. split and explode</h2>
+<pre><code>df.select(
+    "CustomerID",
+    split(col("Items"), ",").alias("ItemArray")
+).show(truncate=False)
+
+df.select(
+    "CustomerID",
+    "OrderCode",
+    explode(split(col("Items"), ",")).alias("SingleItem")
+).show(truncate=False)</code></pre>
+<div class="diagram">"mobile,charger,cable" → split() → ["mobile","charger","cable"] → explode() → 3 rows</div>
+</section>
+
+<section class="card" id="s6">
+<h2>6. startswith and endswith</h2>
+<pre><code>df.select(
+    "OrderCode",
+    col("OrderCode").startswith("ORD").alias("IsOrder"),
+    col("OrderCode").startswith("RET").alias("IsReturn")
+).show(truncate=False)
+
+df.select(
+    "Email",
+    col("Email").endswith(".com").alias("IsDotComEmail")
+).show(truncate=False)</code></pre>
+</section>
+
+<section class="card" id="s7">
+<h2>7. initcap, upper, lower</h2>
+<pre><code>df.select(
+    "CustomerName",
+    initcap(trim(col("CustomerName"))).alias("ProperName"),
+    upper(trim(col("CustomerName"))).alias("UpperName"),
+    lower(col("Email")).alias("LowerEmail")
+).show(truncate=False)</code></pre>
+</section>
+
+<section class="card" id="s8">
+<h2>8. substring and length</h2>
+<pre><code>df.select(
+    "OrderCode",
+    substring(col("OrderCode"), 5, 4).alias("OrderYear"),
+    "StoreCode",
+    substring(col("StoreCode"), 4, 3).alias("CityCode"),
+    length(col("StoreCode")).alias("StoreCodeLength")
+).show(truncate=False)</code></pre>
+<div class="warn">Important: PySpark substring starts from position 1, not 0.</div>
+</section>
+
+<section class="card" id="s9">
+<h2>9. lpad, ltrim, rtrim, trim</h2>
+<pre><code>df.select(
+    "CustomerName",
+    ltrim(col("CustomerName")).alias("LeftTrimmed"),
+    rtrim(col("CustomerName")).alias("RightTrimmed"),
+    trim(col("CustomerName")).alias("FullyTrimmed")
+).show(truncate=False)
+
+df.select(
+    "CustomerID",
+    lpad(col("CustomerID").cast("string"), 5, "0").alias("PaddedCustomerID")
+).show()</code></pre>
+</section>
+
+<section class="card" id="s10">
+<h2>10. regexp_extract and regexp_replace</h2>
+<pre><code>df.select(
+    "Email",
+    regexp_extract(col("Email"), r"@(.+)$", 1).alias("EmailDomain"),
+    "OrderCode",
+    regexp_extract(col("OrderCode"), r"([0-9]{4})", 1).alias("ExtractedYear")
+).show(truncate=False)
+
+df.select(
+    "OrderCode",
+    regexp_replace(col("OrderCode"), "-", "").alias("OrderCodeNoDash"),
+    regexp_replace(trim(col("CustomerName")), r"\s+", " ").alias("CleanName")
+).show(truncate=False)</code></pre>
+</section>
+
+<section class="card" id="s11">
+<h2>11. Real-World Retail Use Case</h2>
+<h3>Requirement</h3>
+<p>Clean retail order data by fixing customer names, normalizing emails, extracting order year and city code, identifying order/return type, and converting comma-separated item values into one item per row.</p>
+<h3>Expected Result</h3>
+<table><tr><th>Output</th><th>Description</th></tr>
+<tr><td>CleanCustomerName</td><td>Trimmed and title-cased customer name</td></tr>
+<tr><td>EmailDomain</td><td>Domain extracted from email</td></tr>
+<tr><td>TransactionType</td><td>ORDER, RETURN, or UNKNOWN</td></tr>
+<tr><td>OrderYear</td><td>Year from order code</td></tr>
+<tr><td>CityCode</td><td>City extracted from store code</td></tr>
+<tr><td>SingleItem</td><td>One item per row</td></tr></table>
+<pre><code>result_df = (
+    df.withColumn("CleanCustomerName", initcap(trim(col("CustomerName"))))
+      .withColumn("EmailLower", lower(col("Email")))
+      .withColumn("EmailDomain", regexp_extract(col("EmailLower"), r"@(.+)$", 1))
+      .withColumn("TransactionType",
+          when(col("OrderCode").startswith("ORD"), "ORDER")
+          .when(col("OrderCode").startswith("RET"), "RETURN")
+          .otherwise("UNKNOWN"))
+      .withColumn("OrderYear", substring(col("OrderCode"), 5, 4))
+      .withColumn("CityCode", substring(col("StoreCode"), 4, 3))
+      .withColumn("PaddedCustomerID", lpad(col("CustomerID").cast("string"), 5, "0"))
+      .withColumn("SingleItem", explode(split(col("Items"), ",")))
+)
+result_df.show(truncate=False)</code></pre>
+</section>
+
+<section class="card" id="s12">
+<h2>12. Interview Q&A</h2>
+<table>
+<tr><th>#</th><th>Question</th><th>Answer</th></tr>
+<tr><td>1</td><td>concat vs concat_ws?</td><td>concat joins directly; concat_ws joins with separator.</td></tr>
+<tr><td>2</td><td>Use of split?</td><td>Converts a string into an array.</td></tr>
+<tr><td>3</td><td>Use of explode?</td><td>Converts array elements into multiple rows.</td></tr>
+<tr><td>4</td><td>Why use lower for email?</td><td>For consistent comparison and grouping.</td></tr>
+<tr><td>5</td><td>What does initcap do?</td><td>Capitalizes first letter of each word.</td></tr>
+<tr><td>6</td><td>What does substring do?</td><td>Extracts a part of a string.</td></tr>
+<tr><td>7</td><td>PySpark substring starts from?</td><td>Position 1.</td></tr>
+<tr><td>8</td><td>What is length used for?</td><td>String length validation.</td></tr>
+<tr><td>9</td><td>What does lpad do?</td><td>Adds padding on the left side.</td></tr>
+<tr><td>10</td><td>trim vs ltrim vs rtrim?</td><td>trim removes both sides; ltrim left; rtrim right.</td></tr>
+<tr><td>11</td><td>regexp_extract use?</td><td>Extract pattern from text.</td></tr>
+<tr><td>12</td><td>regexp_replace use?</td><td>Replace pattern in text.</td></tr>
+<tr><td>13</td><td>Why avoid Python UDFs?</td><td>Built-in Spark functions are optimized and distributed.</td></tr>
+<tr><td>14</td><td>Real use of startswith?</td><td>Classify order IDs such as ORD and RET.</td></tr>
+<tr><td>15</td><td>Real use of explode?</td><td>Create one row per purchased item.</td></tr>
+</table>
+</section>
+
+<section class="card" id="s13">
+<h2>13. Quiz, Timed Exam, Exercises, and Progress</h2>
+<h3>Exercises</h3>
+<ol><li>Clean names with trim and initcap.</li><li>Extract email domains.</li><li>Split and explode product items.</li><li>Create transaction type using startswith.</li><li>Create padded customer IDs.</li></ol>
+<h3>Progress Tracker</h3><div id="tracker"></div><div class="progress"><span id="bar"></span></div><p id="trackerText"></p>
+<h3>Practice Quiz</h3><div id="quiz"></div><button onclick="submitQuiz()">Submit Quiz</button><p id="quizResult"></p>
+<h3>Timed Exam</h3><p>Time left: <b id="timer">05:00</b></p><button onclick="startExam()">Start Exam</button><div id="exam"></div><button onclick="submitExam()">Submit Exam</button><p id="examResult"></p>
+<h3>Double-click Notes</h3><p>Double-click any word to save a local note.</p><textarea id="manualNote" placeholder="Write your note here..."></textarea><button onclick="saveManualNote()">Save Note</button><div id="notesPanel"></div>
+</section>
+</main>
+<aside class="side">
+<div class="card"><h3>Memory Map</h3><p><b>Combine:</b> concat, concat_ws</p><p><b>Break:</b> split, explode</p><p><b>Check:</b> startswith, endswith</p><p><b>Format:</b> initcap, upper, lower</p><p><b>Clean:</b> trim, regexp_replace</p></div>
+<div class="card"><h3>Classroom Tip</h3><p>Show messy input and clean output side by side. Learners understand string functions faster.</p></div>
+</aside>
+</div>
+
+<script>
+const topics=["Intro","Setup","Cheat Sheet","concat","split/explode","startswith","case","substring","pad/trim","regex","use case","interview","quiz"];
+function initTracker(){let t=document.getElementById("tracker");t.innerHTML="";topics.forEach((x,i)=>{let c=localStorage.getItem("sf_"+i)==="1";t.innerHTML+=`<label style="display:block"><input type="checkbox" ${c?"checked":""} onchange="saveTopic(${i},this.checked)"> ${x}</label>`});updateBar()}
+function saveTopic(i,v){localStorage.setItem("sf_"+i,v?"1":"0");updateBar()}
+function updateBar(){let d=0;topics.forEach((_,i)=>{if(localStorage.getItem("sf_"+i)==="1")d++});let p=Math.round(d/topics.length*100);document.getElementById("bar").style.width=p+"%";document.getElementById("trackerText").innerText=`Completed ${d}/${topics.length} topics (${p}%)`}
+const quiz=[["Which joins columns with separator?",["concat","concat_ws","split"],1],["Which creates array?",["split","explode","trim"],0],["Which converts array into rows?",["length","explode","upper"],1],["Which removes both side spaces?",["ltrim","rtrim","trim"],2],["Substring starts from?",["0","1","-1"],1]];
+function renderQuiz(){let q=document.getElementById("quiz");q.innerHTML="";quiz.forEach((it,i)=>{q.innerHTML+=`<div class="quizbox"><b>Q${i+1}. ${it[0]}</b>`+it[1].map((a,j)=>`<label style="display:block"><input type="radio" name="q${i}" value="${j}"> ${a}</label>`).join("")+`</div>`})}
+function submitQuiz(){let s=0;quiz.forEach((it,i)=>{let x=document.querySelector(`input[name=q${i}]:checked`);if(x&&Number(x.value)===it[2])s++});document.getElementById("quizResult").innerText=`Score: ${s}/${quiz.length} `+(s>=4?"Excellent 🎉":s>=3?"Good 👍":"Revise 📘")}
+let examStarted=false,sec=300,intv=null;
+function startExam(){if(examStarted)return;examStarted=true;document.getElementById("exam").innerHTML=document.getElementById("quiz").innerHTML.replaceAll('name="q','name="e');intv=setInterval(()=>{sec--;document.getElementById("timer").innerText=String(Math.floor(sec/60)).padStart(2,"0")+":"+String(sec%60).padStart(2,"0");if(sec<=0)submitExam()},1000)}
+function submitExam(){let s=0;quiz.forEach((it,i)=>{let x=document.querySelector(`input[name=e${i}]:checked`);if(x&&Number(x.value)===it[2])s++});if(intv)clearInterval(intv);document.getElementById("examResult").innerText=`Exam Score: ${s}/${quiz.length}`}
+function saveNote(txt){let notes=JSON.parse(localStorage.getItem("sf_notes")||"[]");notes.push({txt,dt:new Date().toLocaleString()});localStorage.setItem("sf_notes",JSON.stringify(notes));renderNotes()}
+function saveManualNote(){let v=document.getElementById("manualNote").value.trim();if(v){saveNote(v);document.getElementById("manualNote").value=""}}
+function renderNotes(){let notes=JSON.parse(localStorage.getItem("sf_notes")||"[]");document.getElementById("notesPanel").innerHTML=notes.map((n,i)=>`<div class="noteItem"><b>${i+1}.</b> ${n.txt}<br><small>${n.dt}</small></div>`).join("")}
+document.addEventListener("dblclick",()=>{let w=(window.getSelection()+"").trim();if(w&&w.length<60){let n=prompt("Add note for: "+w);if(n)saveNote(w+": "+n)}})
+document.addEventListener("mousemove",e=>{if(Math.random()>.9){let s=document.createElement("div");s.className="sparkle";s.textContent="✦";s.style.left=e.clientX+"px";s.style.top=e.clientY+"px";document.body.appendChild(s);setTimeout(()=>s.remove(),700)}})
+initTracker();renderQuiz();renderNotes();
+</script>
+</body>
+</html>
