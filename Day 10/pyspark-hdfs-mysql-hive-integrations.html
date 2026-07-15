@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PySpark Integrations: HDFS, MySQL and Hive</title>
+<style>
+:root{--accent:#4f46e5;--accent2:#7c3aed;--bg:#f4f6fb;--card:#ffffff;--text:#172033;--muted:#5d667a;--border:#dce1ed;--code:#111827;--codeText:#e5e7eb;--ok:#137333;--bad:#b3261e;--warn:#9a6700;--shadow:0 10px 28px rgba(25,35,60,.08);--font:16px}
+[data-theme="dark"]{--bg:#0f1420;--card:#171e2c;--text:#edf2ff;--muted:#aeb8ce;--border:#303b52;--code:#090d14;--codeText:#e8ecf7;--shadow:0 10px 28px rgba(0,0,0,.28)}
+*{box-sizing:border-box}html{scroll-behavior:smooth;font-size:var(--font)}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;line-height:1.65}a{color:var(--accent)}button,input,select,textarea{font:inherit}.reading-bar{position:fixed;top:0;left:0;height:4px;background:linear-gradient(90deg,var(--accent),#22c55e);width:0;z-index:1000}.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);display:flex;gap:.5rem;align-items:center;justify-content:space-between;padding:.65rem 1rem}.brand{font-weight:800}.controls{display:flex;gap:.4rem;flex-wrap:wrap}.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:.5rem .75rem;border-radius:.65rem;cursor:pointer}.btn:hover,.btn:focus{border-color:var(--accent);outline:none}.btn.primary{background:var(--accent);color:white;border-color:var(--accent)}.btn.danger{background:#b3261e;color:#fff;border-color:#b3261e}.btn.small{padding:.3rem .55rem;font-size:.86rem}.layout{display:grid;grid-template-columns:290px minmax(0,1fr);max-width:1500px;margin:auto}.sidebar{position:sticky;top:55px;height:calc(100vh - 55px);overflow:auto;padding:1rem;border-right:1px solid var(--border);background:var(--card)}.sidebar h2{font-size:1rem;margin:.25rem 0}.toc a{display:block;text-decoration:none;padding:.38rem .5rem;border-radius:.5rem;color:var(--muted);font-size:.9rem}.toc a:hover{background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--text)}.progress-box{padding:.75rem;border:1px solid var(--border);border-radius:.8rem;margin-bottom:1rem}.progress-track{height:10px;background:var(--border);border-radius:999px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#22c55e);width:0}.main{min-width:0;padding:1rem 1.4rem 5rem}.hero{background:linear-gradient(135deg,#312e81,#6d28d9 55%,#0e7490);color:white;padding:clamp(1.4rem,4vw,3.4rem);border-radius:1.25rem;box-shadow:var(--shadow);margin:1rem 0}.hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1.08;margin:.2rem 0}.hero .lead{font-size:1.15rem;max-width:900px}.objective-grid,.strip-grid,.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}.objective,.strip-item,.mini-card{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);padding:.85rem;border-radius:.8rem}.section{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:clamp(1rem,2.5vw,2rem);margin:1rem 0;box-shadow:var(--shadow);transition:.2s}.section:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));transform:translateY(-1px)}.section h2{margin-top:0;font-size:clamp(1.45rem,3vw,2.15rem)}.section h3{margin-top:1.45rem}.prepared{float:right;font-size:.86rem;font-weight:400}.callout{border-left:5px solid var(--accent);padding:.8rem 1rem;border-radius:.6rem;background:color-mix(in srgb,var(--accent) 8%,var(--card));margin:1rem 0}.callout.remember{border-color:#0e7490}.callout.warn{border-color:#d97706}.callout.pro{border-color:#16a34a}.callout.memory{border-color:#db2777}.tag{display:inline-block;padding:.15rem .5rem;border-radius:999px;font-size:.78rem;font-weight:700;background:color-mix(in srgb,var(--accent) 14%,var(--card));color:var(--accent)}.tag.b{color:#0369a1}.tag.i{color:#7c3aed}.tag.a{color:#b91c1c}.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:.75rem}table{border-collapse:collapse;width:100%;min-width:700px}th,td{padding:.7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{background:color-mix(in srgb,var(--accent) 8%,var(--card))}code{font-family:Consolas,Monaco,monospace;background:color-mix(in srgb,var(--accent) 9%,var(--card));padding:.1rem .25rem;border-radius:.3rem}.code-card{position:relative;margin:1rem 0}.code-card pre{background:var(--code);color:var(--codeText);padding:1rem;overflow:auto;border-radius:.8rem;margin:0;line-height:1.5}.copy-btn{position:absolute;right:.55rem;top:.55rem}.output{background:color-mix(in srgb,#16a34a 7%,var(--card));border:1px solid color-mix(in srgb,#16a34a 35%,var(--border));padding:.75rem;border-radius:.65rem;white-space:pre-wrap;font-family:Consolas,monospace}.diagram{border:1px solid var(--border);border-radius:.9rem;padding:1rem;background:color-mix(in srgb,var(--accent) 3%,var(--card));margin:1rem 0}.flow{display:flex;align-items:center;justify-content:center;gap:.55rem;flex-wrap:wrap}.node{min-width:135px;text-align:center;border:2px solid var(--accent);background:var(--card);padding:.7rem;border-radius:.7rem;font-weight:700}.arrow{font-size:1.5rem;color:var(--accent);font-weight:800}.join-visual{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:.8rem}.set{border:3px solid var(--accent);border-radius:50%;width:170px;height:170px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 10%,transparent);font-weight:800}.result-box{border:2px dashed #16a34a;border-radius:.7rem;padding:.75rem;background:color-mix(in srgb,#16a34a 7%,var(--card))}.micro{border:1px dashed var(--border);border-radius:.65rem;padding:.65rem;margin:.7rem 0}.micro summary{cursor:pointer;font-weight:700}.qa-list details{border:1px solid var(--border);border-radius:.7rem;padding:.7rem;margin:.55rem 0}.flashcard{min-height:230px;border:2px solid var(--accent);border-radius:1rem;padding:1.2rem;display:grid;place-items:center;text-align:center;cursor:pointer;background:linear-gradient(145deg,color-mix(in srgb,var(--accent) 8%,var(--card)),var(--card))}.flash-answer{display:none}.flashcard.flipped .flash-question{display:none}.flashcard.flipped .flash-answer{display:block}.flash-controls{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin:.8rem}.rating{display:none;gap:.4rem;justify-content:center;flex-wrap:wrap}.flashcard.flipped+.rating{display:flex}.exercise,.question{border:1px solid var(--border);border-radius:.8rem;padding:1rem;margin:.8rem 0}.question.correct{border-color:#16a34a;background:color-mix(in srgb,#16a34a 6%,var(--card))}.question.wrong{border-color:#dc2626;background:color-mix(in srgb,#dc2626 6%,var(--card))}.option{display:block;padding:.38rem .45rem;border-radius:.45rem}.option:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}.feedback{display:none;margin-top:.7rem;padding:.65rem;border-radius:.55rem;background:color-mix(in srgb,var(--accent) 7%,var(--card))}.result-panel{font-size:1.1rem;border:2px solid var(--accent);padding:1rem;border-radius:.8rem;margin:1rem 0;display:none}.big-emoji{font-size:3rem}.timer{font-weight:800;font-size:1.4rem;padding:.5rem .8rem;border:2px solid var(--accent);display:inline-block;border-radius:.7rem}.timer.warning{color:#b3261e;border-color:#b3261e}.locked{opacity:.55;pointer-events:none}.pair-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}.pair-item{border:1px solid var(--border);padding:.65rem;border-radius:.55rem;cursor:pointer}.pair-item.selected{outline:3px solid var(--accent)}.pair-item.matched{background:color-mix(in srgb,#16a34a 12%,var(--card));cursor:default}.order-list{list-style:none;padding:0}.order-item{display:flex;justify-content:space-between;gap:.4rem;align-items:center;border:1px solid var(--border);padding:.55rem;margin:.4rem 0;border-radius:.55rem}.glossary{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.7rem}.glossary div{border:1px solid var(--border);padding:.7rem;border-radius:.6rem}.term{border-bottom:1px dotted var(--accent);cursor:help}.notes-panel{position:fixed;right:1rem;bottom:1rem;z-index:80;width:min(380px,calc(100vw - 2rem));max-height:65vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:.9rem;box-shadow:0 15px 45px rgba(0,0,0,.2);padding:.8rem}.notes-panel.collapsed .notes-body{display:none}.note-word{background:#fde68a!important;color:#422006!important;border-bottom:3px solid #f97316;border-radius:.2rem;cursor:pointer}.note-popup{position:fixed;z-index:120;background:var(--card);border:1px solid var(--border);box-shadow:0 15px 45px rgba(0,0,0,.25);padding:1rem;border-radius:.8rem;width:min(360px,calc(100vw - 2rem));display:none}.note-popup textarea{width:100%;min-height:90px}.history-item,.note-item{border-bottom:1px solid var(--border);padding:.5rem 0}.xpbar{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap}.badge{padding:.25rem .55rem;background:color-mix(in srgb,#f59e0b 18%,var(--card));border:1px solid #f59e0b;border-radius:999px;font-size:.82rem}.certificate{display:none;border:10px double var(--accent);padding:2rem;text-align:center;margin:1rem 0;background:var(--card)}.back-top{position:fixed;right:1rem;bottom:1rem;border-radius:50%;width:45px;height:45px;z-index:60}.notes-panel:not([hidden])~.back-top{bottom:5rem}.spark{position:fixed;pointer-events:none;z-index:999;width:6px;height:6px;border-radius:50%;background:var(--accent);animation:spark .65s forwards}@keyframes spark{to{transform:translateY(-18px) scale(0);opacity:0}}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}.checklist-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.4rem}.hidden{display:none!important}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border)}.toc{columns:2}.two-col{grid-template-columns:1fr}}
+@media(max-width:560px){.main{padding:.55rem}.topbar{align-items:flex-start}.toc{columns:1}.join-visual{grid-template-columns:1fr}.set{width:140px;height:140px;margin:auto}.arrow{transform:rotate(90deg)}.pair-grid{grid-template-columns:1fr}.prepared{float:none;display:block;margin-top:.4rem}.notes-panel{bottom:.5rem;right:.5rem;width:calc(100vw - 1rem)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+@media print{.topbar,.sidebar,.back-top,.notes-panel,.note-popup,.copy-btn,.quiz-actions,.exam-actions,.flash-controls,.rating,.prepared,.reading-bar,.no-print{display:none!important}.layout{display:block}.main{padding:0}.section,.hero{box-shadow:none;break-inside:avoid}.feedback,.result-panel,.certificate{display:block!important}body{background:white;color:black}.certificate{page-break-before:always}}
+
+/* CODE VISIBILITY FIX:
+   Full code samples are always expanded and use explicit high-contrast colours.
+   Inline code retains the smaller highlighted style. */
+.code-card{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:relative;
+  margin:1rem 0;
+  width:100%;
+  max-width:100%;
+}
+.code-card pre{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  min-height:3rem;
+  width:100%;
+  max-width:100%;
+  margin:0 !important;
+  padding:1.15rem !important;
+  padding-top:3rem !important;
+  overflow-x:auto !important;
+  overflow-y:visible !important;
+  white-space:pre !important;
+  background:#0b1220 !important;
+  color:#f8fafc !important;
+  border:2px solid #334155 !important;
+  border-radius:.8rem !important;
+  line-height:1.55 !important;
+  font-size:.94rem !important;
+  tab-size:4;
+  -webkit-text-fill-color:#f8fafc !important;
+}
+.code-card pre code{
+  display:block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  white-space:pre !important;
+  overflow:visible !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#f8fafc !important;
+  -webkit-text-fill-color:#f8fafc !important;
+  font-family:Consolas,"Courier New",monospace !important;
+  font-size:inherit !important;
+  line-height:inherit !important;
+}
+.code-card .copy-btn{
+  display:inline-block !important;
+  visibility:visible !important;
+  opacity:1 !important;
+  position:absolute !important;
+  top:.55rem !important;
+  right:.55rem !important;
+  z-index:5 !important;
+  background:#ffffff !important;
+  color:#111827 !important;
+  border:1px solid #cbd5e1 !important;
+}
+/* Do not allow a general hidden rule or inherited opacity to hide examples. */
+.section .code-card,
+.section .code-card pre,
+.section .code-card pre code{
+  max-height:none !important;
+  height:auto !important;
+}
+@media(max-width:560px){
+  .code-card pre{
+    font-size:.82rem !important;
+    padding:3rem .8rem 1rem !important;
+  }
+}
+@media print{
+  .code-card,
+  .code-card pre,
+  .code-card pre code{
+    display:block !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    color:#000 !important;
+    -webkit-text-fill-color:#000 !important;
+    background:#fff !important;
+    white-space:pre-wrap !important;
+    overflow:visible !important;
+  }
+}
+
+</style>
+</head>
+<body>
+<div class="reading-bar" id="readingBar"></div>
+<header class="topbar">
+  <div class="brand">⚡ PySpark Classroom Lab</div>
+  <div class="controls">
+    <button class="btn small" id="themeBtn" aria-label="Toggle theme">🌙 Theme</button>
+    <button class="btn small" id="fontDown" aria-label="Decrease font">A−</button>
+    <button class="btn small" id="fontUp" aria-label="Increase font">A+</button>
+    <button class="btn small" id="soundBtn" aria-label="Toggle result sounds">🔊 Sound</button>
+    <button class="btn small" onclick="window.print()">🖨 Print</button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <div class="progress-box storage-feature">
+    <strong id="progressText">0 / 17 prepared</strong>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <button class="btn small" id="resetProgress">Reset progress</button>
+  </div>
+  <h2>Contents</h2>
+  <nav class="toc" id="toc"></nav>
+  <hr>
+  <div class="xpbar storage-feature"><strong>XP: <span id="xp">0</span></strong><span id="badges"></span></div>
+  <div class="storage-feature" style="margin-top:.8rem">
+    <button class="btn small" id="exportData">Download my data</button>
+    <label class="btn small">Import JSON<input id="importData" type="file" accept="application/json" hidden></label>
+  </div>
+  <div class="storage-feature" style="margin-top:.8rem">
+    <strong>Score history</strong><div id="scoreHistory"></div>
+  </div>
+</aside>
+
+<main class="main" id="tutorialBody">
+<section class="hero content-section" id="title-page" data-title="Title Page">
+  <span class="tag">PySpark Integrations</span>
+  <h1>HDFS, MySQL and Hive Integrations with PySpark</h1>
+  <p class="lead">Configure, build, validate and troubleshoot five end-to-end data pipelines using Spark DataFrames, HDFS files, MySQL JDBC and Hive tables.</p>
+  <div class="objective-grid">
+    <div class="objective">Build HDFS → PySpark → HDFS pipelines using CSV and Parquet.</div>
+    <div class="objective">Read and write MySQL safely through JDBC.</div>
+    <div class="objective">Use Spark with Hive catalog tables and a metastore.</div>
+    <div class="objective">Move curated data from HDFS to MySQL and MySQL to Hive.</div>
+    <div class="objective">Apply reconciliation, retry safety, security and performance controls.</div>
+  </div>
+  <h3>Before you start</h3>
+  <div class="strip-grid">
+    <div class="strip-item"><strong>Prerequisites</strong><br>Python, SparkSession, DataFrames, SQL basics, a running Spark/Hadoop environment.</div>
+    <div class="strip-item"><strong>Estimated study</strong><br>3–4 hours including all five labs.</div>
+    <div class="strip-item"><strong>Outcome</strong><br>Run and explain production-style file, JDBC and catalog integrations.</div>
+  </div>
+
+<div class="callout pro" style="margin-top:1rem">
+<strong>CODE DISPLAY:</strong> All Python, SQL, HDFS and spark-submit examples are expanded and visible by default. Use the Copy button in the upper-right corner of each code panel.
+</div>
+</section>
+
+<section class="section content-section" id="introduction" data-title="Introduction">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>1. Introduction</h2>
+<p>A data integration pipeline reads from one system, applies processing rules and writes a verified result to another system. In this tutorial the storage systems are HDFS, MySQL and Hive, while PySpark is the distributed processing layer placed between them.</p>
+<p>HDFS stores large files across cluster machines. MySQL stores structured operational data in tables and supports transactions, indexes and constraints. Hive provides a catalog-oriented warehouse experience: a table name is linked to schema, storage format, location and partition metadata. Spark can interact with all three through a common DataFrame API.</p>
+<p>A reliable integration is more than <code>read</code> followed by <code>write</code>. It must validate schema, isolate rejected rows, protect credentials, control parallel database connections, handle retries and reconcile source and target counts. Skipping these controls can create duplicate records, missing data, overloaded databases or unusable small files.</p>
+<div class="two-col">
+<div class="callout warn"><strong>Without a standard pattern</strong><br>Manual exports, hard-coded secrets, hidden filters, duplicate retries and no proof that the target is complete.</div>
+<div class="callout pro"><strong>With a standard pattern</strong><br>Reusable DataFrame logic, safe connectivity, controlled writes, audit counts and predictable recovery.</div>
+</div>
+<div class="callout memory"><strong>MEMORY HOOK:</strong> R-T-V-W-R — <strong>R</strong>ead, <strong>T</strong>ransform, <strong>V</strong>alidate, <strong>W</strong>rite, <strong>R</strong>econcile.</div>
+<details class="micro"><summary>Check yourself: Is PySpark only a file-copy tool?</summary><p>No. PySpark is used for distributed cleansing, joining, aggregation, validation and publishing. Copying is only one possible operation.</p></details>
+</section>
+
+<section class="section content-section" id="plain-language" data-title="Foundation Explanation">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>2. Foundation-Friendly Explanation</h2>
+<p>Imagine a large logistics hub. Trucks arrive from a distributed storage yard, an operational shop database or a warehouse catalog. The hub unloads the goods, inspects labels, removes damaged items, repacks valid items and sends them to a destination.</p>
+<div class="card-grid">
+<div class="mini-card"><strong>HDFS</strong><br>The distributed storage yard containing large batches of files.</div>
+<div class="mini-card"><strong>MySQL</strong><br>The organized operational store with named tables, keys and permissions.</div>
+<div class="mini-card"><strong>Hive</strong><br>The warehouse catalog telling users what data exists, its schema and location.</div>
+<div class="mini-card"><strong>PySpark</strong><br>The parallel sorting hub where many workers process partitions.</div>
+</div>
+<ol>
+<li><strong>Read:</strong> source files or database rows become Spark DataFrame partitions.</li>
+<li><strong>Transform:</strong> invalid values are cleaned, business fields are derived and datasets may be joined.</li>
+<li><strong>Validate:</strong> required keys, types, duplicates and row counts are checked.</li>
+<li><strong>Write:</strong> Spark creates HDFS files, sends JDBC batches or registers Hive tables.</li>
+<li><strong>Reconcile:</strong> the operator proves that source = valid + rejected and that valid = target for the intended load.</li>
+</ol>
+<div class="callout warn"><strong>Where the analogy breaks</strong><br>Spark transformations are lazy, tasks can retry, database writes can be transactional, and data partitions move over a network. Physical goods do not behave this way.</div>
+<p><strong>Remember it as:</strong> the source owns the input, Spark owns processing, and the target owns the published result.</p>
+</section>
+
+<section class="section content-section" id="technical" data-title="Architecture and Terms">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>3. Technical Architecture and Key Terms</h2>
+<p>Technically, a Spark application uses a data-source connector to construct a distributed DataFrame. Transformations create a logical plan. An action or write causes Spark to optimize the plan, schedule stages and execute tasks against partitions. The sink writer then commits files, JDBC batches or catalog-managed output.</p>
+<div class="glossary">
+<div><strong>DataFrame</strong><br>A distributed table-like dataset with named columns and a schema.</div>
+<div><strong>Partition</strong><br>A unit of data processed by one Spark task at a time.</div>
+<div><strong>JDBC driver</strong><br>A JVM library used to connect Spark to MySQL.</div>
+<div><strong>Hive metastore</strong><br>A catalog storing table, schema, partition and location metadata.</div>
+<div><strong>Predicate pushdown</strong><br>Sending eligible filters to the source so fewer rows move to Spark.</div>
+<div><strong>Idempotency</strong><br>A retry produces the correct final state without duplicate side effects.</div>
+<div><strong>Reconciliation</strong><br>Comparing source, rejected and target measures.</div>
+<div><strong>Schema contract</strong><br>The approved columns, types and validation rules for a dataset.</div>
+</div>
+<div class="diagram">
+<h3>Diagram 1 — Common Integration Architecture</h3>
+<p><strong>How to read:</strong> Start at the blue source, move through the purple processing boxes and finish at the green target. Audit measures are produced throughout the flow.</p>
+<div class="flow">
+<div class="node source">Source<br><small>HDFS / MySQL / Hive</small></div><div class="arrow">→</div>
+<div class="node">Connector<br><small>File / JDBC / Catalog</small></div><div class="arrow">→</div>
+<div class="node">Spark DataFrame<br><small>clean • join • aggregate</small></div><div class="arrow">→</div>
+<div class="node">Quality Gate<br><small>schema • keys • counts</small></div><div class="arrow">→</div>
+<div class="node target">Target<br><small>HDFS / MySQL / Hive</small></div>
+</div>
+<p><strong>Components:</strong> the connector understands the source; the DataFrame plan represents distributed processing; the quality gate rejects unsafe records; the target writer uses destination-specific behavior.</p>
+<ol><li>The connector creates input partitions.</li><li>Spark applies transformations lazily.</li><li>A write triggers distributed tasks.</li><li>Each target has different commit and failure behavior.</li><li>Audit counts make the run explainable.</li></ol>
+</div>
+<div class="callout remember"><strong>Remember it as:</strong> one DataFrame programming model, three different storage behaviors.</div>
+</section>
+
+<section class="section content-section" id="simple-example" data-title="Simple Example">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>4. Simple Example — HDFS to HDFS</h2>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession, functions as F
+
+spark = SparkSession.builder.appName("minimal-integration").getOrCreate()
+
+orders = spark.read.parquet("hdfs:///training/incoming/orders")
+
+curated = (
+    orders
+    .filter(F.col("status") == "PAID")
+    .withColumn("tax", F.round(F.col("amount") * 0.18, 2))
+    .withColumn("net_amount", F.col("amount") + F.col("tax"))
+)
+
+curated.write.mode("overwrite").parquet(
+    "hdfs:///training/curated/orders"
+)
+
+verified = spark.read.parquet(
+    "hdfs:///training/curated/orders"
+).count()
+
+print("Verified rows:", verified)
+spark.stop()</code></pre></div>
+<h3>Line-by-line reasoning</h3>
+<ol><li><code>SparkSession</code> is the entry point for DataFrame work.</li><li><code>hdfs:///</code> uses the Hadoop default filesystem configuration available to Spark.</li><li>The filter and calculated columns build a lazy logical plan.</li><li>The write triggers execution and creates Parquet part files.</li><li>The read-back count checks the committed destination rather than only trusting the in-memory DataFrame.</li></ol>
+<div class="output">Expected result:
+Only PAID orders are written.
+Each row includes tax and net_amount.
+The verified count equals the intended output count.</div>
+</section>
+
+<section class="section content-section" id="industry-example" data-title="Industry Example">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>5. Real-World Retail Scenario</h2>
+<p>A retailer receives hourly order files in HDFS. Customer and current order-status data live in MySQL. Analysts query historical sales through Hive. The engineering team wants the same validation and transformation rules across all source-target combinations.</p>
+<p>Each run receives a run ID. The job validates order ID, customer ID and amount, calculates tax and net amount, writes rejected records separately and publishes valid records to HDFS, MySQL or Hive. Counts and duration are stored for operations.</p>
+<div class="diagram">
+<h3>Diagram 2 — Retail Multi-System Data Flow</h3>
+<p><strong>Legend:</strong> blue = sources, purple = processing, green = targets. <strong>How to read:</strong> either source enters the common Spark pipeline, then the required target branch is selected.</p>
+<div class="flow"><div class="node source">HDFS Landing<br><small>hourly order files</small></div><div class="node source">MySQL OLTP<br><small>orders and customers</small></div><div class="node source">Hive Raw<br><small>warehouse history</small></div></div>
+<div class="flow"><div class="arrow">↓</div></div>
+<div class="flow"><div class="node">Read</div><div class="arrow">→</div><div class="node">Validate</div><div class="arrow">→</div><div class="node">Transform</div><div class="arrow">→</div><div class="node">Reconcile</div></div>
+<div class="flow"><div class="arrow">↓</div></div>
+<div class="flow"><div class="node target">HDFS Curated<br><small>Parquet</small></div><div class="node target">MySQL Serving<br><small>bounded table</small></div><div class="node target">Hive Warehouse<br><small>catalog table</small></div></div>
+<ol><li>Sources are converted into a common schema.</li><li>Invalid records are isolated before a destination write.</li><li>Business calculations are implemented once in Spark.</li><li>Destination-specific options control files, connections and catalog metadata.</li><li>Target verification confirms the result.</li></ol>
+</div>
+</section>
+
+<section class="section content-section" id="setup" data-title="Environment Setup">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>6. Environment and Data Setup</h2>
+<h3>Required components</h3>
+<ul><li>Apache Spark and PySpark.</li><li>Hadoop configuration files that allow Spark nodes to reach HDFS.</li><li>MySQL Server and MySQL Connector/J available to driver and executors.</li><li>A Hive-compatible Spark build and reachable Hive metastore when a shared catalog is required.</li></ul>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code># Verify HDFS and create lab folders
+hdfs dfs -ls /
+hdfs dfs -mkdir -p /training/incoming/orders_csv
+hdfs dfs -mkdir -p /training/curated/orders
+hdfs dfs -mkdir -p /training/rejected/orders
+
+# Submit with Connector/J. Replace the version with the one approved locally.
+spark-submit \
+  --packages com.mysql:mysql-connector-j:9.7.0 \
+  integration_job.py</code></pre></div>
+<h3>Create MySQL training tables</h3>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>CREATE DATABASE IF NOT EXISTS retail_training;
+USE retail_training;
+
+CREATE TABLE source_orders (
+  order_id BIGINT PRIMARY KEY,
+  customer_id BIGINT NOT NULL,
+  order_ts TIMESTAMP NOT NULL,
+  amount DECIMAL(12,2) NOT NULL,
+  status VARCHAR(30) NOT NULL
+);
+
+INSERT INTO source_orders VALUES
+(1001,501,'2026-07-01 10:10:00',1200.00,'PAID'),
+(1002,502,'2026-07-01 10:30:00', 800.00,'PAID'),
+(1003,501,'2026-07-02 09:15:00', 250.00,'CANCELLED'),
+(1004,503,'2026-07-02 11:45:00',1500.00,'PAID');
+
+CREATE TABLE curated_orders (
+  order_id BIGINT PRIMARY KEY,
+  customer_id BIGINT,
+  order_date DATE,
+  amount DECIMAL(12,2),
+  tax DECIMAL(12,2),
+  net_amount DECIMAL(12,2),
+  load_run_id VARCHAR(80)
+);</code></pre></div>
+<h3>Keep credentials outside code</h3>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>export MYSQL_URL='jdbc:mysql://mysql-host:3306/retail_training'
+export MYSQL_USER='spark_etl'
+export MYSQL_PASSWORD='load-from-approved-secret-store'</code></pre></div>
+<div class="callout warn"><strong>WATCH OUT:</strong> Never print the password or commit it to Git. Use a secret manager in production and grant the Spark account only the permissions it requires.</div>
+</section>
+
+<section class="section content-section" id="hdfs-hdfs" data-title="HDFS to PySpark to HDFS">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>7. HDFS → PySpark → HDFS</h2>
+<p>Choose this pattern for raw-to-standardized, standardized-to-curated or aggregate file processing inside a Hadoop data lake.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession, functions as F, types as T
+
+spark = SparkSession.builder.appName("hdfs-to-hdfs").getOrCreate()
+
+schema = T.StructType([
+    T.StructField("order_id", T.LongType(), False),
+    T.StructField("customer_id", T.LongType(), False),
+    T.StructField("order_ts", T.TimestampType(), True),
+    T.StructField("amount", T.DecimalType(12, 2), True),
+    T.StructField("status", T.StringType(), True),
+])
+
+source = (spark.read.option("header", True)
+          .schema(schema)
+          .csv("hdfs:///training/incoming/orders_csv"))
+
+valid_condition = (
+    F.col("order_id").isNotNull()
+    &amp; F.col("customer_id").isNotNull()
+    &amp; F.col("amount").isNotNull()
+    &amp; (F.col("amount") &gt;= 0)
+)
+
+valid = source.filter(valid_condition)
+rejected = source.filter(~valid_condition).withColumn(
+    "rejection_reason", F.lit("Missing key/amount or negative amount")
+)
+
+curated = (valid
+    .withColumn("order_date", F.to_date("order_ts"))
+    .withColumn("tax", F.round(F.col("amount") * 0.18, 2))
+    .withColumn("net_amount", F.col("amount") + F.col("tax")))
+
+(curated.repartition("order_date")
+ .write.mode("overwrite")
+ .partitionBy("order_date")
+ .parquet("hdfs:///training/curated/orders"))
+
+rejected.write.mode("overwrite").json(
+    "hdfs:///training/rejected/orders"
+)
+
+print("source", source.count())
+print("valid", valid.count())
+print("rejected", rejected.count())</code></pre></div>
+<div class="callout pro"><strong>Why Parquet?</strong><br>It is columnar, compressed and schema-aware. Analytical queries can read only required columns and partitions.</div>
+<div class="callout warn"><strong>Small-file risk</strong><br>Too many Spark partitions create too many output files. Tune partition count based on volume and target file size instead of using a random number.</div>
+</section>
+
+<section class="section content-section" id="mysql-mysql" data-title="MySQL to PySpark to MySQL">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>8. MySQL → PySpark → MySQL</h2>
+<p>Use this pattern for batch enrichment, aggregation or publishing from an operational source table to a reporting or serving table.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>import os
+from pyspark.sql import SparkSession, functions as F
+
+spark = SparkSession.builder.appName("mysql-to-mysql").getOrCreate()
+url = os.environ["MYSQL_URL"]
+user = os.environ["MYSQL_USER"]
+password = os.environ["MYSQL_PASSWORD"]
+
+orders = (spark.read.format("jdbc")
+    .option("url", url)
+    .option("dbtable", "source_orders")
+    .option("user", user)
+    .option("password", password)
+    .option("driver", "com.mysql.cj.jdbc.Driver")
+    .option("partitionColumn", "order_id")
+    .option("lowerBound", "1001")
+    .option("upperBound", "1005")
+    .option("numPartitions", "2")
+    .option("fetchsize", "1000")
+    .load())
+
+run_id = "retail-20260714-001"
+curated = (orders.filter(F.col("status") == "PAID")
+    .withColumn("order_date", F.to_date("order_ts"))
+    .withColumn("tax", F.round(F.col("amount") * 0.18, 2))
+    .withColumn("net_amount", F.col("amount") + F.col("tax"))
+    .withColumn("load_run_id", F.lit(run_id))
+    .select("order_id", "customer_id", "order_date", "amount",
+            "tax", "net_amount", "load_run_id"))
+
+# Control the number of simultaneous database writers.
+curated = curated.coalesce(2)
+
+(curated.write.format("jdbc")
+    .option("url", url)
+    .option("dbtable", "curated_orders")
+    .option("user", user)
+    .option("password", password)
+    .option("driver", "com.mysql.cj.jdbc.Driver")
+    .option("batchsize", "1000")
+    .mode("append")
+    .save())</code></pre></div>
+<div class="callout warn"><strong>COMMON CONFUSION:</strong> JDBC <code>lowerBound</code> and <code>upperBound</code> determine partition stride. They do not automatically filter all rows to that range. Use a subquery or predicate for a required business window.</div>
+<div class="callout remember"><strong>Production retry pattern:</strong> write to staging → validate → merge/upsert by key → record run ID → mark the run complete.</div>
+</section>
+
+<section class="section content-section" id="hive-hive" data-title="Hive to PySpark to Hive">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>9. Hive → PySpark → Hive</h2>
+<p>Use this pattern when both source and target are warehouse datasets registered in a Hive-compatible catalog.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>from pyspark.sql import SparkSession, functions as F
+
+spark = (SparkSession.builder
+    .appName("hive-to-hive")
+    # Use this when the platform requires an external metastore URI:
+    # .config("hive.metastore.uris", "thrift://metastore-host:9083")
+    .enableHiveSupport()
+    .getOrCreate())
+
+spark.sql("CREATE DATABASE IF NOT EXISTS retail_dw")
+source = spark.table("retail_raw.orders")
+
+daily_sales = (source.filter(F.col("status") == "PAID")
+    .withColumn("order_date", F.to_date("order_ts"))
+    .groupBy("order_date")
+    .agg(F.countDistinct("order_id").alias("order_count"),
+         F.round(F.sum("amount"), 2).alias("gross_sales")))
+
+(daily_sales.write
+    .mode("overwrite")
+    .format("parquet")
+    .saveAsTable("retail_dw.daily_sales"))
+
+spark.sql("""
+SELECT order_date, order_count, gross_sales
+FROM retail_dw.daily_sales
+ORDER BY order_date
+""").show()</code></pre></div>
+<h3>Writing to an existing table</h3>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code># insertInto uses the target table definition and positional column order.
+ordered = daily_sales.select("order_date", "order_count", "gross_sales")
+ordered.write.mode("append").insertInto("retail_dw.daily_sales")</code></pre></div>
+<div class="callout warn"><strong>WATCH OUT:</strong> With <code>insertInto</code>, select columns in the exact target order. Compatible types in the wrong order can produce semantically incorrect data.</div>
+</section>
+
+<section class="section content-section" id="hdfs-mysql" data-title="HDFS to PySpark to MySQL">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>10. HDFS → PySpark → MySQL</h2>
+<p>This pattern publishes a smaller, query-friendly serving dataset from a large HDFS history into MySQL.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>import os
+from pyspark.sql import SparkSession, functions as F
+
+spark = SparkSession.builder.appName("hdfs-to-mysql").getOrCreate()
+raw = spark.read.parquet("hdfs:///training/curated/orders")
+
+serving = (raw.filter(F.col("status") == "PAID")
+    .groupBy("customer_id")
+    .agg(F.countDistinct("order_id").alias("paid_order_count"),
+         F.round(F.sum("net_amount"), 2).alias("lifetime_value")))
+
+# A bounded result should not open hundreds of database connections.
+serving = serving.coalesce(4)
+
+(serving.write.format("jdbc")
+    .option("url", os.environ["MYSQL_URL"])
+    .option("dbtable", "customer_value")
+    .option("user", os.environ["MYSQL_USER"])
+    .option("password", os.environ["MYSQL_PASSWORD"])
+    .option("driver", "com.mysql.cj.jdbc.Driver")
+    .option("batchsize", "1000")
+    .mode("overwrite")
+    .save())</code></pre></div>
+<div class="callout pro"><strong>Why aggregate first?</strong><br>HDFS is suitable for large detailed history. MySQL should usually receive a bounded serving result rather than every raw event.</div>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>SELECT COUNT(*) AS customer_rows,
+       SUM(lifetime_value) AS total_value
+FROM retail_training.customer_value;</code></pre></div>
+</section>
+
+<section class="section content-section" id="mysql-hive" data-title="MySQL to PySpark to Hive">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>11. MySQL → PySpark → Hive</h2>
+<p>This pattern extracts operational records from MySQL and builds a historical analytical table in Hive.</p>
+<div class="code-card"><button class="btn small copy-btn">Copy</button><pre><code>import os
+from pyspark.sql import SparkSession, functions as F
+
+spark = (SparkSession.builder
+    .appName("mysql-to-hive")
+    .enableHiveSupport()
+    .getOrCreate())
+
+source_query = """
+(
+  SELECT order_id, customer_id, order_ts, amount, status
+  FROM source_orders
+  WHERE order_ts &gt;= '2026-07-01'
+    AND order_ts &lt;  '2026-08-01'
+) monthly_orders
+"""
+
+orders = (spark.read.format("jdbc")
+    .option("url", os.environ["MYSQL_URL"])
+    .option("dbtable", source_query)
+    .option("user", os.environ["MYSQL_USER"])
+    .option("password", os.environ["MYSQL_PASSWORD"])
+    .option("driver", "com.mysql.cj.jdbc.Driver")
+    .option("fetchsize", "1000")
+    .load())
+
+warehouse = (orders
+    .withColumn("order_date", F.to_date("order_ts"))
+    .withColumn("order_month", F.date_format("order_ts", "yyyy-MM")))
+
+spark.sql("CREATE DATABASE IF NOT EXISTS retail_dw")
+
+(warehouse.write
+    .mode("append")
+    .format("parquet")
+    .partitionBy("order_month")
+    .saveAsTable("retail_dw.orders"))</code></pre></div>
+<div class="callout remember"><strong>Remember it as:</strong> extract narrowly from the operational database, process in Spark and publish broadly for analytical use.</div>
+</section>
+
+<section class="section content-section" id="comparison" data-title="Comparison Table">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>12. Comparison and Selection</h2>
+<div class="table-wrap"><table><thead><tr><th>Pipeline</th><th>Best use</th><th>Main strength</th><th>Main risk</th></tr></thead><tbody>
+<tr><td>HDFS → Spark → HDFS</td><td>Data-lake refinement</td><td>High-throughput distributed file processing</td><td>Small files and weak schema governance</td></tr>
+<tr><td>MySQL → Spark → MySQL</td><td>Database enrichment and serving</td><td>Direct table integration</td><td>Connection overload and duplicate retries</td></tr>
+<tr><td>Hive → Spark → Hive</td><td>Warehouse transformations</td><td>Catalog discovery and SQL access</td><td>Overwrite, partition and metastore mistakes</td></tr>
+<tr><td>HDFS → Spark → MySQL</td><td>Publish aggregated serving data</td><td>Large-scale preparation before database load</td><td>Sending too much detail to MySQL</td></tr>
+<tr><td>MySQL → Spark → Hive</td><td>Operational-to-analytical ingestion</td><td>Historical warehouse creation</td><td>Heavy extraction load on source MySQL</td></tr>
+</tbody></table></div>
+<div class="callout remember"><strong>Selection rule:</strong> source = authoritative location; target = consumption pattern. Use HDFS for large analytical files, MySQL for bounded operational serving and Hive for catalog-driven SQL analytics.</div>
+</section>
+
+<section class="section content-section" id="best-practices" data-title="Best Practices">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>13. Best Practices</h2>
+<div class="two-col">
+<div><h3>Do</h3><ul>
+<li><strong>Use explicit file schemas.</strong> Why: avoids repeated inference and silent type changes.</li>
+<li><strong>Select only required columns.</strong> Why: reduces I/O, network and memory.</li>
+<li><strong>Push JDBC filters to MySQL.</strong> Why: fewer rows leave the database.</li>
+<li><strong>Limit database write partitions.</strong> Why: protects connection and transaction capacity.</li>
+<li><strong>Use run IDs and audit counts.</strong> Why: every load becomes traceable.</li>
+<li><strong>Design an idempotent retry.</strong> Why: distributed jobs and networks can fail.</li>
+<li><strong>Read back the destination.</strong> Why: verifies committed output rather than planned output.</li>
+</ul></div>
+<div><h3>Avoid</h3><ul>
+<li><strong>Hard-coded passwords.</strong> They leak through source control and logs.</li>
+<li><strong><code>collect()</code> on large data.</strong> It can exhaust driver memory.</li>
+<li><strong>Uncontrolled overwrite.</strong> It can replace an entire path or table.</li>
+<li><strong>Hundreds of JDBC writers.</strong> They can overload MySQL.</li>
+<li><strong>High-cardinality Hive partitions.</strong> They create many tiny directories/files.</li>
+<li><strong>Assuming append is retry-safe.</strong> It can duplicate records.</li>
+</ul></div>
+</div>
+<div class="callout pro"><strong>PRO TIP:</strong> Log source count, valid count, rejected count, target count, run ID, duration and output location/table for every execution.</div>
+</section>
+
+<section class="section content-section" id="edge-cases" data-title="Edge Cases and Gotchas">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>14. Edge Cases and Gotchas</h2>
+<div class="table-wrap"><table><thead><tr><th>Situation</th><th>What can break</th><th>Recommended response</th></tr></thead><tbody>
+<tr><td>Null or malformed keys</td><td>Join misses or target constraint failure</td><td>Quarantine with an explicit rejection reason.</td></tr>
+<tr><td>Decimal precision changes</td><td>Rounding or JDBC conversion failure</td><td>Cast to an approved precision and scale before writing.</td></tr>
+<tr><td>Source adds/removes columns</td><td>Unexpected target schema evolution</td><td>Use a selected column allow-list and schema contract test.</td></tr>
+<tr><td>Partial database write</td><td>Retry duplicates rows</td><td>Use staging, run ID, key constraints and merge/upsert logic.</td></tr>
+<tr><td>Skewed JDBC partition key</td><td>One task reads most rows</td><td>Use better ranges, predicates or a more balanced key.</td></tr>
+<tr><td>Too many output partitions</td><td>HDFS/Hive small-file problem</td><td>Repartition or coalesce according to data size.</td></tr>
+<tr><td>Wrong positional order in insertInto</td><td>Values enter the wrong semantic columns</td><td>Select target columns in the exact order before insertion.</td></tr>
+<tr><td>Metastore points to another environment</td><td>Table not found or wrong data queried</td><td>Verify catalog, metastore URI, database and warehouse location.</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="section content-section" id="troubleshooting" data-title="Troubleshooting">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>15. Troubleshooting and Common Errors</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead><tbody>
+<tr><td><code>ClassNotFoundException: com.mysql.cj.jdbc.Driver</code></td><td>Connector/J missing from classpath</td><td>Use <code>--jars</code> or approved <code>--packages</code>; ensure executors receive it.</td></tr>
+<tr><td><code>No suitable driver</code></td><td>Missing driver or invalid JDBC URL</td><td>Check JAR, class and <code>jdbc:mysql://host:3306/database</code>.</td></tr>
+<tr><td><code>Communications link failure</code></td><td>Service, DNS, port, firewall or TLS problem</td><td>Test connectivity from every Spark node; inspect MySQL bind address and firewall.</td></tr>
+<tr><td><code>Access denied for user</code></td><td>Wrong secret or insufficient grant</td><td>Validate the secret source and database grants.</td></tr>
+<tr><td>HDFS <code>FileNotFoundException</code></td><td>Wrong path, authority or permission</td><td>Run <code>hdfs dfs -ls</code>; check <code>fs.defaultFS</code> and directory permissions.</td></tr>
+<tr><td><code>Table or view not found</code></td><td>Wrong catalog/database or no Hive support</td><td>Enable Hive support; run <code>SHOW DATABASES</code> and verify metastore URI.</td></tr>
+<tr><td>JDBC write appears stuck</td><td>Locks, excessive connections or slow transactions</td><td>Reduce partitions, inspect MySQL locks/process list and tune batch size.</td></tr>
+<tr><td>Thousands of Parquet files</td><td>Too many output partitions</td><td>Choose a target file count and repartition/coalesce before the write.</td></tr>
+<tr><td>Target count is lower</td><td>Filters, rejects, key constraints or failed batches</td><td>Compare source, valid, rejected and target counts using the run ID.</td></tr>
+</tbody></table></div>
+<div class="callout memory"><strong>Diagnostic order:</strong> configuration → network → authentication → schema → partitioning → target constraints → reconciliation.</div>
+</section>
+
+<section class="section content-section" id="interview" data-title="Interview Q&A">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>16. Interview Questions and Answers</h2>
+<div class="flashcard" id="flashcard" tabindex="0" role="button" aria-label="Flip interview flashcard"><div class="flash-question"></div><div class="flash-answer"></div></div>
+<div class="rating storage-feature"><button class="btn small recall" data-days="0">Again</button><button class="btn small recall" data-days="1">Hard</button><button class="btn small recall" data-days="3">Good</button><button class="btn small recall" data-days="7">Easy</button></div>
+<div class="flash-controls"><button class="btn" id="prevCard">Previous</button><button class="btn" id="flipCard">Flip</button><button class="btn" id="nextCard">Next</button><button class="btn" id="shuffleCards">Shuffle</button><button class="btn storage-feature" id="dueCards">Due today</button><button class="btn storage-feature" id="resetSchedule">Reset schedule</button></div>
+<div class="qa-list" id="qaList"></div>
+</section>
+
+<section class="section content-section" id="exercises" data-title="Active Exercises">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>17. Active Practice Exercises</h2>
+<h3>A. Fill in the blank</h3>
+<div class="exercise"><p>1. Read a MySQL table using Spark's database format:</p><code>spark.read.format("______")</code><br><input class="fill-answer" data-answer="jdbc"><button class="btn small check-fill">Check</button><button class="btn small reveal-fill">Reveal</button><span class="exercise-feedback"></span></div>
+<div class="exercise"><p>2. Enable Hive catalog support:</p><code>SparkSession.builder.______()</code><br><input class="fill-answer" data-answer="enableHiveSupport"><button class="btn small check-fill">Check</button><button class="btn small reveal-fill">Reveal</button><span class="exercise-feedback"></span></div>
+<h3>B. Match term to meaning</h3>
+<p>Click a term, then click its matching meaning.</p><div class="pair-grid" id="matching"></div><p id="matchFeedback"></p>
+<h3>C. Put the pipeline in order</h3>
+<ul class="order-list" id="orderList"></ul><button class="btn" id="checkOrder">Check order</button><button class="btn" id="revealOrder">Reveal</button><span id="orderFeedback"></span>
+</section>
+
+<section class="section content-section" id="quiz" data-title="Practice Quiz">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>18. Interactive Practice Quiz</h2>
+<p>15 questions are drawn and shuffled. Mark confidence as Sure or Unsure before submission.</p>
+<div id="quizQuestions"></div>
+<div class="quiz-actions"><button class="btn primary" id="submitQuiz">Submit Practice Quiz</button> <button class="btn hidden" id="retryQuiz">Retry and reshuffle</button> <button class="btn hidden" id="wrongOnly">Review wrong answers only</button></div>
+<div class="result-panel" id="quizResult"></div>
+</section>
+
+<section class="section content-section" id="exam" data-title="Formal Exam">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>19. Formal MCQ Exam</h2>
+<p>15 questions × 1 mark. Pass mark: 60%. Timer: 15 minutes. No negative marking.</p>
+<div class="exam-actions"><button class="btn primary" id="startExam">Start Test</button> <span class="timer" id="timer">15:00</span></div>
+<div id="examQuestions" class="hidden"></div>
+<div class="exam-actions"><button class="btn primary hidden" id="submitExam">Submit Exam</button> <button class="btn hidden" id="restartExam">Restart Exam</button> <button class="btn hidden" id="weakRetry">Practice my weak areas</button></div>
+<div class="result-panel" id="examResult"></div>
+<div id="weakArea"></div>
+</section>
+
+<section class="section content-section" id="glossary" data-title="Glossary">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>20. Glossary</h2>
+<div class="glossary">
+<div><strong>Batch size</strong><br>Rows grouped into one JDBC batch.</div><div><strong>Catalog</strong><br>Metadata mapping table names to schemas and locations.</div><div><strong>DataFrame</strong><br>A distributed table-like dataset.</div><div><strong>Executor</strong><br>A Spark process running tasks.</div><div><strong>HDFS</strong><br>Hadoop Distributed File System.</div><div><strong>Hive metastore</strong><br>Catalog containing Hive table metadata.</div><div><strong>Idempotency</strong><br>Safe repeat execution without an incorrect duplicate result.</div><div><strong>JDBC</strong><br>Java Database Connectivity.</div><div><strong>Partition</strong><br>A subset processed by one task.</div><div><strong>Predicate pushdown</strong><br>Executing eligible filters at the source.</div><div><strong>Reconciliation</strong><br>Comparing input, reject and output measures.</div><div><strong>Sink</strong><br>The pipeline destination.</div>
+</div>
+</section>
+
+<section class="section content-section" id="summary" data-title="Summary">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>21. Summary and Quick Revision</h2>
+<ul><li>Use R-T-V-W-R for every pipeline: Read, Transform, Validate, Write, Reconcile.</li><li>HDFS integrations need schema control, efficient formats and sensible file counts.</li><li>MySQL integrations need Connector/J, protected secrets, filter pushdown, limited connections and batch writes.</li><li>Hive integrations need Hive support, correct metastore/catalog configuration and careful table/partition behavior.</li><li>Retries require staging, run IDs, stable keys and an idempotent target strategy.</li><li>Always verify the physical destination and log operational metrics.</li></ul>
+<div class="callout remember"><strong>One-line cheat list:</strong> files scale storage, MySQL serves bounded relational results, Hive makes analytical data discoverable, and Spark performs the distributed work.</div>
+<h3>What to learn next</h3>
+<div class="flow"><div class="node">DataFrames and SQL</div><div class="arrow">→</div><div class="node">These integrations</div><div class="arrow">→</div><div class="node">Workflow orchestration</div><div class="arrow">→</div><div class="node">CDC, streaming and lakehouse tables</div></div>
+<h3>Official reference basis</h3>
+<ul><li>Apache Spark JDBC data source and DataFrameWriter JDBC documentation.</li><li>Apache Spark Hive tables and Spark SQL data-source documentation.</li><li>Apache Hadoop File System Shell and HDFS documentation.</li><li>MySQL Connector/J driver, URL and configuration documentation.</li></ul>
+</section>
+
+<section class="section content-section" id="certificate-section" data-title="Certificate">
+<label class="prepared storage-feature"><input type="checkbox" class="prepared-check"> Mark as prepared</label>
+<h2>Certificate of Completion</h2>
+<p>Enter the learner name after completing the exam.</p>
+<input id="certName" placeholder="Learner name"> <button class="btn primary" id="generateCert">Generate certificate</button>
+<div class="certificate" id="certificate"><h1>Certificate of Completion</h1><p>This certifies that</p><h2 id="certDisplayName"></h2><p>completed the classroom tutorial</p><h2>PySpark Integrations: HDFS, MySQL and Hive</h2><p>Best exam score: <strong id="certScore">0%</strong></p><p>Date: <strong id="certDate"></strong></p></div>
+</section>
+</main>
+
+</div>
+
+<div class="notes-panel storage-feature collapsed" id="notesPanel" hidden><button class="btn small" id="toggleNotes">📝 My Notes</button><div class="notes-body"><p>Double-click a word in the lesson to add a note.</p><div id="notesList"></div><button class="btn small danger" id="clearNotes">Clear all</button></div></div>
+<div class="note-popup storage-feature" id="notePopup"><strong>Note for: <span id="noteWordLabel"></span></strong><textarea id="noteText" placeholder="Type your preparation note..."></textarea><div><button class="btn primary small" id="saveNote">Save</button> <button class="btn small" id="cancelNote">Cancel</button> <button class="btn danger small hidden" id="deleteNote">Delete</button></div></div>
+<button class="btn primary back-top" id="backTop" aria-label="Back to top">↑</button>
+
+<script>
+const CONFIG={topic:'PySpark Integrations: HDFS, MySQL and Hive',practiceCount:15,examCount:15,examMinutes:15,passMark:60,marksPerQuestion:1};
+const LS='pyspark_integrations_hdfs_mysql_hive_v1_';
+let storageOK=false;try{localStorage.setItem(LS+'test','1');storageOK=localStorage.getItem(LS+'test')==='1';localStorage.removeItem(LS+'test')}catch(e){storageOK=false}
+if(!storageOK)document.querySelectorAll('.storage-feature').forEach(e=>e.classList.add('hidden'));
+const get=(k,d)=>{if(!storageOK)return d;try{const v=localStorage.getItem(LS+k);return v===null?d:JSON.parse(v)}catch(e){return d}};
+const set=(k,v)=>{if(storageOK)try{localStorage.setItem(LS+k,JSON.stringify(v))}catch(e){}};
+
+// TOC and preparation tracking
+const sections=[...document.querySelectorAll('.content-section')];const toc=document.getElementById('toc');
+sections.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.textContent=(i+1)+'. '+s.dataset.title;toc.appendChild(a)});
+let progress=get('progress',{});function updateProgress(){let n=0;sections.forEach(s=>{const c=s.querySelector('.prepared-check');if(c){c.checked=!!progress[s.id];if(c.checked)n++}});const total=sections.filter(s=>s.querySelector('.prepared-check')).length;document.getElementById('progressText').textContent=`${n} / ${total} prepared`;document.getElementById('progressFill').style.width=(total?n/total*100:0)+'%';if(n===total&&total){awardBadge('All Topics Prepared');addXP(100)}}
+document.querySelectorAll('.prepared-check').forEach(c=>c.addEventListener('change',e=>{const id=e.target.closest('.content-section').id;progress[id]=e.target.checked;set('progress',progress);updateProgress()}));
+document.getElementById('resetProgress').onclick=()=>{progress={};set('progress',progress);updateProgress()};updateProgress();
+
+// Theme, font, sound
+let theme=get('theme','light');document.documentElement.dataset.theme=theme;document.getElementById('themeBtn').onclick=()=>{theme=theme==='light'?'dark':'light';document.documentElement.dataset.theme=theme;set('theme',theme)};
+let fontSize=get('fontSize',16);document.documentElement.style.setProperty('--font',fontSize+'px');document.getElementById('fontUp').onclick=()=>{fontSize=Math.min(21,fontSize+1);document.documentElement.style.setProperty('--font',fontSize+'px');set('fontSize',fontSize)};document.getElementById('fontDown').onclick=()=>{fontSize=Math.max(13,fontSize-1);document.documentElement.style.setProperty('--font',fontSize+'px');set('fontSize',fontSize)};
+let soundOn=get('soundOn',true);function soundLabel(){document.getElementById('soundBtn').textContent=soundOn?'🔊 Sound':'🔇 Muted'}soundLabel();document.getElementById('soundBtn').onclick=()=>{soundOn=!soundOn;set('soundOn',soundOn);soundLabel()};
+function playTone(pct){if(!soundOn)return;try{const A=window.AudioContext||window.webkitAudioContext;const ac=new A();const notes=pct===100?[523,659,784,1046]:pct>=90?[523,659,784]:pct>=75?[440,554,659]:pct>=60?[392,494]:[261,329];notes.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.connect(g);g.connect(ac.destination);const t=ac.currentTime+i*.16;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.15,t+.03);g.gain.exponentialRampToValueAtTime(.0001,t+.28);o.start(t);o.stop(t+.3)});setTimeout(()=>ac.close(),1500)}catch(e){}}
+function mood(p){if(p===100)return['🤩🎉','Perfect! Flawless run.'];if(p>=90)return['😄','Excellent — interview-ready!'];if(p>=75)return['🙂','Well done — solid grasp.'];if(p>=60)return['😌','Good — revise the misses.'];return['💪😤','Needs focus — review and retry.']}
+
+// Reading progress and resume
+window.addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById('readingBar').style.width=(h?scrollY/h*100:0)+'%';let current=sections[0].id;sections.forEach(s=>{if(s.getBoundingClientRect().top<160)current=s.id});set('lastSection',current)});
+document.getElementById('backTop').onclick=()=>scrollTo({top:0,behavior:'smooth'});
+const last=get('lastSection',null);if(last&&location.hash==='')setTimeout(()=>{const el=document.getElementById(last);if(el)el.scrollIntoView()},200);
+
+// Copy buttons
+for(const b of document.querySelectorAll('.copy-btn'))b.onclick=async()=>{const text=b.nextElementSibling.innerText;try{await navigator.clipboard.writeText(text);b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1000)}catch(e){b.textContent='Select & copy'}};
+
+// Sparkle trail
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){let lastSpark=0;addEventListener('pointermove',e=>{const now=Date.now();if(now-lastSpark<45)return;lastSpark=now;const s=document.createElement('span');s.className='spark';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),700)})}
+
+// XP, badges, history
+let xp=get('xp',0),badges=get('badges',[]),history=get('history',[]);function renderGame(){document.getElementById('xp').textContent=xp;document.getElementById('badges').innerHTML=badges.map(b=>`<span class="badge">${b}</span>`).join(' ')}function addXP(n){if(!storageOK)return;xp+=n;set('xp',xp);renderGame()}function awardBadge(b){if(!storageOK||badges.includes(b))return;badges.push(b);set('badges',badges);renderGame()}function addHistory(type,pct){if(!storageOK)return;history.unshift({date:new Date().toLocaleString(),type,pct});history=history.slice(0,10);set('history',history);renderHistory()}function renderHistory(){document.getElementById('scoreHistory').innerHTML=history.length?history.map(h=>`<div class="history-item">${h.type}: <strong>${h.pct}%</strong><br><small>${h.date}</small></div>`).join(''):'<small>No attempts yet.</small>'}renderGame();renderHistory();
+
+// Interview Q&A and flashcards
+const qa=[["Foundation", "What is an integration pipeline in PySpark?", "It is a Spark application that reads from a source, transforms and validates distributed DataFrames, and writes a verified result to a target. The source and target can use different storage technologies."], ["Foundation", "What is HDFS?", "HDFS is Hadoop Distributed File System. It stores large files as blocks across cluster machines and presents paths such as hdfs:///training/orders."], ["Foundation", "What is JDBC?", "JDBC is Java Database Connectivity. Spark uses a JDBC driver running in the JVM to communicate with relational databases such as MySQL."], ["Foundation", "What is a Hive table?", "A Hive table is data described by catalog metadata including columns, format, location and partitions. Spark can query and write it after Hive support is enabled."], ["Foundation", "Why read the target again after writing?", "A read-back validation checks committed destination data. The source DataFrame count alone cannot prove that the target accepted and stored every intended record."], ["Foundation", "Why should passwords not be hard-coded?", "Code can be committed, shared, logged or copied. Environment variables or a secret manager reduce accidental exposure and allow credentials to rotate without changing the program."], ["Intermediate", "How does Spark read a JDBC table in parallel?", "Use partitionColumn, lowerBound, upperBound and numPartitions on a suitable numeric, date or timestamp column. Spark creates multiple range queries, although the bounds control partition stride rather than serving as a complete filter."], ["Intermediate", "What does fetchsize control?", "It influences how many rows the JDBC driver fetches per database round trip. A suitable value reduces round trips without creating excessive memory pressure."], ["Intermediate", "What does batchsize control?", "It controls how many rows are grouped into a JDBC write batch. Batching reduces per-row database overhead."], ["Intermediate", "Why limit partitions before a MySQL write?", "Each Spark partition can create a database writer and connection. Too many partitions can exhaust connection limits and overload transactions, locks and network capacity."], ["Intermediate", "What is the difference between writing Parquet and saveAsTable?", "Writing Parquet creates files at a path. saveAsTable also registers table metadata in a catalog so SQL users can discover and query the data by name."], ["Intermediate", "What is an idempotent pipeline?", "It is designed so rerunning the same logical load produces the correct final state instead of duplicates. Stable keys, staging, run IDs and merge/upsert patterns are common controls."], ["Advanced", "What is predicate pushdown?", "Spark translates eligible filters or operations into work performed by the source. With JDBC, this can reduce rows transferred from MySQL, depending on the query and connector behavior."], ["Advanced", "How does Spark connect to an external Hive metastore?", "Configure the platform’s metastore URI and related Hadoop/Hive settings, then create SparkSession with enableHiveSupport. Driver and executors must have compatible configuration and network access."], ["Advanced", "What is the risk of overwrite?", "Overwrite may replace an entire path, table or partition depending on the data source and API. Production jobs must define the replacement scope and validate the target after execution."], ["Advanced", "How should schema evolution be handled?", "Treat schema as a contract. Detect added, removed, renamed and incompatible fields, decide approved evolution rules and avoid relying on accidental inference."], ["Advanced", "How do you make a JDBC load retry-safe?", "Write to staging using a run ID, validate counts and keys, then perform a database-side merge/upsert or controlled partition replacement. Plain append is not automatically retry-safe."], ["Advanced", "What should an audit record contain?", "At minimum: run ID, source and target identifiers, start/end time, source count, valid count, rejected count, target count, status and error details. These measures support reconciliation and operations."]];
+const qaList=document.getElementById('qaList');qa.forEach(([lvl,q,a])=>{const d=document.createElement('details');d.innerHTML=`<summary><span class="tag ${lvl[0].toLowerCase()}">${lvl}</span> ${q}</summary><p>${a}</p>`;qaList.appendChild(d)});
+let flashOrder=qa.map((_,i)=>i),flashPos=0,cardFlipped=false,schedule=get('schedule',{});function showCard(){const [l,q,a]=qa[flashOrder[flashPos]];const fc=document.getElementById('flashcard');fc.classList.remove('flipped');cardFlipped=false;fc.querySelector('.flash-question').innerHTML=`<span class="tag">${l}</span><h3>${q}</h3><small>Click to reveal</small>`;fc.querySelector('.flash-answer').innerHTML=`<p>${a}</p>`}function flip(){cardFlipped=!cardFlipped;document.getElementById('flashcard').classList.toggle('flipped',cardFlipped)}document.getElementById('flashcard').onclick=flip;document.getElementById('flashcard').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();flip()}};document.getElementById('flipCard').onclick=flip;document.getElementById('nextCard').onclick=()=>{flashPos=(flashPos+1)%flashOrder.length;showCard()};document.getElementById('prevCard').onclick=()=>{flashPos=(flashPos-1+flashOrder.length)%flashOrder.length;showCard()};document.getElementById('shuffleCards').onclick=()=>{flashOrder.sort(()=>Math.random()-.5);flashPos=0;showCard()};document.querySelectorAll('.recall').forEach(b=>b.onclick=()=>{const idx=flashOrder[flashPos],days=+b.dataset.days;const due=new Date();due.setDate(due.getDate()+days);schedule[idx]={due:due.toISOString(),ease:days};set('schedule',schedule);addXP(days>=3?5:2);document.getElementById('nextCard').click()});document.getElementById('dueCards').onclick=()=>{const now=new Date();const due=qa.map((_,i)=>i).filter(i=>!schedule[i]||new Date(schedule[i].due)<=now);flashOrder=due.length?due:qa.map((_,i)=>i);flashPos=0;showCard()};document.getElementById('resetSchedule').onclick=()=>{schedule={};set('schedule',schedule);flashOrder=qa.map((_,i)=>i);flashPos=0;showCard()};showCard();
+
+// Exercises
+for(const b of document.querySelectorAll('.check-fill'))b.onclick=()=>{const ex=b.closest('.exercise'),inp=ex.querySelector('.fill-answer'),fb=ex.querySelector('.exercise-feedback'),ok=inp.value.trim().toLowerCase()===inp.dataset.answer.toLowerCase();fb.textContent=ok?' ✅ Correct.':' ❌ Review the exact function/join name.';if(ok)addXP(5)};for(const b of document.querySelectorAll('.reveal-fill'))b.onclick=()=>{const ex=b.closest('.exercise'),inp=ex.querySelector('.fill-answer');inp.value=inp.dataset.answer;ex.querySelector('.exercise-feedback').textContent=' Answer revealed.'};
+const pairs=[['HDFS','Distributed file storage'],['JDBC','Database connectivity'],['Hive metastore','Table metadata catalog'],['Idempotency','Safe repeat execution']];const match=document.getElementById('matching');let terms=pairs.map((p,i)=>({id:i,text:p[0],side:'t'})).sort(()=>Math.random()-.5),defs=pairs.map((p,i)=>({id:i,text:p[1],side:'d'})).sort(()=>Math.random()-.5),selected=null,matched=0;[...terms,...defs].forEach(x=>{const e=document.createElement('div');e.className='pair-item';e.textContent=x.text;e.dataset.id=x.id;e.dataset.side=x.side;e.onclick=()=>{if(e.classList.contains('matched'))return;if(!selected){selected=e;e.classList.add('selected')}else{if(selected.dataset.side!==e.dataset.side&&selected.dataset.id===e.dataset.id){selected.classList.add('matched');e.classList.add('matched');selected.classList.remove('selected');matched++;if(matched===pairs.length){document.getElementById('matchFeedback').textContent='✅ All pairs matched.';addXP(20)}}else{selected.classList.remove('selected');document.getElementById('matchFeedback').textContent='Try a different pair.'}selected=null}};match.appendChild(e)});
+const correctOrder=['Read source data','Transform business fields','Validate schema and records','Write the destination','Reconcile source and target'];let order=[...correctOrder].sort(()=>Math.random()-.5);function renderOrder(){const ul=document.getElementById('orderList');ul.innerHTML='';order.forEach((x,i)=>{const li=document.createElement('li');li.className='order-item';li.innerHTML=`<span>${i+1}. ${x}</span><span><button class="btn small up">↑</button><button class="btn small down">↓</button></span>`;li.querySelector('.up').onclick=()=>{if(i){[order[i-1],order[i]]=[order[i],order[i-1]];renderOrder()}};li.querySelector('.down').onclick=()=>{if(i<order.length-1){[order[i+1],order[i]]=[order[i],order[i+1]];renderOrder()}};ul.appendChild(li)})}renderOrder();document.getElementById('checkOrder').onclick=()=>{const ok=order.every((x,i)=>x===correctOrder[i]);document.getElementById('orderFeedback').textContent=ok?' ✅ Correct pipeline order.':' ❌ Revisit the R-T-V-W-R pipeline sequence.';if(ok)addXP(15)};document.getElementById('revealOrder').onclick=()=>{order=[...correctOrder];renderOrder();document.getElementById('orderFeedback').textContent=' Correct order revealed.'};
+
+// Question bank
+const bank=[{"t": "HDFS", "q": "Which path uses the default HDFS authority configured for Spark?", "o": ["hdfs:///training/orders", "file:///training/orders", "jdbc:mysql://training/orders", "hive:///training/orders"], "a": 0, "e": "hdfs:/// uses the default Hadoop filesystem authority and the supplied HDFS path."}, {"t": "HDFS", "q": "Which format is normally preferred for analytical output in HDFS?", "o": ["Parquet", "BMP", "Executable JAR", "Plain text only"], "a": 0, "e": "Parquet is columnar, compressed and schema-aware."}, {"t": "HDFS", "q": "What is a common result of too many output partitions?", "o": ["Thousands of small files", "A MySQL user is created", "Hive support is disabled", "All columns become strings"], "a": 0, "e": "Each output partition usually produces a file, so excessive partitions create a small-file problem."}, {"t": "HDFS", "q": "Why use an explicit schema for CSV?", "o": ["To avoid repeated inference and type surprises", "To start MySQL", "To create executors manually", "To disable nulls automatically"], "a": 0, "e": "An explicit schema is predictable, faster than inference and acts as a data contract."}, {"t": "JDBC", "q": "Which Spark format is used for MySQL connectivity?", "o": ["jdbc", "parquet", "hive-only", "binaryFile"], "a": 0, "e": "Spark uses the JDBC data source for relational database connectivity."}, {"t": "JDBC", "q": "What is the MySQL Connector/J driver class?", "o": ["com.mysql.cj.jdbc.Driver", "org.mysql.Driver", "pyspark.mysql.Driver", "com.hive.mysql.Driver"], "a": 0, "e": "Connector/J uses com.mysql.cj.jdbc.Driver."}, {"t": "Security", "q": "Where should a production database password be stored?", "o": ["An approved secret manager", "Inside every Python file", "In a public README", "Printed in Spark logs"], "a": 0, "e": "A secret manager protects and rotates credentials without embedding them in source code."}, {"t": "Performance", "q": "Which options enable a parallel JDBC range read?", "o": ["partitionColumn, lowerBound, upperBound, numPartitions", "header, sep, quote, escape", "path, codec, mode, format", "bucketBy, sortBy, cache, collect"], "a": 0, "e": "These four options define JDBC range partitioning."}, {"t": "Performance", "q": "What does fetchsize influence?", "o": ["Rows fetched per database round trip", "HDFS replication", "Hive database count", "Spark application name"], "a": 0, "e": "Fetch size controls JDBC row retrieval batches."}, {"t": "Performance", "q": "What does batchsize influence?", "o": ["Rows grouped into a JDBC write batch", "HDFS block replication", "Number of Hive databases", "Python process count"], "a": 0, "e": "Batch size reduces per-row write overhead by grouping operations."}, {"t": "Hive", "q": "Which call enables Hive catalog support?", "o": ["enableHiveSupport()", "enableJdbcSupport()", "enableHdfsSupport()", "enableMysqlSupport()"], "a": 0, "e": "SparkSession.builder.enableHiveSupport() enables Hive-compatible catalog features."}, {"t": "Hive", "q": "Which method persists data and registers a catalog table?", "o": ["saveAsTable", "collect", "show", "toLocalIterator"], "a": 0, "e": "saveAsTable creates or writes a table through the catalog."}, {"t": "Hive", "q": "What does a Hive metastore store?", "o": ["Table schemas, locations and partitions", "Every Spark executor process", "MySQL query results only", "HDFS block contents"], "a": 0, "e": "The metastore contains metadata, not the actual file blocks."}, {"t": "Hive", "q": "What is a key risk of insertInto?", "o": ["Position-based column order can misplace values", "It always deletes HDFS", "It cannot write rows", "It creates a MySQL driver"], "a": 0, "e": "insertInto follows the existing table definition and positional column ordering."}, {"t": "Quality", "q": "Which equation is a basic reconciliation check?", "o": ["source = valid + rejected", "source = target + password", "partitions = databases + users", "schema = port + host"], "a": 0, "e": "Every source row should be classified as valid or rejected for a complete quality gate."}, {"t": "Quality", "q": "What should be checked after a target write?", "o": ["Read-back count and business totals", "Only the Python variable name", "The mouse pointer", "The shell prompt color"], "a": 0, "e": "Destination verification detects partial or semantically wrong writes."}, {"t": "Reliability", "q": "What does idempotent mean?", "o": ["A retry produces the correct final state", "Every run changes the schema", "Only one executor is allowed", "The source is deleted first"], "a": 0, "e": "Idempotency prevents incorrect duplicate side effects on retries."}, {"t": "Reliability", "q": "Which design makes MySQL append safer to retry?", "o": ["Staging plus key-based merge/upsert", "Calling collect before write", "Increasing partitions without limit", "Removing primary keys"], "a": 0, "e": "Staging and key-based merge/upsert allow controlled, repeatable publication."}, {"t": "Performance", "q": "Why coalesce before a small MySQL write?", "o": ["To limit simultaneous database writers", "To create more HDFS files", "To infer CSV schema", "To enable Hive support"], "a": 0, "e": "A lower partition count limits concurrent JDBC connections."}, {"t": "Performance", "q": "What is predicate pushdown?", "o": ["Eligible filters execute at the source", "All rows are collected first", "HDFS duplicates every block", "Hive removes all partitions"], "a": 0, "e": "Pushdown reduces data transferred by applying supported work in the source."}, {"t": "Troubleshooting", "q": "What usually causes ClassNotFoundException for the MySQL driver?", "o": ["Connector/J is missing from the classpath", "The amount is negative", "HDFS has one file", "The Hive table is partitioned"], "a": 0, "e": "Spark cannot instantiate the driver class when the JAR is unavailable."}, {"t": "Troubleshooting", "q": "What usually causes Communications link failure?", "o": ["Host, port, network, firewall, TLS or service issue", "A missing CSV header only", "A decimal column", "A Spark alias"], "a": 0, "e": "The JDBC driver cannot establish or maintain the network connection."}, {"t": "Troubleshooting", "q": "What should be checked for HDFS FileNotFoundException?", "o": ["Path, fs.defaultFS and permissions", "MySQL batch size only", "Hive table comments", "Python list length"], "a": 0, "e": "Wrong paths, authorities or permissions are common HDFS causes."}, {"t": "Troubleshooting", "q": "What can cause Table or view not found for Hive?", "o": ["Wrong database/catalog, missing Hive support or metastore mismatch", "Too many MySQL indexes", "A Parquet compression codec", "A valid HDFS file"], "a": 0, "e": "Catalog context and metastore configuration determine table visibility."}, {"t": "Writing", "q": "Which mode adds rows to existing target data?", "o": ["append", "overwrite", "error", "ignore-schema"], "a": 0, "e": "Append adds data, although duplicate and retry controls are still required."}, {"t": "Writing", "q": "Why must overwrite be used carefully?", "o": ["It can replace a full path, table or partition", "It always encrypts the target", "It starts the NameNode", "It changes JDBC driver class"], "a": 0, "e": "Overwrite scope differs by sink and can destroy more data than intended."}, {"t": "Architecture", "q": "What is PySpark’s main role between source and target?", "o": ["Distributed processing and validation", "Replacing all storage systems", "Creating network firewalls", "Managing MySQL users automatically"], "a": 0, "e": "Spark performs scalable transformations and quality checks between systems."}, {"t": "Architecture", "q": "What is a DataFrame partition?", "o": ["A subset processed by one Spark task", "A MySQL password", "A Hive database server", "An HDFS user account"], "a": 0, "e": "A partition is Spark’s unit of distributed task processing."}, {"t": "Use Case", "q": "Which pipeline is best for publishing aggregated lake data to an application database?", "o": ["HDFS → PySpark → MySQL", "MySQL → PySpark → HDFS only", "Hive → shell → text editor", "MySQL → no processing → MySQL always"], "a": 0, "e": "HDFS-to-MySQL is appropriate when Spark reduces lake history into a bounded serving table."}, {"t": "Use Case", "q": "Which pipeline is best for moving operational history into a SQL warehouse catalog?", "o": ["MySQL → PySpark → Hive", "HDFS → PySpark → MySQL", "Hive → PySpark → MySQL only", "Local CSV → print"], "a": 0, "e": "MySQL-to-Hive extracts operational records and publishes analytical history to a catalog table."}];
+function shuffle(a){const x=[...a];for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]]}return x}
+let quizSet=[],examSet=[],quizMissed=[],examMissed=[],examTimer=null,remaining=CONFIG.examMinutes*60,examStarted=false;
+function buildAttempt(){const ids=shuffle(bank.map((_,i)=>i));quizSet=ids.slice(0,CONFIG.practiceCount);examSet=ids.slice(CONFIG.practiceCount,CONFIG.practiceCount+CONFIG.examCount);renderQuestions('quizQuestions',quizSet,'quiz',true);document.getElementById('examQuestions').innerHTML='';}
+function renderQuestions(target,ids,prefix,confidence=false){const root=document.getElementById(target);root.innerHTML='';ids.forEach((idx,n)=>{const q=bank[idx],order=shuffle(q.o.map((text,i)=>({text,orig:i})));const div=document.createElement('div');div.className='question';div.dataset.bank=idx;div.innerHTML=`<p><strong>${n+1}. ${q.q}</strong> <span class="tag">${q.t}</span></p>`+order.map((x,k)=>`<label class="option"><input type="radio" name="${prefix}_${n}" value="${x.orig}"> ${x.text}</label>`).join('')+(confidence?`<div><small>Confidence: <label><input type="radio" name="conf_${n}" value="sure"> Sure</label> <label><input type="radio" name="conf_${n}" value="unsure"> Unsure</label></small></div>`:'')+`<div class="feedback"></div>`;root.appendChild(div)})}
+function grade(rootId,ids,kind){let correct=0,missed=[];const root=document.getElementById(rootId);[...root.querySelectorAll('.question')].forEach((div,n)=>{const q=bank[ids[n]],sel=div.querySelector('input[type=radio]:checked'),val=sel?+sel.value:null,ok=val===q.a;div.classList.add(ok?'correct':'wrong');if(ok)correct++;else missed.push(ids[n]);const conf=kind==='Quiz'?(div.querySelector(`input[name="conf_${n}"]:checked`)?.value||'not marked'):'';let shaky='';if(kind==='Quiz'&&ok&&conf==='unsure')shaky='<br><strong>Shaky spot:</strong> correct but unsure — revise once.';if(kind==='Quiz'&&!ok&&conf==='sure')shaky='<br><strong>Priority fix:</strong> confident but incorrect.';const fb=div.querySelector('.feedback');fb.style.display='block';fb.innerHTML=`<strong>${ok?'Correct':'Incorrect'}.</strong> Correct answer: ${q.o[q.a]}. ${q.e}${shaky}`});const pct=Math.round(correct/ids.length*100),[emoji,msg]=mood(pct);return{correct,pct,missed,html:`<div class="big-emoji">${emoji}</div><strong>${msg}</strong><br>${correct} / ${ids.length} correct — ${pct}%`}}
+buildAttempt();
+document.getElementById('submitQuiz').onclick=()=>{const r=grade('quizQuestions',quizSet,'Quiz');quizMissed=r.missed;const p=document.getElementById('quizResult');p.style.display='block';p.innerHTML=r.html;document.getElementById('retryQuiz').classList.remove('hidden');document.getElementById('wrongOnly').classList.remove('hidden');document.getElementById('submitQuiz').disabled=true;addXP(r.correct*3);if(r.pct===100)awardBadge('Perfect Score');addHistory('Practice Quiz',r.pct);playTone(r.pct)};
+document.getElementById('retryQuiz').onclick=()=>{buildAttempt();document.getElementById('quizResult').style.display='none';document.getElementById('submitQuiz').disabled=false;document.getElementById('retryQuiz').classList.add('hidden');document.getElementById('wrongOnly').classList.add('hidden')};
+document.getElementById('wrongOnly').onclick=()=>{document.querySelectorAll('#quizQuestions .question').forEach(q=>q.style.display=q.classList.contains('wrong')?'block':'none')};
+function timerText(){const m=String(Math.floor(remaining/60)).padStart(2,'0'),s=String(remaining%60).padStart(2,'0');const el=document.getElementById('timer');el.textContent=`${m}:${s}`;el.classList.toggle('warning',remaining<=60)}
+document.getElementById('startExam').onclick=()=>{examStarted=true;remaining=CONFIG.examMinutes*60;renderQuestions('examQuestions',examSet,'exam',false);document.getElementById('examQuestions').classList.remove('hidden');document.getElementById('submitExam').classList.remove('hidden');document.getElementById('startExam').disabled=true;timerText();examTimer=setInterval(()=>{remaining--;timerText();if(remaining<=0){clearInterval(examTimer);submitExam(true)}},1000)};
+function submitExam(auto=false){if(!examStarted)return;examStarted=false;clearInterval(examTimer);const r=grade('examQuestions',examSet,'Exam');examMissed=r.missed;const marks=r.correct*CONFIG.marksPerQuestion,total=examSet.length*CONFIG.marksPerQuestion,pass=r.pct>=CONFIG.passMark;const counts={};examSet.forEach((id,i)=>{const t=bank[id].t;counts[t]??={c:0,n:0};counts[t].n++;if(!r.missed.includes(id))counts[t].c++});const breakdown=Object.entries(counts).map(([t,x])=>`${t}: ${x.c}/${x.n}`).join('<br>');const p=document.getElementById('examResult');p.style.display='block';p.innerHTML=`${r.html}<br><strong>Marks:</strong> ${marks} / ${total}<br><strong>${pass?'PASS':'NOT YET PASSED'}</strong> (required ${CONFIG.passMark}%)${auto?'<br><em>Auto-submitted when time ended.</em>':''}<hr><strong>Topic breakdown</strong><br>${breakdown}`;document.getElementById('submitExam').classList.add('hidden');document.getElementById('restartExam').classList.remove('hidden');if(examMissed.length)document.getElementById('weakRetry').classList.remove('hidden');addXP(r.correct*5);if(pass)awardBadge('Exam Passed');if(r.pct===100)awardBadge('Perfect Score');let best=Math.max(get('bestExam',0),r.pct);set('bestExam',best);addHistory('Formal Exam',r.pct);playTone(r.pct)}
+document.getElementById('submitExam').onclick=()=>submitExam(false);document.getElementById('restartExam').onclick=()=>{remaining=CONFIG.examMinutes*60;timerText();examStarted=false;examSet=shuffle(examSet);document.getElementById('examQuestions').classList.add('hidden');document.getElementById('examQuestions').innerHTML='';document.getElementById('examResult').style.display='none';document.getElementById('restartExam').classList.add('hidden');document.getElementById('weakRetry').classList.add('hidden');document.getElementById('startExam').disabled=false;document.getElementById('weakArea').innerHTML=''};
+document.getElementById('weakRetry').onclick=()=>{const root=document.getElementById('weakArea');root.innerHTML='<h3>Weak-area mini quiz</h3><div id="weakQuestions"></div><button class="btn primary" id="submitWeak">Submit mini quiz</button><div class="result-panel" id="weakResult"></div>';renderQuestions('weakQuestions',examMissed,'weak',false);document.getElementById('submitWeak').onclick=()=>{const r=grade('weakQuestions',examMissed,'Weak');const p=document.getElementById('weakResult');p.style.display='block';p.innerHTML=r.html;addXP(r.correct*3);playTone(r.pct)}};
+
+// Certificate
+document.getElementById('generateCert').onclick=()=>{const name=document.getElementById('certName').value.trim()||'Learner';document.getElementById('certDisplayName').textContent=name;document.getElementById('certScore').textContent=get('bestExam',0)+'%';document.getElementById('certDate').textContent=new Date().toLocaleDateString();document.getElementById('certificate').style.display='block'};
+
+// Notes: double-click selected word, local-only
+let notes=get('notes',[]),pendingRange=null,editingId=null;const popup=document.getElementById('notePopup');function escapeReg(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}function renderNotes(){const list=document.getElementById('notesList');list.innerHTML=notes.length?notes.map(n=>`<div class="note-item"><strong>${n.word}</strong> — ${n.note}<br><small>${n.section} · ${n.time}</small> <button class="btn small edit-note" data-id="${n.id}">Edit</button> <button class="btn small danger del-note" data-id="${n.id}">Delete</button></div>`).join(''):'<small>No notes yet.</small>';list.querySelectorAll('.edit-note').forEach(b=>b.onclick=()=>openExisting(b.dataset.id));list.querySelectorAll('.del-note').forEach(b=>b.onclick=()=>deleteNoteById(b.dataset.id));document.getElementById('notesPanel').hidden=false}function openPopup(x,y,word,id=null){editingId=id;document.getElementById('noteWordLabel').textContent=word;document.getElementById('noteText').value=id?(notes.find(n=>n.id==id)?.note||''):'';document.getElementById('deleteNote').classList.toggle('hidden',!id);popup.style.left=Math.min(x,innerWidth-380)+'px';popup.style.top=Math.min(y,innerHeight-230)+'px';popup.style.display='block';document.getElementById('noteText').focus()}function openExisting(id){const n=notes.find(x=>x.id==id);if(n)openPopup(innerWidth/2-170,innerHeight/2-100,n.word,id)}function deleteNoteById(id){notes=notes.filter(n=>n.id!=id);set('notes',notes);document.querySelectorAll(`.note-word[data-note-id="${id}"]`).forEach(s=>s.replaceWith(document.createTextNode(s.textContent)));renderNotes();popup.style.display='none'}
+function reapplyNotes(){notes.forEach(n=>{if(document.querySelector(`.note-word[data-note-id="${n.id}"]`))return;const sec=[...document.querySelectorAll('.content-section')].find(s=>s.dataset.title===n.section)||document.getElementById('tutorialBody');const walker=document.createTreeWalker(sec,NodeFilter.SHOW_TEXT,{acceptNode(node){const p=node.parentElement;if(!p||p.closest('script,style,pre,code,button,input,textarea,select,label,a,.note-word,.question,.exercise,.flashcard'))return NodeFilter.FILTER_REJECT;return node.nodeValue.includes(n.word)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_SKIP}});const node=walker.nextNode();if(!node)return;const i=node.nodeValue.indexOf(n.word);try{const r=document.createRange();r.setStart(node,i);r.setEnd(node,i+n.word.length);const span=document.createElement('span');span.className='note-word';span.dataset.noteId=n.id;span.title=n.note;r.surroundContents(span)}catch(e){}})}
+if(storageOK){document.getElementById('tutorialBody').addEventListener('dblclick',e=>{if(e.target.closest('button,input,textarea,select,label,a,.question,.exercise,.flashcard'))return;const sel=getSelection();const word=sel.toString().trim();if(!word||/\s/.test(word)||word.length>40)return;const range=sel.rangeCount?sel.getRangeAt(0):null;if(!range||!e.target.closest('.content-section'))return;pendingRange=range.cloneRange();openPopup(e.clientX,e.clientY,word)});document.getElementById('saveNote').onclick=()=>{const word=document.getElementById('noteWordLabel').textContent,note=document.getElementById('noteText').value.trim();if(!note)return;if(editingId){const n=notes.find(x=>x.id==editingId);if(n)n.note=note;document.querySelectorAll(`.note-word[data-note-id="${editingId}"]`).forEach(x=>x.title=note)}else{const id=Date.now().toString();const section=pendingRange?.commonAncestorContainer?.parentElement?.closest('.content-section')?.dataset.title||'Tutorial';notes.push({id,word,note,section,time:new Date().toLocaleString()});try{const span=document.createElement('span');span.className='note-word';span.dataset.noteId=id;span.title=note;pendingRange.surroundContents(span)}catch(e){}}set('notes',notes);popup.style.display='none';pendingRange=null;editingId=null;renderNotes()};document.getElementById('cancelNote').onclick=()=>popup.style.display='none';document.getElementById('deleteNote').onclick=()=>editingId&&deleteNoteById(editingId);document.getElementById('clearNotes').onclick=()=>{notes=[];set('notes',notes);document.querySelectorAll('.note-word').forEach(s=>s.replaceWith(document.createTextNode(s.textContent)));renderNotes()};document.getElementById('toggleNotes').onclick=()=>document.getElementById('notesPanel').classList.toggle('collapsed');document.getElementById('tutorialBody').addEventListener('click',e=>{const w=e.target.closest('.note-word');if(w)openExisting(w.dataset.noteId)});renderNotes();reapplyNotes();}
+
+// Export/import
+if(storageOK){document.getElementById('exportData').onclick=()=>{const payload={progress,notes,history,schedule,xp,badges,bestExam:get('bestExam',0),theme,fontSize,soundOn};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pyspark-integrations-learning-data.json';a.click();URL.revokeObjectURL(a.href)};document.getElementById('importData').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);Object.entries(d).forEach(([k,v])=>set(k,v));location.reload()}catch(err){alert('Invalid learning-data JSON file.')}};r.readAsText(f)}}
+</script>
+</body>
+</html>
