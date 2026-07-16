@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Classroom tutorial on Hive database operations and CRUD with a complete employee management sample.">
+<title>Hive Database Operations & CRUD with Sample</title>
+<style>
+:root{--accent:#0f766e;--accent2:#0891b2;--bg:#f4f7f8;--card:#fff;--text:#17202a;--muted:#5b6673;--border:#d9e1e6;--code:#0b1320;--codeText:#e6edf3;--good:#087f5b;--bad:#c92a2a;--warn:#b45309;--shadow:0 12px 32px rgba(15,23,42,.09);--fontScale:1}
+[data-theme="dark"]{--bg:#0b1220;--card:#121c2c;--text:#edf4f7;--muted:#a9b6c4;--border:#2b3b50;--code:#040913;--codeText:#e2e8f0;--shadow:0 12px 32px rgba(0,0,0,.34)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;font-size:calc(16px * var(--fontScale));line-height:1.68}.reading-progress{position:fixed;left:0;top:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;z-index:9999}.topbar{position:sticky;top:0;z-index:1000;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.55rem;justify-content:space-between;padding:.55rem 1rem}.brand{font-weight:900;display:flex;align-items:center;gap:.55rem}.brand-badge{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:var(--shadow)}.toolbar{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:flex-end}.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:.55rem .78rem;border-radius:9px;cursor:pointer;font-weight:750}.btn:hover,.btn:focus{border-color:var(--accent);outline:none;transform:translateY(-1px)}.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.danger{background:#fff1f2;color:#be123c;border-color:#fecdd3}.layout{display:grid;grid-template-columns:285px minmax(0,1fr);max-width:1500px;margin:0 auto;gap:1.15rem;padding:1.15rem}.sidebar{position:sticky;top:66px;height:calc(100vh - 82px);overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:var(--shadow)}.sidebar h3{margin:.1rem 0 .6rem}.toc a{display:block;text-decoration:none;color:var(--muted);padding:.39rem .52rem;border-radius:8px;font-size:.9rem}.toc a:hover,.toc a.active{background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent)}.progress-card{margin-top:1rem;padding:.8rem;background:color-mix(in srgb,var(--accent) 7%,var(--card));border-radius:12px}.progress-track{height:10px;background:var(--border);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0}.main{min-width:0}.hero{border-radius:22px;padding:clamp(1.4rem,4vw,3rem);color:#fff;background:radial-gradient(circle at 88% 12%,rgba(255,255,255,.23),transparent 30%),linear-gradient(135deg,#115e59,#0f766e 50%,#0891b2);box-shadow:var(--shadow);position:relative;overflow:hidden}.hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1.05;margin:.25rem 0 1rem}.hero p{max-width:920px;font-size:1.1rem}.chips{display:flex;flex-wrap:wrap;gap:.5rem}.chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:.38rem .65rem;border-radius:999px;font-weight:700}.outcomes{margin-top:1.1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}.outcomes div{background:rgba(255,255,255,.13);padding:.75rem;border-radius:12px}.section{background:var(--card);border:1px solid var(--border);border-radius:18px;margin:1.15rem 0;padding:clamp(1rem,2.5vw,2rem);box-shadow:var(--shadow);transition:.2s transform,.2s border-color}.section:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}.section h2{margin-top:0;font-size:clamp(1.45rem,3vw,2.15rem);border-bottom:1px solid var(--border);padding-bottom:.65rem}.section h3{margin-top:1.4rem}.prepare{float:right;font-size:.84rem;font-weight:700;color:var(--muted)}.lead{font-size:1.08rem;color:var(--muted)}.callout{border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--card));padding:.85rem 1rem;border-radius:0 10px 10px 0;margin:1rem 0}.callout.warn{border-color:#f59e0b;background:color-mix(in srgb,#f59e0b 9%,var(--card))}.callout.good{border-color:#10b981;background:color-mix(in srgb,#10b981 9%,var(--card))}.grid2,.grid3,.grid4{display:grid;gap:1rem}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid4{grid-template-columns:repeat(4,minmax(0,1fr))}.mini-card{border:1px solid var(--border);border-radius:13px;padding:1rem;background:color-mix(in srgb,var(--card) 96%,var(--accent) 4%)}.mini-card h3,.mini-card h4{margin-top:0}.memory{border:2px dashed color-mix(in srgb,var(--accent) 60%,var(--border));border-radius:14px;padding:1rem;background:color-mix(in srgb,var(--accent) 5%,var(--card))}.diagram{border:1px solid var(--border);border-radius:16px;padding:1rem;overflow:auto;background:color-mix(in srgb,var(--bg) 60%,var(--card))}.flow{display:flex;align-items:center;gap:.55rem;min-width:880px;justify-content:center;padding:1rem}.node{min-width:130px;text-align:center;padding:.75rem;border:2px solid var(--accent);border-radius:12px;background:var(--card);font-weight:800}.arrow{font-size:1.6rem;color:var(--accent)}.code-wrap{position:relative;margin:1rem 0}.code-head{display:flex;justify-content:space-between;align-items:center;background:#1f2937;color:#fff;padding:.55rem .8rem;border-radius:12px 12px 0 0;font-size:.85rem;font-weight:700}.copy-btn{border:1px solid #64748b;background:#334155;color:#fff;border-radius:7px;padding:.35rem .55rem;cursor:pointer}pre{margin:0;background:var(--code);color:var(--codeText);padding:1rem;overflow:auto;border-radius:0 0 12px 12px;line-height:1.55;tab-size:2}code{font-family:Consolas,Monaco,monospace}.inline-code{background:color-mix(in srgb,var(--accent) 10%,var(--card));padding:.1rem .35rem;border-radius:5px;font-family:Consolas,monospace}.expected{border:1px solid var(--border);border-radius:10px;padding:.8rem;background:color-mix(in srgb,#10b981 6%,var(--card));margin-top:.5rem}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:720px}th,td{border:1px solid var(--border);padding:.7rem;text-align:left;vertical-align:top}th{background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--text)}tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 40%,var(--card))}.qa{border:1px solid var(--border);border-radius:12px;margin:.7rem 0;overflow:hidden}.qa button{width:100%;text-align:left;padding:.85rem 1rem;border:0;background:color-mix(in srgb,var(--accent) 8%,var(--card));color:var(--text);font-weight:800;cursor:pointer}.qa .answer{display:none;padding:1rem}.qa.open .answer{display:block}.tag{font-size:.73rem;padding:.2rem .45rem;border-radius:999px;margin-right:.45rem;background:var(--border)}.quiz-question{border:1px solid var(--border);border-radius:12px;padding:1rem;margin:.8rem 0}.quiz-question.correct{border-color:#10b981;background:color-mix(in srgb,#10b981 7%,var(--card))}.quiz-question.wrong{border-color:#ef4444;background:color-mix(in srgb,#ef4444 7%,var(--card))}.option{display:block;padding:.45rem .6rem;border-radius:8px;margin:.25rem 0}.option:hover{background:color-mix(in srgb,var(--accent) 8%,var(--card))}.feedback{margin-top:.6rem;font-weight:700}.result{display:none;border-radius:14px;padding:1rem;margin:1rem 0;text-align:center;font-size:1.05rem;background:color-mix(in srgb,var(--accent) 8%,var(--card));border:1px solid var(--border)}.timer{font-size:1.35rem;font-weight:900;padding:.6rem .8rem;border-radius:10px;background:var(--code);color:#fff;display:inline-block}.timer.danger{background:#b91c1c;animation:pulse 1s infinite}@keyframes pulse{50%{transform:scale(1.04)}}.hidden{display:none!important}.exercise{border:1px solid var(--border);border-radius:12px;padding:1rem;margin:.8rem 0}.exercise input,.exercise select,.note-dialog input,.note-dialog textarea,.certificate input,.builder select{width:100%;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text)}.order-list{list-style:none;padding:0}.order-list li{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);padding:.65rem;margin:.35rem 0;border-radius:9px;background:var(--card)}.note-word{background:#fde68a;color:#422006;border-bottom:3px solid #f59e0b;border-radius:3px;cursor:pointer}.notes-panel{position:fixed;right:14px;bottom:14px;width:min(390px,calc(100vw - 28px));max-height:62vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:15px;box-shadow:0 18px 55px rgba(0,0,0,.25);z-index:1300;padding:1rem}.note-dialog{position:fixed;inset:0;background:rgba(0,0,0,.54);display:grid;place-items:center;z-index:1500;padding:1rem}.note-dialog .box{background:var(--card);width:min(520px,100%);border-radius:16px;padding:1rem;border:1px solid var(--border)}.certificate{border:10px double var(--accent);padding:2rem;text-align:center;background:var(--card);margin-top:1rem}.sparkle{position:fixed;pointer-events:none;z-index:5000;animation:spark .75s ease-out forwards;font-size:12px}@keyframes spark{to{transform:translateY(-25px) scale(0);opacity:0}}.kbd{border:1px solid var(--border);border-bottom-width:3px;padding:.1rem .35rem;border-radius:5px;background:var(--card)}.footer{text-align:center;color:var(--muted);padding:1.2rem}.xp{font-weight:900;color:var(--accent)}.sql-builder{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.scenario{border-left:4px solid var(--accent2);padding:.8rem 1rem;background:color-mix(in srgb,var(--accent2) 7%,var(--card));border-radius:0 12px 12px 0}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:relative;top:0;height:auto}.toc{columns:2}.outcomes,.grid3,.grid4{grid-template-columns:1fr 1fr}.sql-builder{grid-template-columns:1fr}}
+@media(max-width:650px){.topbar{align-items:flex-start}.brand span:last-child{display:none}.layout{padding:.6rem}.toc{columns:1}.outcomes,.grid2,.grid3,.grid4{grid-template-columns:1fr}.section{border-radius:13px}.prepare{float:none;display:block;margin-bottom:.5rem}.flow{justify-content:flex-start}.toolbar .btn{padding:.45rem}.hero h1{font-size:2rem}}
+@media print{.topbar,.sidebar,.prepare,.copy-btn,.notes-panel,.note-dialog,.no-print{display:none!important}.layout{display:block;padding:0}.section,.hero{box-shadow:none;break-inside:avoid}.hero{color:#000;background:#fff;border:2px solid #000}.main{width:100%}}
+</style>
+</head>
+<body>
+<div class="reading-progress" id="readingProgress"></div>
+<header class="topbar">
+  <div class="brand"><div class="brand-badge">H</div><span>Hive CRUD Classroom</span></div>
+  <div class="toolbar">
+    <button class="btn" id="themeBtn">🌙 Theme</button><button class="btn" id="fontDown">A−</button><button class="btn" id="fontUp">A+</button>
+    <button class="btn" id="soundBtn">♫ Focus sound</button><button class="btn" id="notesBtn">📝 Notes</button>
+    <button class="btn" id="exportBtn">Export progress</button><button class="btn danger" id="resetBtn">Reset</button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar">
+  <h3>Lesson Menu</h3>
+  <nav class="toc" id="toc">
+    <a href="#overview">1. Overview</a><a href="#mental-model">2. CRUD Mental Model</a><a href="#prerequisites">3. Prerequisites</a>
+    <a href="#database-create">4. Create Database</a><a href="#database-read">5. Read Database Metadata</a><a href="#database-update">6. Alter Database</a>
+    <a href="#database-delete">7. Drop Database</a><a href="#table-create">8. Create Employee Table</a><a href="#row-create">9. Insert Data</a>
+    <a href="#row-read">10. Select Data</a><a href="#row-update">11. Update Data</a><a href="#row-delete">12. Delete Data</a>
+    <a href="#acid">13. ACID Internals</a><a href="#bulk-load">14. CSV Bulk Load</a><a href="#full-demo">15. Full Demo Script</a>
+    <a href="#expected">16. Expected Results</a><a href="#best-practices">17. Best Practices</a><a href="#troubleshooting">18. Troubleshooting</a>
+    <a href="#exercises">19. Practical Exercises</a><a href="#interview">20. Interview Q&A</a><a href="#quiz">21. Practice Quiz</a>
+    <a href="#exam">22. Timed Exam</a><a href="#cheatsheet">23. Cheat Sheet</a><a href="#certificate">24. Certificate</a><a href="#references">25. References</a>
+  </nav>
+  <div class="progress-card"><strong>Preparation</strong><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><div><span id="progressText">0%</span> complete • <span class="xp" id="xpText">0 XP</span></div></div>
+  <p style="font-size:.84rem;color:var(--muted)">Tip: double-click any word or phrase in the lesson to attach a personal note.</p>
+</aside>
+<main class="main" id="lessonMain">
+<section class="hero">
+  <div class="chips"><span class="chip">HiveQL</span><span class="chip">Database DDL</span><span class="chip">Row CRUD</span><span class="chip">ACID + ORC</span><span class="chip">Beeline Lab</span></div>
+  <h1>Hive Database Operations & CRUD with Sample</h1>
+  <p>Learn how to create, inspect, alter, and remove Hive databases, then implement employee data CRUD using a transactional ORC table. The same real-world HR example continues from database creation to clean-up.</p>
+  <div class="outcomes"><div><strong>Understand</strong><br>Database-level and row-level CRUD</div><div><strong>Execute</strong><br>Working HiveQL in Beeline</div><div><strong>Diagnose</strong><br>ACID, transaction, and permissions errors</div></div>
+  <div class="no-print" style="margin-top:1rem;display:flex;gap:.6rem;flex-wrap:wrap"><a class="btn" style="background:#fff;color:#115e59;text-decoration:none" href="hive-database-crud-demo.hql" download>Download executable HQL</a><a class="btn" style="background:#fff;color:#115e59;text-decoration:none" href="employees-sample.csv" download>Download sample CSV</a></div>
+</section>
+
+<section id="overview" class="section"><label class="prepare"><input type="checkbox" data-progress="overview"> Mark as prepared</label><h2>1. Overview</h2>
+<p class="lead">A Hive database is a logical namespace stored in the Hive Metastore. It groups tables, views, functions, properties, and default storage locations. It is not an OLTP database server in the same sense as MySQL or SQL Server; Hive is designed mainly for large-scale analytical workloads.</p>
+<div class="grid3"><div class="mini-card"><h3>Metadata</h3><p>Database and table definitions live in the metastore.</p></div><div class="mini-card"><h3>Data</h3><p>Managed or external files live in HDFS or another supported object/file store.</p></div><div class="mini-card"><h3>Execution</h3><p>Hive compiles HiveQL and runs work through an execution engine.</p></div></div>
+<div class="callout good"><strong>Real-world case:</strong> the HR analytics team needs a <span class="inline-code">company_hr</span> database and an <span class="inline-code">employees</span> table for employee reporting, salary corrections, and inactive-record clean-up.</div>
+</section>
+
+<section id="mental-model" class="section"><label class="prepare"><input type="checkbox" data-progress="mental-model"> Mark as prepared</label><h2>2. CRUD Mental Model</h2>
+<div class="diagram"><div class="flow"><div class="node">CREATE<br><small>Database / table / rows</small></div><div class="arrow">→</div><div class="node">READ<br><small>SHOW / DESCRIBE / SELECT</small></div><div class="arrow">→</div><div class="node">UPDATE<br><small>ALTER / UPDATE</small></div><div class="arrow">→</div><div class="node">DELETE<br><small>DROP / DELETE</small></div></div></div>
+<div class="table-wrap"><table><thead><tr><th>CRUD letter</th><th>Database object</th><th>Table row</th><th>Example</th></tr></thead><tbody>
+<tr><td>C</td><td>CREATE DATABASE</td><td>INSERT INTO</td><td>Create namespace or add employee rows</td></tr>
+<tr><td>R</td><td>SHOW / DESCRIBE DATABASE</td><td>SELECT</td><td>Inspect metadata or read employee data</td></tr>
+<tr><td>U</td><td>ALTER DATABASE</td><td>UPDATE</td><td>Change properties or salary/status</td></tr>
+<tr><td>D</td><td>DROP DATABASE</td><td>DELETE</td><td>Remove namespace or selected employees</td></tr>
+</tbody></table></div>
+<div class="memory"><strong>Memory aid — C R U D:</strong> <em>Create Resources, Understand Data, Revise Values, Dispose Safely.</em></div>
+</section>
+
+<section id="prerequisites" class="section"><label class="prepare"><input type="checkbox" data-progress="prerequisites"> Mark as prepared</label><h2>3. Prerequisites and Connection</h2>
+<p>HDFS, the Hive Metastore, and HiveServer2 should be running. Use Beeline rather than the legacy Hive CLI for a server-based setup.</p>
+<div class="code-wrap"><div class="code-head"><span>Ubuntu service checks and Beeline connection</span><button class="copy-btn">Copy</button></div><pre><code>jps
+ss -ltnp | grep -E '9083|10000'
+
+# Start services only when they are not already running.
+nohup hive --service metastore &gt; ~/metastore.log 2&gt;&amp;1 &amp;
+nohup hive --service hiveserver2 &gt; ~/hiveserver2.log 2&gt;&amp;1 &amp;
+
+beeline -u 'jdbc:hive2://localhost:10000/default' -n vmuser</code></pre></div>
+<div class="callout warn"><strong>Do not start duplicates:</strong> confirm ports 9083 and 10000 before launching services. A second process can fail or create confusing logs.</div>
+<h3>ACID session settings</h3>
+<div class="code-wrap"><div class="code-head"><span>Run before creating or using the transactional table</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.support.concurrency=true;
+SET hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+SET hive.enforce.bucketing=true; -- older releases only</code></pre></div>
+<p>In a production cluster, administrators normally place the transaction and compactor settings in configuration files. Session settings cannot replace missing metastore compactor configuration.</p>
+</section>
+
+<section id="database-create" class="section"><label class="prepare"><input type="checkbox" data-progress="database-create"> Mark as prepared</label><h2>4. Create a Hive Database</h2>
+<div class="code-wrap"><div class="code-head"><span>Simple create</span><button class="copy-btn">Copy</button></div><pre><code>CREATE DATABASE company_hr;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Safe and descriptive create</span><button class="copy-btn">Copy</button></div><pre><code>CREATE DATABASE IF NOT EXISTS company_hr
+COMMENT 'Training database for employee CRUD operations'
+WITH DBPROPERTIES (
+  'created_by'='ItTechGenie Training',
+  'purpose'='Hive CRUD demonstration'
+);</code></pre></div>
+<div class="grid2"><div class="mini-card"><h3>IF NOT EXISTS</h3><p>Makes the command repeatable by preventing an error when the database already exists.</p></div><div class="mini-card"><h3>DBPROPERTIES</h3><p>Stores descriptive governance metadata such as owner team, environment, and purpose.</p></div></div>
+<div class="callout"><strong>Location note:</strong> omit <span class="inline-code">LOCATION</span> for the first lab so Hive uses the configured warehouse path. Add a custom HDFS location only after permissions and governance rules are understood.</div>
+</section>
+
+<section id="database-read" class="section"><label class="prepare"><input type="checkbox" data-progress="database-read"> Mark as prepared</label><h2>5. Read and Inspect Database Metadata</h2>
+<div class="code-wrap"><div class="code-head"><span>Database inspection commands</span><button class="copy-btn">Copy</button></div><pre><code>SHOW DATABASES;
+SHOW DATABASES LIKE 'company*';
+DESCRIBE DATABASE company_hr;
+DESCRIBE DATABASE EXTENDED company_hr;
+
+USE company_hr;
+SELECT current_database();
+SHOW TABLES;</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th>Command</th><th>What it answers</th></tr></thead><tbody>
+<tr><td>SHOW DATABASES</td><td>Which databases are visible?</td></tr><tr><td>DESCRIBE DATABASE</td><td>What are its comment and filesystem location?</td></tr><tr><td>DESCRIBE DATABASE EXTENDED</td><td>What custom DBPROPERTIES are stored?</td></tr><tr><td>current_database()</td><td>Which database will unqualified table names use?</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="database-update" class="section"><label class="prepare"><input type="checkbox" data-progress="database-update"> Mark as prepared</label><h2>6. Update Database Metadata with ALTER</h2>
+<div class="code-wrap"><div class="code-head"><span>Add or change properties</span><button class="copy-btn">Copy</button></div><pre><code>ALTER DATABASE company_hr SET DBPROPERTIES (
+  'environment'='training',
+  'owner_team'='data_engineering'
+);
+
+DESCRIBE DATABASE EXTENDED company_hr;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Other supported metadata changes</span><button class="copy-btn">Copy</button></div><pre><code>ALTER DATABASE company_hr SET OWNER USER vmuser;
+
+-- Supported in suitable Hive releases:
+ALTER DATABASE company_hr
+SET LOCATION 'hdfs:///user/hive/custom/company_hr.db';</code></pre></div>
+<div class="callout warn"><strong>Important:</strong> changing a database location does not move existing tables or partitions. It changes the default parent location used by future objects.</div>
+</section>
+
+<section id="database-delete" class="section"><label class="prepare"><input type="checkbox" data-progress="database-delete"> Mark as prepared</label><h2>7. Delete a Database</h2>
+<div class="grid2"><div class="mini-card"><h3>RESTRICT — safer default</h3><div class="code-wrap"><div class="code-head"><span>Fails when objects remain</span><button class="copy-btn">Copy</button></div><pre><code>USE default;
+DROP DATABASE company_hr RESTRICT;</code></pre></div></div><div class="mini-card"><h3>CASCADE — destructive</h3><div class="code-wrap"><div class="code-head"><span>Drops contained objects</span><button class="copy-btn">Copy</button></div><pre><code>USE default;
+DROP DATABASE company_hr CASCADE;</code></pre></div></div></div>
+<div class="callout warn"><strong>Safety sequence:</strong> run <span class="inline-code">USE company_hr; SHOW TABLES;</span>, verify the database name, switch to <span class="inline-code">default</span>, and only then consider CASCADE.</div>
+</section>
+
+<section id="table-create" class="section"><label class="prepare"><input type="checkbox" data-progress="table-create"> Mark as prepared</label><h2>8. Create the Employee Transactional Table</h2>
+<p>Row-level UPDATE and DELETE require an ACID-capable table. This sample uses ORC, the transactional property, and bucketing for broad compatibility with older Hive distributions.</p>
+<div class="code-wrap"><div class="code-head"><span>Create table</span><button class="copy-btn">Copy</button></div><pre><code>USE company_hr;
+
+CREATE TABLE employees (
+  employee_id   INT,
+  employee_name STRING,
+  department    STRING,
+  salary        DECIMAL(12,2),
+  joining_date  DATE,
+  employment_status STRING
+)
+CLUSTERED BY (employee_id) INTO 4 BUCKETS
+STORED AS ORC
+TBLPROPERTIES ('transactional'='true');</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Verify table metadata</span><button class="copy-btn">Copy</button></div><pre><code>SHOW TABLES;
+DESCRIBE employees;
+DESCRIBE FORMATTED employees;
+SHOW TBLPROPERTIES employees;</code></pre></div>
+<div class="diagram"><div class="flow"><div class="node">HiveQL DDL</div><div class="arrow">→</div><div class="node">Hive Metastore<br><small>schema + properties</small></div><div class="arrow">→</div><div class="node">HDFS warehouse<br><small>ORC data directories</small></div></div></div>
+</section>
+
+<section id="row-create" class="section"><label class="prepare"><input type="checkbox" data-progress="row-create"> Mark as prepared</label><h2>9. Create Rows with INSERT</h2>
+<div class="code-wrap"><div class="code-head"><span>Insert six employees</span><button class="copy-btn">Copy</button></div><pre><code>INSERT INTO TABLE employees VALUES
+(101, 'Asha',   'Data Engineering', 75000.00, DATE '2024-02-15', 'ACTIVE'),
+(102, 'Bharat', 'Finance',          62000.00, DATE '2023-08-10', 'ACTIVE'),
+(103, 'Charan', 'Human Resources',  58000.00, DATE '2022-11-01', 'ACTIVE'),
+(104, 'Divya',  'Data Engineering', 81000.00, DATE '2021-06-19', 'ACTIVE'),
+(105, 'Eshan',  'Support',          45000.00, DATE '2025-01-06', 'INACTIVE'),
+(106, 'Farah',  'Finance',          69000.00, DATE '2020-04-27', 'ACTIVE');</code></pre></div>
+<div class="grid2"><div class="mini-card"><h3>INSERT INTO</h3><p>Appends rows to existing data.</p></div><div class="mini-card"><h3>INSERT OVERWRITE</h3><p>Replaces the target table or partition contents. Use with care.</p></div></div>
+<div class="expected"><strong>Expected:</strong> six rows become visible after a successful auto-committed insert.</div>
+</section>
+
+<section id="row-read" class="section"><label class="prepare"><input type="checkbox" data-progress="row-read"> Mark as prepared</label><h2>10. Read Rows with SELECT</h2>
+<div class="code-wrap"><div class="code-head"><span>Read all rows</span><button class="copy-btn">Copy</button></div><pre><code>SELECT *
+FROM employees
+ORDER BY employee_id;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Filter and sort</span><button class="copy-btn">Copy</button></div><pre><code>SELECT employee_id, employee_name, salary
+FROM employees
+WHERE department = 'Data Engineering'
+ORDER BY salary DESC;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Department summary</span><button class="copy-btn">Copy</button></div><pre><code>SELECT department,
+       COUNT(*) AS employee_count,
+       ROUND(AVG(salary), 2) AS average_salary
+FROM employees
+GROUP BY department
+ORDER BY department;</code></pre></div>
+<div class="callout good"><strong>Production habit:</strong> preview an UPDATE or DELETE condition by running it first as a SELECT with the same WHERE clause.</div>
+</section>
+
+<section id="row-update" class="section"><label class="prepare"><input type="checkbox" data-progress="row-update"> Mark as prepared</label><h2>11. Update Existing Rows</h2>
+<div class="code-wrap"><div class="code-head"><span>Increase Data Engineering salaries by 10%</span><button class="copy-btn">Copy</button></div><pre><code>-- Preview first.
+SELECT employee_id, employee_name, salary
+FROM employees
+WHERE department = 'Data Engineering';
+
+UPDATE employees
+SET salary = salary * 1.10
+WHERE department = 'Data Engineering';</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Activate one employee</span><button class="copy-btn">Copy</button></div><pre><code>UPDATE employees
+SET employment_status = 'ACTIVE'
+WHERE employee_id = 105;</code></pre></div>
+<div class="callout warn"><strong>Restrictions:</strong> Hive UPDATE cannot directly change partition columns or bucketing columns. Subqueries in the assigned expression are also unsupported.</div>
+</section>
+
+<section id="row-delete" class="section"><label class="prepare"><input type="checkbox" data-progress="row-delete"> Mark as prepared</label><h2>12. Delete Rows and Understand Destructive Commands</h2>
+<div class="code-wrap"><div class="code-head"><span>Delete one row</span><button class="copy-btn">Copy</button></div><pre><code>-- Preview first.
+SELECT * FROM employees WHERE employee_id = 103;
+
+DELETE FROM employees
+WHERE employee_id = 103;</code></pre></div>
+<div class="table-wrap"><table><thead><tr><th>Command</th><th>Scope</th><th>Object retained?</th><th>Typical use</th></tr></thead><tbody>
+<tr><td>DELETE ... WHERE</td><td>Matching rows</td><td>Yes</td><td>Remove selected business records</td></tr>
+<tr><td>DELETE without WHERE</td><td>All rows</td><td>Yes</td><td>Rare; potentially expensive</td></tr>
+<tr><td>TRUNCATE TABLE</td><td>All table data</td><td>Yes</td><td>Fast reset of a managed table</td></tr>
+<tr><td>DROP TABLE</td><td>Table object and managed data</td><td>No</td><td>Remove obsolete table</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="acid" class="section"><label class="prepare"><input type="checkbox" data-progress="acid"> Mark as prepared</label><h2>13. How Hive ACID Works</h2>
+<p>HDFS does not update bytes in the middle of an existing file. Hive therefore records mutations as new transactional delta data and merges the base plus relevant deltas when reading.</p>
+<div class="diagram"><div class="flow"><div class="node">base_0001<br><small>original ORC rows</small></div><div class="arrow">+</div><div class="node">delta_0002<br><small>insert/update changes</small></div><div class="arrow">+</div><div class="node">delete_delta_0003<br><small>deleted row IDs</small></div><div class="arrow">→</div><div class="node">Reader<br><small>current snapshot</small></div></div></div>
+<div class="diagram"><div class="flow"><div class="node">Many delta files</div><div class="arrow">→</div><div class="node">Compactor</div><div class="arrow">→</div><div class="node">New consolidated base</div><div class="arrow">→</div><div class="node">Faster future reads</div></div></div>
+<div class="code-wrap"><div class="code-head"><span>Inspect or request compaction</span><button class="copy-btn">Copy</button></div><pre><code>SHOW TRANSACTIONS;
+SHOW COMPACTIONS;
+
+-- Normally automatic; run manually only when appropriate.
+ALTER TABLE employees COMPACT 'minor';
+ALTER TABLE employees COMPACT 'major';</code></pre></div>
+<div class="callout"><strong>Auto-commit:</strong> Hive's language operations are committed individually. Traditional multi-statement BEGIN/COMMIT/ROLLBACK workflows are not generally available in the same way as OLTP databases.</div>
+</section>
+
+<section id="bulk-load" class="section"><label class="prepare"><input type="checkbox" data-progress="bulk-load"> Mark as prepared</label><h2>14. Optional CSV Bulk Load Through a Staging Table</h2>
+<p>Use a plain text stage for landing data, then insert into the transactional ORC target. This separates file parsing from optimized storage.</p>
+<div class="code-wrap"><div class="code-head"><span>Create the CSV staging table</span><button class="copy-btn">Copy</button></div><pre><code>CREATE TABLE employees_stage (
+  employee_id INT,
+  employee_name STRING,
+  department STRING,
+  salary DECIMAL(12,2),
+  joining_date DATE,
+  employment_status STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+TBLPROPERTIES ('skip.header.line.count'='1');</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Load and convert</span><button class="copy-btn">Copy</button></div><pre><code>LOAD DATA LOCAL INPATH '/home/vmuser/Desktop/employees-sample.csv'
+OVERWRITE INTO TABLE employees_stage;
+
+SELECT * FROM employees_stage;
+
+INSERT INTO TABLE employees
+SELECT * FROM employees_stage;</code></pre></div>
+<div class="callout warn"><strong>HiveServer2 path rule:</strong> with <span class="inline-code">LOCAL</span>, the file must be accessible on the HiveServer2 machine, not merely on a remote browser or client computer.</div>
+</section>
+
+<section id="full-demo" class="section"><label class="prepare"><input type="checkbox" data-progress="full-demo"> Mark as prepared</label><h2>15. Complete End-to-End Demo</h2>
+<p>Download the companion HQL file from the link below the tutorial. It contains all database and table operations in execution order. The condensed flow is:</p>
+<div class="diagram"><div class="flow"><div class="node">Configure ACID</div><div class="arrow">→</div><div class="node">Create database</div><div class="arrow">→</div><div class="node">Create ORC table</div><div class="arrow">→</div><div class="node">Insert + Select</div><div class="arrow">→</div><div class="node">Update + Delete</div></div></div>
+<div class="code-wrap"><div class="code-head"><span>Execute a saved HQL script</span><button class="copy-btn">Copy</button></div><pre><code>beeline -u 'jdbc:hive2://localhost:10000/default' -n vmuser \
+  -f /home/vmuser/Desktop/hive-database-crud-demo.hql</code></pre></div>
+<div class="sql-builder builder"><div><label><strong>Generate a command</strong></label><select id="builderOperation"><option value="createDb">Create database</option><option value="showDb">Inspect database</option><option value="createTable">Create employee table</option><option value="insert">Insert employee</option><option value="select">Select active employees</option><option value="update">Update salary</option><option value="delete">Delete employee</option><option value="drop">Drop database safely</option></select></div><div><label><strong>Generated HiveQL</strong></label><textarea id="builderOutput" rows="6" readonly style="width:100%;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:var(--code);color:var(--codeText)"></textarea></div></div>
+</section>
+
+<section id="expected" class="section"><label class="prepare"><input type="checkbox" data-progress="expected"> Mark as prepared</label><h2>16. Expected Results</h2>
+<div class="table-wrap"><table><thead><tr><th>Step</th><th>Expected observation</th></tr></thead><tbody>
+<tr><td>After INSERT</td><td>Six employees: IDs 101 through 106.</td></tr><tr><td>After salary UPDATE</td><td>Asha: 82,500.00; Divya: 89,100.00.</td></tr><tr><td>After status UPDATE</td><td>Eshan changes from INACTIVE to ACTIVE.</td></tr><tr><td>After DELETE</td><td>Employee 103 is absent; five rows remain.</td></tr><tr><td>After ALTER DATABASE</td><td>environment and owner_team appear in DESCRIBE DATABASE EXTENDED.</td></tr>
+</tbody></table></div>
+<div class="code-wrap"><div class="code-head"><span>Final verification</span><button class="copy-btn">Copy</button></div><pre><code>SELECT employee_id, employee_name, department, salary, employment_status
+FROM company_hr.employees
+ORDER BY employee_id;</code></pre></div>
+</section>
+
+<section id="best-practices" class="section"><label class="prepare"><input type="checkbox" data-progress="best-practices"> Mark as prepared</label><h2>17. Best Practices and Edge Cases</h2>
+<div class="grid2"><div class="mini-card"><h3>Before mutation</h3><ul><li>Run the WHERE clause as SELECT.</li><li>Check row counts.</li><li>Confirm the active database.</li><li>Use qualified names in automation.</li></ul></div><div class="mini-card"><h3>After mutation</h3><ul><li>Verify changed rows.</li><li>Monitor compactions.</li><li>Refresh statistics after major changes.</li><li>Audit who changed data.</li></ul></div></div>
+<div class="grid3"><div class="mini-card"><h4>Use Hive for analytics</h4><p>Batch corrections and warehouse maintenance are appropriate. Thousands of tiny per-second updates are not.</p></div><div class="mini-card"><h4>Avoid accidental overwrite</h4><p>Prefer INSERT INTO unless replacement is explicitly required.</p></div><div class="mini-card"><h4>Protect destructive DDL</h4><p>Use RESTRICT by default and grant CASCADE privileges carefully.</p></div></div>
+<div class="callout warn"><strong>Edge case:</strong> once a table is marked transactional, do not expect to turn the property back to false. Plan transactional storage intentionally.</div>
+</section>
+
+<section id="troubleshooting" class="section"><label class="prepare"><input type="checkbox" data-progress="troubleshooting"> Mark as prepared</label><h2>18. Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+<tr><td>FAILED: SemanticException [Error 10294] Attempt to do update or delete using transaction manager that does not support these operations</td><td>DbTxnManager not active</td><td>Set <span class="inline-code">hive.txn.manager</span> before querying the ACID table and configure it cluster-wide.</td></tr>
+<tr><td>Table is not transactional</td><td>Missing <span class="inline-code">transactional=true</span> or incompatible table</td><td>Create a managed ORC transactional target and load data into it.</td></tr>
+<tr><td>Cannot drop non empty database</td><td>RESTRICT behavior</td><td>Drop/move contained objects or deliberately use CASCADE after inspection.</td></tr>
+<tr><td>Permission denied on warehouse path</td><td>HDFS ownership or mode</td><td>Check <span class="inline-code">hdfs dfs -ls</span>, database location, owner, and permissions.</td></tr>
+<tr><td>LOCAL file not found</td><td>Path exists on client but not HiveServer2 host</td><td>Copy the file to the server or use an HDFS path without LOCAL.</td></tr>
+<tr><td>Update of bucket/partition column rejected</td><td>Physical layout column cannot be updated</td><td>Insert corrected rows into a rebuilt table or partition instead.</td></tr>
+<tr><td>Many delta files / slow reads</td><td>Compactor disabled, failing, or under-provisioned</td><td>Check SHOW COMPACTIONS and metastore logs; fix compactor configuration.</td></tr>
+<tr><td>Port 10000 not listening</td><td>HiveServer2 stopped or failed</td><td>Inspect <span class="inline-code">~/hiveserver2.log</span>, metastore connectivity, and Java process list.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="exercises" class="section"><label class="prepare"><input type="checkbox" data-progress="exercises"> Mark as prepared</label><h2>19. Practical Exercises</h2>
+<div class="exercise"><h3>Exercise 1 — Fill the command</h3><p>Create the database only when it is absent:</p><input id="ex1" placeholder="CREATE DATABASE ..."><button class="btn primary" onclick="checkText('ex1',['CREATE DATABASE IF NOT EXISTS COMPANY_HR'])">Check</button><div id="ex1Feedback" class="feedback"></div></div>
+<div class="exercise"><h3>Exercise 2 — Choose the safe drop</h3><select id="ex2"><option value="">Choose</option><option>DROP DATABASE company_hr CASCADE</option><option>DROP DATABASE company_hr RESTRICT</option><option>DELETE DATABASE company_hr</option></select><button class="btn primary" onclick="checkSelect('ex2','DROP DATABASE company_hr RESTRICT')">Check</button><div id="ex2Feedback" class="feedback"></div></div>
+<div class="exercise"><h3>Exercise 3 — Write an update</h3><p>Give Finance employees a 5% salary increase.</p><input id="ex3" placeholder="UPDATE employees SET ..."><button class="btn primary" onclick="checkContains('ex3',['UPDATE EMPLOYEES','SALARY = SALARY * 1.05','DEPARTMENT','FINANCE'])">Check</button><div id="ex3Feedback" class="feedback"></div></div>
+<div class="exercise"><h3>Exercise 4 — Scenario</h3><div class="scenario">A learner wants to delete all INACTIVE employees. What should they run first?</div><select id="ex4"><option value="">Choose</option><option>DELETE FROM employees</option><option>SELECT * FROM employees WHERE employment_status='INACTIVE'</option><option>DROP TABLE employees</option></select><button class="btn primary" onclick="checkSelect('ex4',&quot;SELECT * FROM employees WHERE employment_status='INACTIVE'&quot;)">Check</button><div id="ex4Feedback" class="feedback"></div></div>
+<div class="exercise"><h3>Exercise 5 — Put the workflow in order</h3><ul class="order-list" id="orderList"><li data-order="3">Verify with SELECT <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-order="1">Create transactional table <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-order="2">Insert sample rows <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-order="4">Run previewed UPDATE/DELETE <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li></ul><button class="btn primary" onclick="checkOrder()">Check order</button><div id="orderFeedback" class="feedback"></div></div>
+<div class="exercise"><h3>Exercise 6 — Mini assignment</h3><p>Create a <span class="inline-code">products</span> transactional ORC table with product_id, product_name, category, price, and status. Insert five records, update one price, delete one discontinued product, and produce category-wise average price.</p><button class="btn" onclick="completeAssignment(this)">Mark assignment complete</button></div>
+</section>
+
+<section id="interview" class="section"><label class="prepare"><input type="checkbox" data-progress="interview"> Mark as prepared</label><h2>20. Interview Questions and Answers</h2>
+<div id="interviewList"></div>
+</section>
+
+<section id="quiz" class="section"><label class="prepare"><input type="checkbox" data-progress="quiz"> Mark as prepared</label><h2>21. Practice Quiz</h2>
+<p>Fifteen questions are randomly selected from the 30-question bank. Submit to receive explanations and XP.</p><div id="practiceQuiz"></div><button class="btn primary" id="submitPractice">Submit practice</button><button class="btn" id="newPractice">New questions</button><div class="result" id="practiceResult"></div>
+</section>
+
+<section id="exam" class="section"><label class="prepare"><input type="checkbox" data-progress="exam"> Mark as prepared</label><h2>22. Formal Timed Exam</h2>
+<p>15 questions • 12 minutes • one attempt at a time. The exam submits automatically when time reaches zero.</p><button class="btn primary" id="startExam">Start exam</button> <span class="timer hidden" id="examTimer">12:00</span><div id="examArea" class="hidden"></div><button class="btn primary hidden" id="submitExam">Submit exam</button><div class="result" id="examResult"></div>
+</section>
+
+<section id="cheatsheet" class="section"><label class="prepare"><input type="checkbox" data-progress="cheatsheet"> Mark as prepared</label><h2>23. Command Cheat Sheet</h2>
+<div class="table-wrap"><table><thead><tr><th>Goal</th><th>Command pattern</th></tr></thead><tbody>
+<tr><td>Create database</td><td><code>CREATE DATABASE IF NOT EXISTS db_name;</code></td></tr><tr><td>Use database</td><td><code>USE db_name;</code></td></tr><tr><td>Inspect database</td><td><code>DESCRIBE DATABASE EXTENDED db_name;</code></td></tr><tr><td>Alter properties</td><td><code>ALTER DATABASE db_name SET DBPROPERTIES (...);</code></td></tr><tr><td>Safe drop</td><td><code>DROP DATABASE db_name RESTRICT;</code></td></tr><tr><td>Transactional table</td><td><code>STORED AS ORC TBLPROPERTIES ('transactional'='true')</code></td></tr><tr><td>Insert rows</td><td><code>INSERT INTO TABLE t VALUES (...);</code></td></tr><tr><td>Read rows</td><td><code>SELECT ... FROM t WHERE ...;</code></td></tr><tr><td>Update rows</td><td><code>UPDATE t SET c=... WHERE ...;</code></td></tr><tr><td>Delete rows</td><td><code>DELETE FROM t WHERE ...;</code></td></tr><tr><td>Remove all data</td><td><code>TRUNCATE TABLE t;</code></td></tr><tr><td>Remove table</td><td><code>DROP TABLE t;</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section id="certificate" class="section"><label class="prepare"><input type="checkbox" data-progress="certificate"> Mark as prepared</label><h2>24. Completion Certificate</h2>
+<div class="certificate"><h2>Certificate of Completion</h2><p>This certifies that</p><input id="learnerName" placeholder="Enter learner name" style="max-width:430px;text-align:center;font-size:1.2rem"><h3>completed the Hive Database Operations & CRUD lesson</h3><p>Practice score: <strong id="certPractice">Not attempted</strong> • Exam score: <strong id="certExam">Not attempted</strong></p><p id="certDate"></p><button class="btn primary no-print" onclick="window.print()">Print certificate</button></div>
+</section>
+
+<section id="references" class="section"><label class="prepare"><input type="checkbox" data-progress="references"> Mark as prepared</label><h2>25. Official References and Version Notes</h2>
+<ul><li><a href="https://hive.apache.org/docs/latest/language/languagemanual-ddl/" target="_blank" rel="noreferrer">Apache Hive LanguageManual DDL</a></li><li><a href="https://hive.apache.org/docs/latest/language/languagemanual-dml/" target="_blank" rel="noreferrer">Apache Hive LanguageManual DML</a></li><li><a href="https://hive.apache.org/docs/latest/user/hive-transactions/" target="_blank" rel="noreferrer">Apache Hive Transactions</a></li></ul>
+<div class="callout"><strong>Version awareness:</strong> basic database DDL and SELECT are broadly available. INSERT VALUES, UPDATE, and DELETE were added in Hive 0.14. MERGE arrived later. Transaction configuration and bucketing requirements vary by release and distribution, so validate against the installed cluster.</div>
+</section>
+<div class="footer">Built as a self-contained offline classroom tutorial. Your notes, progress, scores, theme, and font size are stored locally when browser storage is available.</div>
+</main></div>
+
+<div class="notes-panel hidden" id="notesPanel"><div style="display:flex;justify-content:space-between"><h3>My Notes</h3><button class="btn" id="closeNotes">Close</button></div><div id="notesList"></div><button class="btn" id="clearNotes">Clear notes</button></div>
+<div class="note-dialog hidden" id="noteDialog"><div class="box"><h3>Add note</h3><label>Selected text<input id="noteTerm" readonly></label><label>Your note<textarea id="noteText" rows="5"></textarea></label><div style="margin-top:.7rem"><button class="btn primary" id="saveNote">Save</button> <button class="btn" id="cancelNote">Cancel</button></div></div></div>
+
+<script>
+const QUESTION_BANK = [{"q": "Which statement creates a Hive database only when it does not already exist?", "o": ["CREATE DATABASE company_hr", "CREATE DATABASE IF NOT EXISTS company_hr", "MAKE DATABASE company_hr", "INSERT DATABASE company_hr"], "a": 1, "e": "IF NOT EXISTS prevents an error when the database is already present."}, {"q": "Which command changes the current Hive database?", "o": ["SELECT DATABASE", "USE company_hr", "OPEN company_hr", "CONNECT company_hr"], "a": 1, "e": "USE sets the current database for subsequent HiveQL statements."}, {"q": "Which command displays database properties as well as name, comment, and location?", "o": ["SHOW DATABASE", "DESCRIBE DATABASE EXTENDED company_hr", "SHOW PROPERTIES company_hr", "EXPLAIN DATABASE company_hr"], "a": 1, "e": "The EXTENDED form includes DBPROPERTIES."}, {"q": "What is the default behavior when dropping a non-empty database?", "o": ["CASCADE", "RESTRICT", "PURGE", "TRUNCATE"], "a": 1, "e": "DROP DATABASE defaults to RESTRICT and fails when objects remain."}, {"q": "Which option removes a database and the objects contained in it?", "o": ["DROP DATABASE company_hr CASCADE", "DELETE DATABASE company_hr", "TRUNCATE DATABASE company_hr", "DROP DATABASE company_hr SAFE"], "a": 0, "e": "CASCADE tells Hive to remove contained objects as part of the drop."}, {"q": "Which clause stores custom key-value metadata when creating a database?", "o": ["WITH DBPROPERTIES", "WITH TBLPROPERTIES", "SET DATABASE VALUES", "COMMENT MAP"], "a": 0, "e": "WITH DBPROPERTIES stores database-level properties."}, {"q": "Which command returns the active database name?", "o": ["SELECT current_database()", "SHOW current()", "SELECT database_name", "DESCRIBE current"], "a": 0, "e": "current_database() returns the session's selected database."}, {"q": "In CRUD, which Hive statement normally represents Create at row level?", "o": ["INSERT", "SELECT", "UPDATE", "DELETE"], "a": 0, "e": "INSERT creates new rows in a table."}, {"q": "Which statement reads rows from a Hive table?", "o": ["SELECT", "ALTER", "DROP", "TRUNCATE"], "a": 0, "e": "SELECT retrieves table data."}, {"q": "What must be true before Hive permits UPDATE and DELETE?", "o": ["The table must be a view", "The table must support ACID transactions", "The table must be external", "The table must be CSV only"], "a": 1, "e": "UPDATE and DELETE are restricted to ACID-capable transactional tables."}, {"q": "Which table property marks a table as transactional?", "o": ["'acid'='yes'", "'transactional'='true'", "'update'='enabled'", "'managed'='acid'"], "a": 1, "e": "TBLPROPERTIES ('transactional'='true') enables ACID behavior when the cluster is configured."}, {"q": "Which storage format is used in the tutorial's transactional table?", "o": ["TEXTFILE", "JSON", "ORC", "XML"], "a": 2, "e": "ORC is the standard format used by Hive ACID examples and transactional storage."}, {"q": "What does this do: UPDATE employees SET salary=salary*1.10 WHERE department='Data Engineering'?", "o": ["Deletes the department", "Adds 10% to matching salaries", "Sets every salary to 1.10", "Renames the column"], "a": 1, "e": "Only rows matching the WHERE clause receive a 10% multiplication."}, {"q": "Why is a WHERE clause important in UPDATE and DELETE?", "o": ["It changes storage format", "It limits the affected rows", "It creates a database", "It enables bucketing"], "a": 1, "e": "Without a filter, every row may be modified or removed."}, {"q": "Can a Hive partition column be directly updated with UPDATE?", "o": ["Yes, always", "No", "Only in TEXTFILE", "Only with SELECT"], "a": 1, "e": "Hive does not permit UPDATE of partition columns."}, {"q": "Can a bucketing column be directly updated with UPDATE?", "o": ["Yes", "No", "Only when null", "Only in external tables"], "a": 1, "e": "Changing a bucketing column would invalidate physical bucket placement, so Hive prohibits it."}, {"q": "What does TRUNCATE TABLE employees do?", "o": ["Removes all rows but keeps the table definition", "Drops the database", "Renames the table", "Deletes one matching row"], "a": 0, "e": "TRUNCATE removes table data while preserving the table object."}, {"q": "What does DROP TABLE employees normally remove for a managed table?", "o": ["Only one row", "Table metadata and managed data", "Only DBPROPERTIES", "Only statistics"], "a": 1, "e": "A managed table's metadata and managed files are normally removed."}, {"q": "What is the purpose of SHOW TABLES?", "o": ["List tables in the current database", "Display table rows", "List HDFS blocks", "Start HiveServer2"], "a": 0, "e": "SHOW TABLES lists objects visible in the active database."}, {"q": "Which command gives a tabular view of storage format, location, and table properties?", "o": ["DESCRIBE FORMATTED employees", "SELECT FORMAT employees", "SHOW ROWS employees", "EXPLAIN DATABASE"], "a": 0, "e": "DESCRIBE FORMATTED is the practical metadata inspection command."}, {"q": "Which clause adds rows without replacing existing table contents?", "o": ["INSERT INTO", "INSERT OVERWRITE", "TRUNCATE", "DROP"], "a": 0, "e": "INSERT INTO appends rows; INSERT OVERWRITE replaces target contents."}, {"q": "What does INSERT OVERWRITE do to the target table or partition?", "o": ["Appends only", "Replaces existing contents", "Renames it", "Makes it external"], "a": 1, "e": "OVERWRITE removes and replaces the target contents."}, {"q": "What does LOAD DATA LOCAL INPATH mean?", "o": ["Read a file on the HiveServer2 host's local filesystem", "Read only from HDFS", "Create an ORC file automatically", "Update every row"], "a": 0, "e": "With HiveServer2, LOCAL refers to a path accessible on the server host."}, {"q": "Why use a staging text table before the ORC transactional table?", "o": ["To validate and convert raw CSV-shaped data before inserting into ORC", "To disable SQL", "To avoid a metastore", "To create a database owner"], "a": 0, "e": "The stage table is a simple landing area; INSERT SELECT converts data into the target format."}, {"q": "What is the purpose of DbTxnManager?", "o": ["Render HTML", "Provide Hive transaction and lock management", "Create CSV headers", "Start HDFS"], "a": 1, "e": "ACID tables require Hive's database transaction manager in the session or configuration."}, {"q": "How are ACID changes represented on HDFS before compaction?", "o": ["Only by rewriting one text file", "Using base and delta directories/files", "Inside the metastore only", "As browser cookies"], "a": 1, "e": "Hive writes inserts, updates, and deletes into delta structures and merges them during reads."}, {"q": "What is compaction used for?", "o": ["Combine base/delta changes into cleaner physical layouts", "Create users", "Convert SELECT to DELETE", "Rename databases"], "a": 0, "e": "Compaction consolidates accumulated delta data and reduces read overhead."}, {"q": "Which database alteration changes metadata without moving existing table files?", "o": ["ALTER DATABASE ... SET LOCATION", "UPDATE DATABASE ROWS", "MOVE DATABASE CONTENT", "TRUNCATE LOCATION"], "a": 0, "e": "SET LOCATION changes the default parent for future tables; it does not move existing objects."}, {"q": "Which query calculates employee count and average salary for each department?", "o": ["SELECT department, COUNT(*), AVG(salary) FROM employees GROUP BY department", "SELECT * DELETE department", "ALTER TABLE GROUP", "SHOW AVG DATABASE"], "a": 0, "e": "Aggregate functions combined with GROUP BY produce one result per department."}, {"q": "What is the safest first step before running DROP DATABASE ... CASCADE?", "o": ["Review SHOW TABLES and confirm the target", "Disable the metastore", "Delete HDFS root", "Use a random database name"], "a": 0, "e": "Inspect contained objects and confirm the exact database before destructive cascade operations."}];
+const INTERVIEWS = [["What is a Hive database?", "A logical namespace in the Hive Metastore that groups tables, views, functions, properties, and default storage locations."], ["Are DATABASE and SCHEMA different in Hive?", "No. Hive treats DATABASE and SCHEMA as interchangeable terms."], ["What is database-level CRUD in Hive?", "Create with CREATE DATABASE, read metadata with SHOW/DESCRIBE, update metadata with ALTER DATABASE, and delete with DROP DATABASE."], ["What is row-level CRUD in Hive?", "INSERT creates rows, SELECT reads rows, UPDATE changes rows, and DELETE removes rows."], ["Why are UPDATE and DELETE not available on every Hive table?", "Hive stores large immutable files in distributed storage. Row mutation requires ACID metadata, row identifiers, transaction management, delta files, and compaction."], ["What is an ACID table?", "A Hive transactional table that provides atomicity, consistency, isolation, and durability for supported writes."], ["Why is ORC commonly used for Hive ACID?", "ORC provides a structured columnar format and the row-level metadata integration required by Hive transactions."], ["What is DbTxnManager?", "Hive's transaction and lock manager used for ACID sessions."], ["What is the difference between INSERT INTO and INSERT OVERWRITE?", "INSERT INTO appends; INSERT OVERWRITE replaces the target table or partition contents."], ["What is the difference between DELETE, TRUNCATE, and DROP?", "DELETE removes selected rows, TRUNCATE removes all table data but keeps the table, and DROP removes the table object and normally its managed data."], ["What is RESTRICT versus CASCADE in DROP DATABASE?", "RESTRICT fails if the database is not empty; CASCADE drops contained objects too."], ["Does ALTER DATABASE SET LOCATION move existing tables?", "No. It only changes the default location used by newly created objects; existing table and partition locations remain unchanged."], ["Can you update a partition or bucketing column?", "No. Hive prohibits direct UPDATE of those columns because they define physical data placement."], ["What are base and delta directories?", "Base files hold consolidated data; delta/delete_delta directories hold changes from later transactions until compaction."], ["What is compaction?", "A background or requested process that combines ACID deltas and base data to reduce file count and improve reads."], ["Why should DELETE always be tested with SELECT first?", "The same WHERE condition can be previewed safely, reducing the risk of deleting unintended rows."], ["When would you use a staging table?", "When raw CSV or text must be validated, typed, cleaned, and converted before insertion into an optimized ORC table."], ["Is Hive intended for frequent single-row OLTP updates?", "No. Hive is designed for analytical and batch workloads. ACID mutations exist, but high-frequency OLTP is usually better handled by an operational database."]];
+const mem={}; const safeStore={get(k,d=null){try{const v=localStorage.getItem(k);return v===null?d:JSON.parse(v)}catch(e){return k in mem?mem[k]:d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}},remove(k){try{localStorage.removeItem(k)}catch(e){delete mem[k]}}};
+let state=safeStore.get('hiveCrudState',{progress:{},notes:[],xp:0,practiceScore:null,examScore:null,theme:'light',fontScale:1,name:''});
+function save(){safeStore.set('hiveCrudState',state)}
+function addXP(n){state.xp=(state.xp||0)+n;document.getElementById('xpText').textContent=state.xp+' XP';save()}
+// theme/font
+if(state.theme==='dark')document.documentElement.dataset.theme='dark';document.documentElement.style.setProperty('--fontScale',state.fontScale||1);document.getElementById('xpText').textContent=(state.xp||0)+' XP';
+document.getElementById('themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=state.theme==='dark'?'dark':'';save()};
+document.getElementById('fontUp').onclick=()=>{state.fontScale=Math.min(1.35,(state.fontScale||1)+.05);document.documentElement.style.setProperty('--fontScale',state.fontScale);save()};
+document.getElementById('fontDown').onclick=()=>{state.fontScale=Math.max(.85,(state.fontScale||1)-.05);document.documentElement.style.setProperty('--fontScale',state.fontScale);save()};
+// copy
+for(const b of document.querySelectorAll('.copy-btn'))b.onclick=async()=>{const text=b.closest('.code-wrap').querySelector('code').innerText;try{await navigator.clipboard.writeText(text);b.textContent='Copied'}catch(e){b.textContent='Select & copy'}setTimeout(()=>b.textContent='Copy',1300)};
+// progress
+const progressBoxes=[...document.querySelectorAll('[data-progress]')];function updateProgress(){let done=0;for(const cb of progressBoxes){cb.checked=!!state.progress[cb.dataset.progress];if(cb.checked)done++}const pct=Math.round(done/progressBoxes.length*100);document.getElementById('progressFill').style.width=pct+'%';document.getElementById('progressText').textContent=pct+'%'}progressBoxes.forEach(cb=>cb.onchange=()=>{const was=!!state.progress[cb.dataset.progress];state.progress[cb.dataset.progress]=cb.checked;if(cb.checked&&!was)addXP(5);save();updateProgress()});updateProgress();
+// reading progress and TOC
+const sections=[...document.querySelectorAll('.section')];window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;document.getElementById('readingProgress').style.width=(max?scrollY/max*100:0)+'%';let current='';for(const s of sections)if(s.getBoundingClientRect().top<140)current=s.id;document.querySelectorAll('.toc a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+current))});
+// notes
+const noteDialog=document.getElementById('noteDialog'),noteTerm=document.getElementById('noteTerm'),noteText=document.getElementById('noteText');
+function selectedWord(e){let s=window.getSelection().toString().trim();if(s)return s.slice(0,120);const r=document.caretRangeFromPoint?document.caretRangeFromPoint(e.clientX,e.clientY):null;if(!r||r.startContainer.nodeType!==3)return'';const t=r.startContainer.textContent;let i=r.startOffset,a=i,b=i;while(a>0&&/[\w.-]/.test(t[a-1]))a--;while(b<t.length&&/[\w.-]/.test(t[b]))b++;return t.slice(a,b)}
+document.getElementById('lessonMain').addEventListener('dblclick',e=>{if(e.target.closest('pre,code,input,textarea,select,button,a'))return;const term=selectedWord(e);if(!term)return;noteTerm.value=term;noteText.value='';noteDialog.classList.remove('hidden');noteText.focus()});
+document.getElementById('cancelNote').onclick=()=>noteDialog.classList.add('hidden');document.getElementById('saveNote').onclick=()=>{if(!noteText.value.trim())return;state.notes.push({term:noteTerm.value,note:noteText.value.trim(),at:new Date().toLocaleString()});save();addXP(2);noteDialog.classList.add('hidden');renderNotes();highlightTerms()};
+function renderNotes(){const box=document.getElementById('notesList');box.innerHTML=state.notes.length?'':'<p>No notes yet. Double-click a phrase.</p>';state.notes.forEach((n,i)=>{const d=document.createElement('div');d.className='mini-card';d.innerHTML='<strong>'+escapeHtml(n.term)+'</strong><p>'+escapeHtml(n.note)+'</p><small>'+escapeHtml(n.at)+'</small> <button class="btn" data-del="'+i+'">Delete</button>';box.appendChild(d)});box.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{state.notes.splice(+b.dataset.del,1);save();renderNotes()})}
+function escapeHtml(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function highlightTerms(){const terms=[...new Set(state.notes.map(n=>n.term).filter(t=>t.length>2))];if(!terms.length)return;const walker=document.createTreeWalker(document.getElementById('lessonMain'),NodeFilter.SHOW_TEXT,{acceptNode(n){if(!n.parentElement||n.parentElement.closest('pre,code,script,style,.note-word,input,textarea,select,button,a'))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});const nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);for(const node of nodes){let text=node.nodeValue;const term=terms.find(t=>text.toLowerCase().includes(t.toLowerCase()));if(!term)continue;const idx=text.toLowerCase().indexOf(term.toLowerCase());const before=text.slice(0,idx),match=text.slice(idx,idx+term.length),after=text.slice(idx+term.length);const frag=document.createDocumentFragment();frag.append(before);const mark=document.createElement('span');mark.className='note-word';mark.textContent=match;mark.title='Personal note saved';frag.append(mark);frag.append(after);node.parentNode.replaceChild(frag,node)}}
+document.getElementById('notesBtn').onclick=()=>{renderNotes();document.getElementById('notesPanel').classList.remove('hidden')};document.getElementById('closeNotes').onclick=()=>document.getElementById('notesPanel').classList.add('hidden');document.getElementById('clearNotes').onclick=()=>{state.notes=[];save();renderNotes()};renderNotes();setTimeout(highlightTerms,300);
+// sparkles
+let lastSpark=0;document.addEventListener('mousemove',e=>{if(Date.now()-lastSpark<75)return;lastSpark=Date.now();const s=document.createElement('span');s.className='sparkle';s.textContent=Math.random()>.5?'✦':'·';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),800)});
+// sound
+let audioCtx,osc1,osc2,gain,soundOn=false;document.getElementById('soundBtn').onclick=()=>{soundOn=!soundOn;const b=document.getElementById('soundBtn');if(soundOn){audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();gain=audioCtx.createGain();gain.gain.value=.018;osc1=audioCtx.createOscillator();osc2=audioCtx.createOscillator();osc1.frequency.value=174;osc2.frequency.value=261;osc1.type='sine';osc2.type='sine';osc1.connect(gain);osc2.connect(gain);gain.connect(audioCtx.destination);osc1.start();osc2.start();b.textContent='♫ Sound on'}else{try{osc1.stop();osc2.stop()}catch(e){}b.textContent='♫ Focus sound'}};
+function chime(ok){if(!audioCtx)return;const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=ok?660:180;g.gain.setValueAtTime(.04,audioCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,audioCtx.currentTime+.22);o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+.23)}
+// interview
+const il=document.getElementById('interviewList');INTERVIEWS.forEach((x,i)=>{const d=document.createElement('div');d.className='qa';d.innerHTML='<button><span class="tag">Q'+(i+1)+'</span>'+escapeHtml(x[0])+'</button><div class="answer">'+escapeHtml(x[1])+'</div>';d.querySelector('button').onclick=()=>d.classList.toggle('open');il.appendChild(d)});
+// quizzes
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}let practiceSet=[];function renderQuiz(target,set,prefix,showFeedback=false){target.innerHTML='';set.forEach((q,i)=>{const d=document.createElement('div');d.className='quiz-question';d.dataset.index=i;d.innerHTML='<strong>'+(i+1)+'. '+escapeHtml(q.q)+'</strong>'+q.o.map((o,j)=>'<label class="option"><input type="radio" name="'+prefix+i+'" value="'+j+'"> '+escapeHtml(o)+'</label>').join('')+'<div class="feedback"></div>';target.appendChild(d)})}
+function newPractice(){practiceSet=shuffled(QUESTION_BANK).slice(0,15);renderQuiz(document.getElementById('practiceQuiz'),practiceSet,'p');document.getElementById('practiceResult').style.display='none'}newPractice();document.getElementById('newPractice').onclick=newPractice;
+document.getElementById('submitPractice').onclick=()=>{let score=0;document.querySelectorAll('#practiceQuiz .quiz-question').forEach((d,i)=>{const sel=d.querySelector('input:checked');const q=practiceSet[i];d.classList.remove('correct','wrong');if(sel&&+sel.value===q.a){score++;d.classList.add('correct');d.querySelector('.feedback').textContent='Correct — '+q.e}else{d.classList.add('wrong');d.querySelector('.feedback').textContent='Answer: '+q.o[q.a]+' — '+q.e}});state.practiceScore=score;save();addXP(score*2);chime(score>=10);const r=document.getElementById('practiceResult');r.style.display='block';r.textContent='Practice score: '+score+'/15 ('+Math.round(score/15*100)+'%)';updateCertificate()};
+// exam
+let examSet=[],examSeconds=720,examInterval=null;document.getElementById('startExam').onclick=()=>{examSet=shuffled(QUESTION_BANK).slice(0,15);renderQuiz(document.getElementById('examArea'),examSet,'e');document.getElementById('examArea').classList.remove('hidden');document.getElementById('submitExam').classList.remove('hidden');document.getElementById('startExam').disabled=true;document.getElementById('examResult').style.display='none';examSeconds=720;document.getElementById('examTimer').classList.remove('hidden');tickExam();clearInterval(examInterval);examInterval=setInterval(()=>{examSeconds--;tickExam();if(examSeconds<=0)submitExam()},1000)};
+function tickExam(){const m=Math.floor(examSeconds/60),s=examSeconds%60,t=document.getElementById('examTimer');t.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');t.classList.toggle('danger',examSeconds<=60)}function submitExam(){if(examInterval){clearInterval(examInterval);examInterval=null}let score=0;document.querySelectorAll('#examArea .quiz-question').forEach((d,i)=>{const sel=d.querySelector('input:checked');if(sel&&+sel.value===examSet[i].a)score++});state.examScore=score;save();addXP(score*3);const r=document.getElementById('examResult');r.style.display='block';r.textContent='Exam score: '+score+'/15 ('+Math.round(score/15*100)+'%). '+(score>=12?'Excellent.':'Review the lesson and try again.');document.getElementById('submitExam').classList.add('hidden');document.getElementById('startExam').disabled=false;chime(score>=12);updateCertificate()}document.getElementById('submitExam').onclick=submitExam;
+// exercises
+window.checkText=(id,answers)=>{const v=document.getElementById(id).value.trim().toUpperCase().replace(/\s+/g,' '),ok=answers.some(a=>v.includes(a));document.getElementById(id+'Feedback').textContent=ok?'Correct!':'Review the CREATE DATABASE syntax.';chime(ok);if(ok)addXP(5)};window.checkSelect=(id,answer)=>{const ok=document.getElementById(id).value===answer;document.getElementById(id+'Feedback').textContent=ok?'Correct!':'Try again.';chime(ok);if(ok)addXP(5)};window.checkContains=(id,parts)=>{const v=document.getElementById(id).value.toUpperCase().replace(/\s+/g,' '),ok=parts.every(p=>v.includes(p));document.getElementById(id+'Feedback').textContent=ok?'Correct structure!':'Include UPDATE, salary calculation, department filter, and Finance.';chime(ok);if(ok)addXP(5)};window.moveItem=(btn,dir)=>{const li=btn.closest('li'),list=li.parentElement;if(dir<0&&li.previousElementSibling)list.insertBefore(li,li.previousElementSibling);if(dir>0&&li.nextElementSibling)list.insertBefore(li.nextElementSibling,li)};window.checkOrder=()=>{const ok=[...document.querySelectorAll('#orderList li')].every((li,i)=>+li.dataset.order===i+1);document.getElementById('orderFeedback').textContent=ok?'Correct workflow!':'Not yet. Create, insert, verify, then mutate.';chime(ok);if(ok)addXP(8)};window.completeAssignment=b=>{b.textContent='Assignment completed ✓';b.disabled=true;addXP(15)};
+// builder
+const templates={createDb:"CREATE DATABASE IF NOT EXISTS company_hr\nCOMMENT 'HR analytics database';",showDb:"SHOW DATABASES LIKE 'company*';\nDESCRIBE DATABASE EXTENDED company_hr;",createTable:"CREATE TABLE company_hr.employees (\n  employee_id INT, employee_name STRING,\n  department STRING, salary DECIMAL(12,2),\n  joining_date DATE, employment_status STRING\n)\nCLUSTERED BY (employee_id) INTO 4 BUCKETS\nSTORED AS ORC\nTBLPROPERTIES ('transactional'='true');",insert:"INSERT INTO company_hr.employees VALUES\n(107,'Gopi','Training',70000.00,DATE '2026-07-16','ACTIVE');",select:"SELECT * FROM company_hr.employees\nWHERE employment_status='ACTIVE';",update:"UPDATE company_hr.employees\nSET salary=salary*1.05\nWHERE employee_id=107;",delete:"DELETE FROM company_hr.employees\nWHERE employee_id=107;",drop:"USE default;\nDROP DATABASE company_hr RESTRICT;"};const bop=document.getElementById('builderOperation'),bout=document.getElementById('builderOutput');function buildSql(){bout.value=templates[bop.value]}bop.onchange=buildSql;buildSql();
+// export/reset/name/certificate
+document.getElementById('exportBtn').onclick=()=>{const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hive-crud-learning-progress.json';a.click();URL.revokeObjectURL(a.href)};document.getElementById('resetBtn').onclick=()=>{if(confirm('Reset notes, progress, scores, XP and display preferences?')){safeStore.remove('hiveCrudState');location.reload()}};const learner=document.getElementById('learnerName');learner.value=state.name||'';learner.oninput=()=>{state.name=learner.value;save()};function updateCertificate(){document.getElementById('certPractice').textContent=state.practiceScore===null?'Not attempted':state.practiceScore+'/15';document.getElementById('certExam').textContent=state.examScore===null?'Not attempted':state.examScore+'/15';document.getElementById('certDate').textContent='Date: '+new Date().toLocaleDateString()}updateCertificate();
+</script>
+</body></html>
