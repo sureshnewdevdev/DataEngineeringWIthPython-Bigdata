@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Classroom tutorial on Apache Hive Tez execution, ORC, partitioning, bucketing, vectorization and cost-based optimization.">
+<title>Hive Performance: Tez, ORC, Partitioning, Bucketing, Vectorization & CBO</title>
+<style>
+:root{--accent:#4f46e5;--accent2:#7c3aed;--bg:#f6f7fb;--card:#fff;--text:#172033;--muted:#5c667a;--border:#dfe3ec;--code:#111827;--codeText:#e5e7eb;--good:#087f5b;--bad:#c92a2a;--warn:#b45309;--shadow:0 10px 28px rgba(17,24,39,.08);--fontScale:1}
+[data-theme="dark"]{--bg:#0f172a;--card:#172033;--text:#edf2f7;--muted:#aeb8ca;--border:#334155;--code:#050914;--codeText:#e2e8f0;--shadow:0 10px 28px rgba(0,0,0,.32)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Segoe UI,Arial,sans-serif;font-size:calc(16px * var(--fontScale));line-height:1.68}.reading-progress{position:fixed;left:0;top:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;z-index:9999}.topbar{position:sticky;top:0;z-index:1000;background:color-mix(in srgb,var(--card) 94%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.55rem;justify-content:space-between;padding:.55rem 1rem}.brand{font-weight:800;display:flex;align-items:center;gap:.55rem}.brand-badge{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:var(--shadow)}.toolbar{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:flex-end}.btn{border:1px solid var(--border);background:var(--card);color:var(--text);padding:.55rem .78rem;border-radius:9px;cursor:pointer;font-weight:700}.btn:hover,.btn:focus{border-color:var(--accent);outline:none;transform:translateY(-1px)}.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.btn.danger{background:#fff1f2;color:#be123c;border-color:#fecdd3}.layout{display:grid;grid-template-columns:285px minmax(0,1fr);max-width:1500px;margin:0 auto;gap:1.15rem;padding:1.15rem}.sidebar{position:sticky;top:66px;height:calc(100vh - 82px);overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1rem;box-shadow:var(--shadow)}.sidebar h3{margin:.1rem 0 .6rem}.toc a{display:block;text-decoration:none;color:var(--muted);padding:.42rem .52rem;border-radius:8px;font-size:.91rem}.toc a:hover,.toc a.active{background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--accent)}.progress-card{margin-top:1rem;padding:.8rem;background:color-mix(in srgb,var(--accent) 7%,var(--card));border-radius:12px}.progress-track{height:10px;background:var(--border);border-radius:99px;overflow:hidden}.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0}.main{min-width:0}.hero{border-radius:22px;padding:clamp(1.4rem,4vw,3rem);color:#fff;background:radial-gradient(circle at 90% 12%,rgba(255,255,255,.23),transparent 30%),linear-gradient(135deg,#312e81,#4f46e5 50%,#7c3aed);box-shadow:var(--shadow);position:relative;overflow:hidden}.hero h1{font-size:clamp(2rem,5vw,4rem);line-height:1.05;margin:.25rem 0 1rem}.hero p{max-width:900px;font-size:1.1rem}.chips{display:flex;flex-wrap:wrap;gap:.5rem}.chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.3);padding:.38rem .65rem;border-radius:999px;font-weight:700}.before{margin-top:1.1rem;display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}.before div{background:rgba(255,255,255,.13);padding:.75rem;border-radius:12px}.section{background:var(--card);border:1px solid var(--border);border-radius:18px;margin:1.15rem 0;padding:clamp(1rem,2.5vw,2rem);box-shadow:var(--shadow);transition:.2s transform,.2s border-color}.section:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}.section h2{margin-top:0;font-size:clamp(1.45rem,3vw,2.15rem);border-bottom:1px solid var(--border);padding-bottom:.65rem}.section h3{margin-top:1.45rem}.prepare{float:right;font-size:.84rem;font-weight:700;color:var(--muted)}.lead{font-size:1.08rem;color:var(--muted)}.callout{border-left:5px solid var(--accent);background:color-mix(in srgb,var(--accent) 7%,var(--card));padding:.85rem 1rem;border-radius:0 10px 10px 0;margin:1rem 0}.callout.warn{border-color:#f59e0b;background:color-mix(in srgb,#f59e0b 9%,var(--card))}.callout.good{border-color:#10b981;background:color-mix(in srgb,#10b981 9%,var(--card))}.grid2,.grid3{display:grid;gap:1rem}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}.mini-card{border:1px solid var(--border);border-radius:13px;padding:1rem;background:color-mix(in srgb,var(--card) 96%,var(--accent) 4%)}.mini-card h3,.mini-card h4{margin-top:0}.memory{border:2px dashed color-mix(in srgb,var(--accent) 60%,var(--border));border-radius:14px;padding:1rem;background:color-mix(in srgb,var(--accent) 5%,var(--card))}.diagram{border:1px solid var(--border);border-radius:16px;padding:1rem;overflow:auto;background:color-mix(in srgb,var(--bg) 60%,var(--card))}.flow{display:flex;align-items:center;gap:.55rem;min-width:880px;justify-content:center;padding:1rem}.node{min-width:130px;text-align:center;padding:.75rem;border:2px solid var(--accent);border-radius:12px;background:var(--card);font-weight:800}.arrow{font-size:1.6rem;color:var(--accent)}.dag{display:grid;grid-template-columns:repeat(7,130px);grid-template-rows:repeat(3,90px);gap:15px;min-width:1000px;align-items:center;justify-content:center}.dag .node{min-width:auto}.edge{text-align:center;font-size:1.5rem;color:var(--accent)}.legend{display:flex;flex-wrap:wrap;gap:.8rem;margin:.75rem 0;font-size:.9rem}.dot{width:12px;height:12px;display:inline-block;border-radius:50%;margin-right:.3rem;background:var(--accent)}.code-wrap{position:relative;margin:1rem 0}.code-head{display:flex;justify-content:space-between;align-items:center;background:#1f2937;color:#fff;padding:.55rem .8rem;border-radius:12px 12px 0 0;font-size:.85rem;font-weight:700}.copy-btn{border:1px solid #64748b;background:#334155;color:#fff;border-radius:7px;padding:.35rem .55rem;cursor:pointer}pre{margin:0;background:var(--code);color:var(--codeText);padding:1rem;overflow:auto;border-radius:0 0 12px 12px;line-height:1.55;tab-size:2}code{font-family:Consolas,Monaco,monospace}.inline-code{background:color-mix(in srgb,var(--accent) 10%,var(--card));padding:.1rem .35rem;border-radius:5px;font-family:Consolas,monospace}.expected{border:1px solid var(--border);border-radius:10px;padding:.8rem;background:color-mix(in srgb,#10b981 6%,var(--card));margin-top:.5rem}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:720px}th,td{border:1px solid var(--border);padding:.7rem;text-align:left;vertical-align:top}th{background:color-mix(in srgb,var(--accent) 12%,var(--card));color:var(--text)}tr:nth-child(even) td{background:color-mix(in srgb,var(--bg) 40%,var(--card))}.qa{border:1px solid var(--border);border-radius:12px;margin:.7rem 0;overflow:hidden}.qa button{width:100%;text-align:left;padding:.85rem 1rem;border:0;background:color-mix(in srgb,var(--accent) 8%,var(--card));color:var(--text);font-weight:800;cursor:pointer}.qa .answer{display:none;padding:1rem}.qa.open .answer{display:block}.tag{font-size:.73rem;padding:.2rem .45rem;border-radius:999px;margin-right:.45rem;background:var(--border)}.flash-actions{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.6rem}.quiz-question{border:1px solid var(--border);border-radius:12px;padding:1rem;margin:.8rem 0}.quiz-question.correct{border-color:#10b981;background:color-mix(in srgb,#10b981 7%,var(--card))}.quiz-question.wrong{border-color:#ef4444;background:color-mix(in srgb,#ef4444 7%,var(--card))}.option{display:block;padding:.45rem .6rem;border-radius:8px;margin:.25rem 0}.option:hover{background:color-mix(in srgb,var(--accent) 8%,var(--card))}.feedback{margin-top:.6rem;font-weight:700}.result{display:none;border-radius:14px;padding:1rem;margin:1rem 0;text-align:center;font-size:1.05rem;background:color-mix(in srgb,var(--accent) 8%,var(--card));border:1px solid var(--border)}.timer{font-size:1.35rem;font-weight:900;padding:.6rem .8rem;border-radius:10px;background:var(--code);color:#fff;display:inline-block}.timer.danger{background:#b91c1c;animation:pulse 1s infinite}@keyframes pulse{50%{transform:scale(1.04)}}.hidden{display:none!important}.exercise{border:1px solid var(--border);border-radius:12px;padding:1rem;margin:.8rem 0}.exercise input,.exercise select,.note-dialog input,.note-dialog textarea,.certificate input{width:100%;padding:.65rem;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--text)}.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}.order-list{list-style:none;padding:0}.order-list li{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);padding:.65rem;margin:.35rem 0;border-radius:9px;background:var(--card)}.note-word{background:#fde68a;color:#422006;border-bottom:3px solid #f59e0b;border-radius:3px;cursor:pointer}.notes-panel{position:fixed;right:14px;bottom:14px;width:min(390px,calc(100vw - 28px));max-height:62vh;overflow:auto;background:var(--card);border:1px solid var(--border);border-radius:15px;box-shadow:0 18px 55px rgba(0,0,0,.25);z-index:1300;padding:1rem}.note-dialog{position:fixed;inset:0;background:rgba(0,0,0,.54);display:grid;place-items:center;z-index:1500;padding:1rem}.note-dialog .box{background:var(--card);width:min(520px,100%);border-radius:16px;padding:1.1rem;box-shadow:var(--shadow)}.note-item{border-bottom:1px solid var(--border);padding:.6rem 0}.note-item:last-child{border-bottom:0}.sparkle{position:fixed;pointer-events:none;width:7px;height:7px;border-radius:50%;background:radial-gradient(circle,#fff 0 20%,#facc15 45%,transparent 70%);z-index:9998;animation:spark .7s linear forwards}@keyframes spark{to{transform:translateY(-14px) scale(0);opacity:0}}.glossary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem}.glossary div{border:1px solid var(--border);border-radius:10px;padding:.7rem}.term{border-bottom:1px dotted var(--accent);cursor:help}.certificate{border:8px double var(--accent);padding:2rem;text-align:center;background:var(--card);margin-top:1rem}.score-history{font-size:.9rem}.backtop{position:fixed;right:18px;bottom:18px;width:46px;height:46px;border-radius:50%;border:0;background:var(--accent);color:#fff;font-size:1.25rem;cursor:pointer;z-index:1100}.notes-panel:not(.hidden)+.backtop{bottom:90px}.source-list li{margin:.4rem 0}.footer{text-align:center;color:var(--muted);padding:2rem}.status-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .55rem;border-radius:999px;background:color-mix(in srgb,var(--accent) 8%,var(--card));font-size:.83rem;font-weight:700}.badge-area{display:flex;gap:.4rem;flex-wrap:wrap}.badge{padding:.35rem .6rem;border-radius:999px;background:#fef3c7;color:#78350f;font-weight:800;font-size:.82rem}.resume{padding:.65rem;border:1px dashed var(--border);border-radius:10px;margin-top:.7rem}.mobile-menu{display:none}
+@media(max-width:980px){.layout{grid-template-columns:1fr}.sidebar{position:fixed;left:0;top:58px;bottom:0;width:300px;height:auto;z-index:1200;transform:translateX(-110%);transition:.2s}.sidebar.open{transform:translateX(0)}.mobile-menu{display:inline-block}.before,.grid3{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}.glossary{grid-template-columns:1fr}}
+@media(max-width:600px){.topbar{align-items:flex-start}.brand span:last-child{display:none}.toolbar .btn{padding:.45rem .55rem;font-size:.78rem}.layout{padding:.65rem}.hero{border-radius:16px}.before{grid-template-columns:1fr}.section{border-radius:14px}.match-grid{grid-template-columns:1fr}}
+@media print{.topbar,.sidebar,.backtop,.notes-panel,.toolbar,.prepare,.reading-progress,.interactive-only,.copy-btn{display:none!important}.layout{display:block;max-width:none;padding:0}.section,.hero{box-shadow:none;break-inside:avoid}.hero{color:#000;background:#fff;border:2px solid #000}.main{width:100%}.certificate{break-before:page}.qa .answer{display:block!important}}
+</style>
+</head>
+<body>
+<div id="readingProgress" class="reading-progress"></div>
+<header class="topbar">
+  <div class="brand"><div class="brand-badge">H</div><span>Hive Performance Lab</span></div>
+  <div class="toolbar">
+    <button class="btn mobile-menu" id="menuBtn" aria-label="Open table of contents">☰</button>
+    <button class="btn" id="themeBtn">🌙 Theme</button>
+    <button class="btn" id="fontDown">A−</button><button class="btn" id="fontUp">A+</button>
+    <button class="btn" id="soundBtn">🔊 Sound</button>
+    <button class="btn" id="notesBtn">📝 Notes</button>
+    <button class="btn" onclick="window.print()">🖨 Print/PDF</button>
+  </div>
+</header>
+<div class="layout">
+<aside class="sidebar" id="sidebar">
+  <h3>Course Contents</h3>
+  <nav class="toc" id="toc">
+    <a href="#intro">1. Introduction</a><a href="#analogy">2. Easy Analogy</a><a href="#architecture">3. Architecture</a>
+    <a href="#tez">4. Tez Execution</a><a href="#orc">5. ORC Format</a><a href="#partitioning">6. Partitioning</a>
+    <a href="#bucketing">7. Bucketing</a><a href="#vectorization">8. Vectorization</a><a href="#cbo">9. CBO</a>
+    <a href="#simple-demo">10. Simple Demo</a><a href="#industry">11. Industry Use Case</a><a href="#comparison">12. Comparison</a>
+    <a href="#best-practices">13. Best Practices</a><a href="#gotchas">14. Edge Cases</a><a href="#troubleshooting">15. Troubleshooting</a>
+    <a href="#interview">16. Interview Q&A</a><a href="#exercises">17. Exercises</a><a href="#quiz">18. Practice Quiz</a>
+    <a href="#exam">19. Timed Exam</a><a href="#glossary">20. Glossary</a><a href="#summary">21. Summary</a>
+  </nav>
+  <div class="progress-card storage-feature">
+    <strong>Preparation Progress</strong>
+    <div id="progressText">0 / 21 topics prepared</div>
+    <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+    <button class="btn" id="resetProgress" style="margin-top:.6rem">Reset</button>
+  </div>
+  <div class="resume storage-feature" id="resumeBox">Resume point: Title</div>
+  <div class="progress-card storage-feature">
+    <strong>Learning XP</strong><div id="xpText">0 XP</div><div id="badges" class="badge-area"></div>
+  </div>
+  <div class="progress-card storage-feature score-history"><strong>Score History</strong><div id="scoreHistory">No attempts yet.</div></div>
+  <div class="progress-card storage-feature">
+    <button class="btn" id="exportBtn">Export Learning Data</button>
+    <label class="btn" style="display:block;margin-top:.4rem;text-align:center">Import Data<input id="importFile" type="file" accept="application/json" hidden></label>
+  </div>
+</aside>
+<main class="main noteable" id="mainContent">
+<section class="hero" id="title">
+  <div class="status-pill">Apache Hive performance optimization</div>
+  <h1>Tez Execution, ORC, Partitioning, Bucketing, Vectorization & CBO</h1>
+  <p>Understand how Hive turns SQL into an efficient data-processing plan, reads less data, processes rows in batches, and chooses lower-cost operations.</p>
+  <div class="chips"><span class="chip">Tez DAG</span><span class="chip">ORC stripes</span><span class="chip">Partition pruning</span><span class="chip">Hash buckets</span><span class="chip">Vector batches</span><span class="chip">Calcite CBO</span></div>
+  <div class="before"><div><strong>Prerequisites</strong><br>Basic HiveQL, HDFS, tables and SQL joins</div><div><strong>Study time</strong><br>90–120 minutes plus lab practice</div><div><strong>Outcome</strong><br>Design and verify an optimized Hive table and query</div></div>
+</section>
+
+<section id="intro" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="intro"> Mark as prepared</label><h2>1. Introduction</h2>
+<p class="lead">A Hive query can be logically correct and still run slowly. Performance depends on how the query is executed, how data is physically stored, how much data is skipped, how rows are processed, and whether the optimizer has trustworthy statistics.</p>
+<p><strong>Tez</strong> controls the execution workflow. <strong>ORC</strong> stores data in a compressed, indexed columnar structure. <strong>Partitioning</strong> removes entire directories from a scan. <strong>Bucketing</strong> distributes rows into a fixed number of files using a hash. <strong>Vectorization</strong> processes batches of column values rather than one row at a time. <strong>Cost Based Optimization</strong> uses table and column statistics to choose a plan.</p>
+<p>These are not six unrelated features. They form a pipeline. A good physical design helps ORC and pruning; accurate statistics help the CBO; the CBO produces a plan; Tez executes that plan; vectorized operators accelerate the CPU work inside the tasks.</p>
+<div class="grid2"><div class="mini-card"><h3>Without optimization</h3><p>Scan every file, deserialize every row, write intermediate results between jobs, use a poor join order, and create too many tiny tasks.</p></div><div class="mini-card"><h3>With optimization</h3><p>Prune directories and stripes, read only required columns, process batches, reuse a Tez DAG, and choose joins based on fresh statistics.</p></div></div>
+<div class="memory"><strong>Memory formula:</strong> <em>Plan → Store → Skip → Group → Batch → Choose</em><br>Tez plans execution, ORC stores, partitions skip directories, buckets group by hash, vectorization batches values, CBO chooses the cheapest plan.</div>
+</section>
+
+<section id="analogy" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="analogy"> Mark as prepared</label><h2>2. Supermarket Warehouse Analogy</h2>
+<p>Imagine a national supermarket warehouse answering: “What was the total beverage revenue from South region customers on 15 July?”</p>
+<ol>
+<li><strong>Tez is the operations manager.</strong> It arranges receiving, filtering, grouping, and reporting as one connected workflow instead of restarting the warehouse after every step.</li>
+<li><strong>ORC is shelf storage by attribute.</strong> Product codes, quantities, and prices are stored in organized column sections, so staff do not open every package.</li>
+<li><strong>Partitioning is the warehouse zone.</strong> There is a South/2026-07-15 zone, so other dates and regions are ignored.</li>
+<li><strong>Bucketing is the numbered aisle.</strong> Customer IDs are hashed into fixed aisles. The same customer always goes to the same bucket number for the same bucket definition.</li>
+<li><strong>Vectorization is moving a tray of items.</strong> Workers process a batch of 1,024 values together rather than repeatedly handling one value at a time.</li>
+<li><strong>CBO is the route planner.</strong> It uses counts and distributions to decide whether to visit the small product catalogue first or scan the large sales area first.</li>
+</ol>
+<div class="callout warn"><strong>Where the analogy stops:</strong> Hive does not physically “walk” through aisles. It creates distributed tasks on YARN containers, uses file metadata and statistics, and exchanges data across network edges when required.</div>
+</section>
+
+<section id="architecture" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="architecture"> Mark as prepared</label><h2>3. End-to-End Technical Architecture</h2>
+<p>A Hive client submits HiveQL to HiveServer2. Hive parses and validates the query, reads metadata and statistics from the metastore, performs logical and physical optimization, and creates a Tez DAG. Tez requests containers from YARN. Tasks read ORC stripes from HDFS or object storage, apply partition and predicate pruning, run vectorized operators when supported, shuffle only where necessary, and write or return results.</p>
+<div class="diagram" role="img" aria-label="Hive optimized query architecture">
+<div class="flow"><div class="node">HiveQL</div><div class="arrow">→</div><div class="node">Parser & Semantic Analyzer</div><div class="arrow">→</div><div class="node">CBO + Rules</div><div class="arrow">→</div><div class="node">Tez DAG</div><div class="arrow">→</div><div class="node">YARN Containers</div><div class="arrow">→</div><div class="node">ORC / HDFS</div></div>
+</div>
+<p><strong>How to read the diagram:</strong> read left to right. The metastore supports the parser and optimizer with schemas, partitions, basic statistics, and column statistics. The final execution reads only the partitions, columns, stripes, and row groups required by the predicates.</p>
+<div class="grid3"><div class="mini-card"><h3>Compile-time</h3><p>Parsing, type checking, partition pruning, join reordering, operator selection.</p></div><div class="mini-card"><h3>Runtime</h3><p>Tez vertices, task parallelism, shuffle edges, container reuse, vector batches.</p></div><div class="mini-card"><h3>Storage-time</h3><p>ORC compression, indexes, stripes, partition folders, bucket files, sort order.</p></div></div>
+</section>
+
+<section id="tez" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="tez"> Mark as prepared</label><h2>4. Tez Execution Engine</h2>
+<p><span class="term" title="A directed graph with no cycle">Apache Tez</span> is a YARN-based framework for expressing a complex directed acyclic graph of data-processing tasks. Hive can combine a chain that would require multiple MapReduce jobs into a connected Tez DAG, reducing repeated job startup and intermediate disk materialization.</p>
+<h3>MapReduce chain versus Tez DAG</h3>
+<div class="diagram"><div class="grid2"><div><h4>Traditional multi-job flow</h4><div class="flow" style="min-width:540px"><div class="node">MR Job 1</div><div class="arrow">→ HDFS →</div><div class="node">MR Job 2</div><div class="arrow">→ HDFS →</div><div class="node">MR Job 3</div></div></div><div><h4>Tez connected flow</h4><div class="flow" style="min-width:540px"><div class="node">Vertex A</div><div class="arrow">→</div><div class="node">Vertex B</div><div class="arrow">→</div><div class="node">Vertex C</div></div></div></div></div>
+<p><strong>Vertex:</strong> a stage of parallel work. <strong>Edge:</strong> how data moves between vertices, such as one-to-one, broadcast, or shuffle. <strong>DAG:</strong> a set of connected vertices with no path that loops back.</p>
+<div class="code-wrap"><div class="code-head"><span>Enable and inspect Tez</span><button class="copy-btn">Copy</button></div><pre><code>-- Session-level setting. Tez must already be installed and configured.
+SET hive.execution.engine=tez;
+
+-- Helpful execution summary in compatible Hive CLI/Beeline environments.
+SET hive.tez.exec.print.summary=true;
+
+-- Allow Tez to adjust reducer parallelism from sampled runtime data.
+SET hive.tez.auto.reducer.parallelism=true;
+
+-- Display the physical plan and Tez vertices.
+EXPLAIN
+SELECT region, SUM(net_amount)
+FROM retail_sales_orc
+WHERE sale_date = '2026-07-15'
+GROUP BY region;</code></pre></div>
+<div class="expected"><strong>Expected observation:</strong> the plan should show Tez work/vertices rather than separate MapReduce job boundaries. Exact wording varies by Hive version and distribution.</div>
+<h3>Why Tez can be faster</h3><ul><li>Fewer framework startups for multi-stage queries.</li><li>Intermediate data can move directly between vertices.</li><li>Containers may be reused across operations.</li><li>The runtime can adjust physical decisions such as reducer parallelism.</li></ul>
+<div class="callout warn"><strong>Important:</strong> setting <span class="inline-code">hive.execution.engine=tez</span> does not install Tez. The Tez libraries, HDFS archive, YARN configuration, and classpath must be correctly configured by the administrator.</div>
+</section>
+
+<section id="orc" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="orc"> Mark as prepared</label><h2>5. ORC File Format</h2>
+<p>ORC means <strong>Optimized Row Columnar</strong>. It is a self-describing, type-aware columnar file format. A query reading only <span class="inline-code">region</span> and <span class="inline-code">net_amount</span> can avoid reading unrelated columns such as address or comments.</p>
+<div class="diagram"><svg viewBox="0 0 900 330" width="100%" role="img" aria-label="ORC file stripe structure"><rect x="20" y="30" width="860" height="270" rx="18" fill="none" stroke="currentColor" stroke-width="2"/><text x="40" y="60" fill="currentColor" font-weight="700">ORC File</text><rect x="55" y="85" width="240" height="170" rx="12" fill="none" stroke="#4f46e5" stroke-width="3"/><text x="75" y="115" fill="currentColor" font-weight="700">Stripe 1</text><rect x="80" y="135" width="55" height="80" fill="#c7d2fe"/><rect x="145" y="135" width="55" height="80" fill="#ddd6fe"/><rect x="210" y="135" width="55" height="80" fill="#bfdbfe"/><text x="90" y="235" fill="currentColor">C1</text><text x="155" y="235" fill="currentColor">C2</text><text x="220" y="235" fill="currentColor">C3</text><rect x="330" y="85" width="240" height="170" rx="12" fill="none" stroke="#4f46e5" stroke-width="3"/><text x="350" y="115" fill="currentColor" font-weight="700">Stripe 2</text><rect x="355" y="135" width="55" height="80" fill="#c7d2fe"/><rect x="420" y="135" width="55" height="80" fill="#ddd6fe"/><rect x="485" y="135" width="55" height="80" fill="#bfdbfe"/><text x="365" y="235" fill="currentColor">C1</text><text x="430" y="235" fill="currentColor">C2</text><text x="495" y="235" fill="currentColor">C3</text><rect x="605" y="85" width="230" height="170" rx="12" fill="none" stroke="#4f46e5" stroke-width="3"/><text x="625" y="115" fill="currentColor" font-weight="700">File Footer</text><text x="625" y="150" fill="currentColor">Schema</text><text x="625" y="180" fill="currentColor">Stripe metadata</text><text x="625" y="210" fill="currentColor">Column statistics</text></svg></div>
+<p><strong>Stripe:</strong> a large independently readable section. <strong>Column streams:</strong> encoded data for each column. <strong>Row index:</strong> positions and statistics for groups of rows. <strong>Footer:</strong> schema and file-level metadata. Predicate pushdown can use minimum/maximum values and optional Bloom filters to skip work.</p>
+<div class="code-wrap"><div class="code-head"><span>Create an ORC table</span><button class="copy-btn">Copy</button></div><pre><code>CREATE TABLE retail_sales_orc (
+  order_id       BIGINT,
+  customer_id    BIGINT,
+  product_id     INT,
+  category       STRING,
+  quantity       INT,
+  unit_price     DECIMAL(12,2),
+  net_amount     DECIMAL(14,2),
+  order_ts       TIMESTAMP
+)
+PARTITIONED BY (sale_date DATE, region STRING)
+STORED AS ORC
+TBLPROPERTIES (
+  'orc.compress'='SNAPPY',
+  'orc.create.index'='true',
+  'orc.bloom.filter.columns'='customer_id,product_id'
+);</code></pre></div>
+<h3>ORC performance mechanisms</h3><div class="grid3"><div class="mini-card"><h4>Column projection</h4><p>Only selected columns are decoded.</p></div><div class="mini-card"><h4>Predicate pushdown</h4><p>Metadata helps reject stripes or row groups.</p></div><div class="mini-card"><h4>Compression & encoding</h4><p>Similar values compress well and type-aware encoding reduces storage.</p></div></div>
+<div class="callout"><strong>Compression choice:</strong> ZLIB usually favors compression ratio; SNAPPY favors faster compression/decompression. Test with your data and workload rather than selecting only by habit.</div>
+</section>
+
+<section id="partitioning" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="partitioning"> Mark as prepared</label><h2>6. Partitioning</h2>
+<p>Partitioning creates a separate directory for each distinct partition-value combination. A filter on the partition column can remove unrelated directories before tasks read the data. This is called <strong>partition pruning</strong>.</p>
+<div class="diagram"><div class="flow" style="min-width:920px"><div class="node">retail_sales_orc/</div><div class="arrow">→</div><div class="node">sale_date=2026-07-15/</div><div class="arrow">→</div><div class="node">region=South/</div><div class="arrow">→</div><div class="node">bucket files</div></div><div class="flow" style="min-width:920px"><div class="node">retail_sales_orc/</div><div class="arrow">→</div><div class="node">sale_date=2026-07-16/</div><div class="arrow">→</div><div class="node">region=North/</div><div class="arrow">→</div><div class="node">bucket files</div></div></div>
+<div class="code-wrap"><div class="code-head"><span>Dynamic partition load</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+
+INSERT OVERWRITE TABLE retail_sales_orc
+PARTITION (sale_date, region)
+SELECT
+  order_id, customer_id, product_id, category,
+  quantity, unit_price, net_amount, order_ts,
+  sale_date, region             -- dynamic partition columns come last
+FROM retail_sales_stage;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Query that enables partition pruning</span><button class="copy-btn">Copy</button></div><pre><code>SELECT category, SUM(net_amount) AS revenue
+FROM retail_sales_orc
+WHERE sale_date = '2026-07-15'
+  AND region = 'South'
+GROUP BY category;</code></pre></div>
+<h3>Choose a good partition key</h3><ul><li>It appears frequently in filters.</li><li>Its cardinality is controlled: date/day and region are common; unique order ID is usually terrible.</li><li>Each partition contains enough data to avoid thousands of tiny directories and files.</li><li>The granularity matches retention and loading operations.</li></ul>
+<div class="callout warn"><strong>Partition column rule:</strong> do not define the same column in both the regular column list and <span class="inline-code">PARTITIONED BY</span>. Hive creates the partition column as a table pseudo-column backed by directory metadata.</div>
+</section>
+
+<section id="bucketing" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="bucketing"> Mark as prepared</label><h2>7. Bucketing</h2>
+<p>Bucketing applies a hash function to one or more columns and maps each row to one of a fixed number of bucket files. Conceptually: <span class="inline-code">bucket = positive_hash(key) modulo number_of_buckets</span>.</p>
+<div class="diagram"><div class="flow" style="min-width:950px"><div class="node">customer_id</div><div class="arrow">→</div><div class="node">hash()</div><div class="arrow">→</div><div class="node">mod 8</div><div class="arrow">→</div><div class="node">Bucket 0…7</div><div class="arrow">→</div><div class="node">ORC files</div></div></div>
+<div class="code-wrap"><div class="code-head"><span>Create a partitioned and bucketed ORC table</span><button class="copy-btn">Copy</button></div><pre><code>CREATE TABLE retail_sales_optimized (
+  order_id BIGINT,
+  customer_id BIGINT,
+  product_id INT,
+  category STRING,
+  quantity INT,
+  net_amount DECIMAL(14,2),
+  order_ts TIMESTAMP
+)
+PARTITIONED BY (sale_date DATE, region STRING)
+CLUSTERED BY (customer_id)
+SORTED BY (order_ts)
+INTO 16 BUCKETS
+STORED AS ORC;</code></pre></div>
+<h3>What bucketing can help</h3><ul><li>Repeatable sampling with <span class="inline-code">TABLESAMPLE</span>.</li><li>Bucket map joins or sort-merge bucket joins when both sides are compatibly bucketed.</li><li>Controlled file distribution inside large partitions.</li><li>Operations grouped by or joined on the bucket key, when the engine recognizes the layout.</li></ul>
+<div class="code-wrap"><div class="code-head"><span>Bucket sampling</span><button class="copy-btn">Copy</button></div><pre><code>SELECT customer_id, SUM(net_amount)
+FROM retail_sales_optimized
+TABLESAMPLE(BUCKET 1 OUT OF 16 ON customer_id)
+WHERE sale_date = '2026-07-15'
+GROUP BY customer_id;</code></pre></div>
+<div class="callout warn"><strong>Metadata is not data organization:</strong> declaring <span class="inline-code">CLUSTERED BY</span> does not magically rewrite existing files. Load through a Hive operation that creates the correct layout and verify the files and plan. Enforcement details differ by Hive release and distribution.</div>
+</section>
+
+<section id="vectorization" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="vectorization"> Mark as prepared</label><h2>8. Vectorized Query Execution</h2>
+<p>Row-mode execution repeatedly creates or accesses row objects and invokes operator logic for each row. Vectorization stores column values in arrays and evaluates a batch, commonly around 1,024 rows, through tight loops. This reduces interpretation, virtual calls, object overhead, and improves CPU cache use.</p>
+<div class="grid2"><div class="mini-card"><h3>Row mode</h3><p>Read row 1 → evaluate → read row 2 → evaluate → repeat.</p></div><div class="mini-card"><h3>Vector mode</h3><p>Load a column batch → apply one vector expression across the batch → pass the batch.</p></div></div>
+<div class="code-wrap"><div class="code-head"><span>Enable and diagnose vectorization</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.vectorized.execution.enabled=true;
+SET hive.vectorized.execution.reduce.enabled=true;
+
+EXPLAIN VECTORIZATION DETAIL
+SELECT category, SUM(net_amount)
+FROM retail_sales_orc
+WHERE sale_date = '2026-07-15'
+  AND quantity &gt;= 2
+GROUP BY category;</code></pre></div>
+<div class="expected"><strong>Expected observation:</strong> vectorization details show which map/reduce work and operators are vectorized, plus a reason when a path falls back to row mode. <span class="inline-code">EXPLAIN VECTORIZATION</span> is available from Hive 2.3.</div>
+<h3>Why a query may not vectorize</h3><ul><li>An unsupported UDF or data type is present.</li><li>The input format is not vectorization-friendly.</li><li>A particular expression or operator lacks a vector implementation.</li><li>A custom SerDe forces row deserialization.</li></ul>
+<div class="callout good"><strong>Best pairing:</strong> ORC + supported primitive expressions + vectorization. ORC naturally supplies column batches, so less conversion is required.</div>
+</section>
+
+<section id="cbo" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="cbo"> Mark as prepared</label><h2>9. Cost Based Optimization (CBO)</h2>
+<p>Hive’s CBO uses Apache Calcite and metadata statistics to estimate alternative plans. It can influence join order, join strategy, cardinality estimates, and other rewrites. A cost-based optimizer cannot make a good decision when its statistics are missing or stale.</p>
+<div class="diagram"><div class="flow" style="min-width:920px"><div class="node">Candidate Plan A</div><div class="arrow">cost 900</div><div class="node">Statistics</div><div class="arrow">→</div><div class="node">Calcite Rules</div><div class="arrow">←</div><div class="node">Candidate Plan B</div><div class="arrow">cost 240 ✓</div></div></div>
+<div class="code-wrap"><div class="code-head"><span>Collect statistics and inspect CBO</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.cbo.enable=true;
+
+-- Basic table/partition statistics.
+ANALYZE TABLE retail_sales_orc COMPUTE STATISTICS;
+
+-- Column statistics used for selectivity and cardinality estimates.
+ANALYZE TABLE retail_sales_orc COMPUTE STATISTICS FOR COLUMNS;
+
+-- Hive 4: show Calcite's CBO plan and estimated cost.
+EXPLAIN CBO COST
+SELECT p.category, SUM(s.net_amount)
+FROM retail_sales_orc s
+JOIN product_dim p ON s.product_id = p.product_id
+WHERE s.sale_date = '2026-07-15'
+  AND s.region = 'South'
+GROUP BY p.category;</code></pre></div>
+<p>For Hive releases that do not support the <span class="inline-code">CBO COST</span> explain clause, use <span class="inline-code">EXPLAIN</span> or <span class="inline-code">EXPLAIN FORMATTED</span> and look for statistics, join operators, row estimates, and “Plan optimized by CBO”.</p>
+<div class="grid3"><div class="mini-card"><h4>Basic statistics</h4><p>Row count, file count, total size, raw data size.</p></div><div class="mini-card"><h4>Column statistics</h4><p>Distinct values, null count, min/max, average length and related measures.</p></div><div class="mini-card"><h4>Plan decision</h4><p>Estimate rows after filters and joins, then compare alternatives.</p></div></div>
+<div class="callout warn"><strong>Stale-statistics trap:</strong> after large inserts, overwrites, partition changes, or compaction, refresh statistics. A beautifully designed table with incorrect row counts can still receive a poor join order.</div>
+</section>
+
+<section id="simple-demo" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="simple-demo"> Mark as prepared</label><h2>10. Simple End-to-End Demo</h2>
+<p>This small lab uses a staging text table and an optimized ORC target. Run it in Beeline or a Hive client connected to a configured Hadoop cluster.</p>
+<div class="code-wrap"><div class="code-head"><span>Step 1 — Create database and staging table</span><button class="copy-btn">Copy</button></div><pre><code>CREATE DATABASE IF NOT EXISTS hive_perf_demo;
+USE hive_perf_demo;
+
+CREATE TABLE retail_sales_stage (
+  order_id BIGINT,
+  customer_id BIGINT,
+  product_id INT,
+  category STRING,
+  quantity INT,
+  unit_price DECIMAL(12,2),
+  net_amount DECIMAL(14,2),
+  order_ts TIMESTAMP,
+  sale_date DATE,
+  region STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Step 2 — Insert sample rows</span><button class="copy-btn">Copy</button></div><pre><code>INSERT INTO retail_sales_stage VALUES
+(1001,501,10,'Beverage',2,75.00,150.00,'2026-07-15 09:10:00','2026-07-15','South'),
+(1002,502,11,'Snack',3,40.00,120.00,'2026-07-15 09:20:00','2026-07-15','South'),
+(1003,501,12,'Beverage',1,95.00,95.00,'2026-07-15 10:00:00','2026-07-15','South'),
+(1004,503,13,'Grocery',5,30.00,150.00,'2026-07-15 10:20:00','2026-07-15','North'),
+(1005,504,10,'Beverage',4,75.00,300.00,'2026-07-16 11:15:00','2026-07-16','South');</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Step 3 — Create optimized target</span><button class="copy-btn">Copy</button></div><pre><code>CREATE TABLE retail_sales_orc (
+  order_id BIGINT,
+  customer_id BIGINT,
+  product_id INT,
+  category STRING,
+  quantity INT,
+  unit_price DECIMAL(12,2),
+  net_amount DECIMAL(14,2),
+  order_ts TIMESTAMP
+)
+PARTITIONED BY (sale_date DATE, region STRING)
+CLUSTERED BY (customer_id) INTO 4 BUCKETS
+STORED AS ORC
+TBLPROPERTIES ('orc.compress'='SNAPPY');</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Step 4 — Load dynamic partitions</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.exec.dynamic.partition=true;
+SET hive.exec.dynamic.partition.mode=nonstrict;
+
+INSERT OVERWRITE TABLE retail_sales_orc PARTITION(sale_date, region)
+SELECT order_id, customer_id, product_id, category,
+       quantity, unit_price, net_amount, order_ts,
+       sale_date, region
+FROM retail_sales_stage;</code></pre></div>
+<div class="code-wrap"><div class="code-head"><span>Step 5 — Optimize, explain and query</span><button class="copy-btn">Copy</button></div><pre><code>SET hive.execution.engine=tez;
+SET hive.vectorized.execution.enabled=true;
+SET hive.cbo.enable=true;
+
+ANALYZE TABLE retail_sales_orc COMPUTE STATISTICS;
+ANALYZE TABLE retail_sales_orc COMPUTE STATISTICS FOR COLUMNS;
+
+EXPLAIN VECTORIZATION DETAIL
+SELECT category, SUM(net_amount) AS revenue
+FROM retail_sales_orc
+WHERE sale_date='2026-07-15' AND region='South'
+GROUP BY category;
+
+SELECT category, SUM(net_amount) AS revenue
+FROM retail_sales_orc
+WHERE sale_date='2026-07-15' AND region='South'
+GROUP BY category;</code></pre></div>
+<div class="expected"><strong>Expected result:</strong><br>Beverage → 245.00<br>Snack → 120.00<br>The North row and 16 July row are removed by partition pruning.</div>
+</section>
+
+<section id="industry" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="industry"> Mark as prepared</label><h2>11. Real-World Industry Use Case</h2>
+<h3>Scenario: Omnichannel retail daily revenue platform</h3>
+<p>A retailer receives store, mobile-app, and web orders. Every hour, an ingestion pipeline lands raw files. Analysts need dashboards filtered by sale date and region, customer teams need repeat-customer analysis, and finance needs product-category revenue with predictable morning completion.</p>
+<div class="diagram"><div class="dag"><div class="node" style="grid-column:1;grid-row:2">Raw Orders</div><div class="edge" style="grid-column:2;grid-row:2">→</div><div class="node" style="grid-column:3;grid-row:2">Validate & Clean</div><div class="edge" style="grid-column:4;grid-row:2">→</div><div class="node" style="grid-column:5;grid-row:2">Partition + ORC Write</div><div class="edge" style="grid-column:6;grid-row:2">→</div><div class="node" style="grid-column:7;grid-row:2">BI Aggregate</div><div class="node" style="grid-column:3;grid-row:1">Product Dimension</div><div class="edge" style="grid-column:4;grid-row:1">↘</div><div class="node" style="grid-column:5;grid-row:3">Customer Dimension</div><div class="edge" style="grid-column:6;grid-row:3">↗</div></div></div>
+<p><strong>Numbered flow:</strong> (1) raw records are parsed, (2) invalid values are quarantined, (3) rows are written as ORC under date/region partitions, (4) customer IDs are bucketed for repeat-customer workloads, (5) statistics are refreshed for new partitions, (6) CBO chooses dimension/fact join order, (7) Tez executes the connected DAG, and (8) vectorized operators aggregate the selected batches.</p>
+<div class="table-wrap"><table><thead><tr><th>Requirement</th><th>Design decision</th><th>Reason</th></tr></thead><tbody><tr><td>Daily/region dashboards</td><td>Partition by sale_date and region</td><td>Most dashboard filters prune directories.</td></tr><tr><td>Large scans and aggregations</td><td>ORC + vectorization</td><td>Read required columns and process batches.</td></tr><tr><td>Customer joins/sampling</td><td>Bucket by customer_id</td><td>Stable hash distribution can support compatible join and sampling patterns.</td></tr><tr><td>Multiple joins</td><td>Collect table and column statistics</td><td>CBO needs row counts and selectivity estimates.</td></tr><tr><td>Multi-stage query</td><td>Tez execution</td><td>Runs connected stages as a DAG with reduced job-boundary overhead.</td></tr></tbody></table></div>
+</section>
+
+<section id="comparison" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="comparison"> Mark as prepared</label><h2>12. Comparison and Selection Guide</h2>
+<div class="table-wrap"><table><thead><tr><th>Feature</th><th>Divides by</th><th>Physical result</th><th>Main skip/benefit</th><th>Common mistake</th></tr></thead><tbody><tr><td>Partitioning</td><td>Exact column values</td><td>Directories</td><td>Skip whole partitions</td><td>Partitioning by high-cardinality IDs</td></tr><tr><td>Bucketing</td><td>Hash modulo N</td><td>Fixed bucket files per partition/table</td><td>Sampling and compatible joins</td><td>Declaring buckets but loading incorrect layout</td></tr><tr><td>ORC</td><td>Columns, stripes, row groups</td><td>Columnar files with metadata</td><td>Column projection and predicate pushdown</td><td>Many tiny ORC files</td></tr><tr><td>Vectorization</td><td>Row batches</td><td>In-memory column vectors</td><td>Lower CPU overhead</td><td>Assuming every UDF vectorizes</td></tr><tr><td>CBO</td><td>Alternative estimated plans</td><td>Selected logical/physical plan</td><td>Better joins and cardinality decisions</td><td>Using stale statistics</td></tr><tr><td>Tez</td><td>DAG vertices and edges</td><td>YARN task graph</td><td>Fewer job boundaries and runtime optimization</td><td>Setting engine without installing Tez</td></tr></tbody></table></div>
+<h3>ORC versus Parquet</h3><p>Both are columnar and support projection and predicate pushdown. ORC has historically been deeply integrated with Hive features such as vectorization, rich statistics, and ACID tables. Parquet is widely used across many engines. Select based on your ecosystem, interoperability, write/read patterns, and measured performance.</p>
+<h3>Partitioning versus bucketing</h3><p>Use partitioning for coarse, commonly filtered dimensions such as date or region. Use bucketing inside a partition when a stable hash layout benefits sampling or compatible joins and partitions would otherwise become too fine-grained. They are complementary, not substitutes.</p>
+</section>
+
+<section id="best-practices" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="best-practices"> Mark as prepared</label><h2>13. Best Practices</h2>
+<div class="grid2"><div class="mini-card"><h3>Do</h3><ol><li>Filter by partition columns using direct predicates.</li><li>Compact or control small files before they overwhelm the NameNode and task scheduler.</li><li>Collect statistics after material data changes.</li><li>Use <span class="inline-code">EXPLAIN</span> before and after optimization.</li><li>Measure file size, scanned bytes, vertices, task count, shuffle volume, and runtime.</li><li>Test vectorization compatibility for custom UDFs.</li><li>Choose bucket count based on data size and parallelism, not a random round number.</li></ol></div><div class="mini-card"><h3>Avoid</h3><ol><li>Functions around partition columns in filters when they prevent pruning.</li><li>Hourly/minute partitions for small data volumes.</li><li>Thousands of empty or tiny partitions.</li><li>Assuming ORC automatically fixes poor joins.</li><li>Relying on old table statistics after overwrite.</li><li>Using <span class="inline-code">SELECT *</span> in large scans.</li><li>Changing bucket metadata without rewriting data.</li></ol></div></div>
+<div class="callout good"><strong>Optimization workflow:</strong> establish a baseline → inspect EXPLAIN → inspect files and partitions → collect statistics → enable/verify vectorization → tune Tez parallelism → measure again.</div>
+</section>
+
+<section id="gotchas" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="gotchas"> Mark as prepared</label><h2>14. Edge Cases and Gotchas</h2>
+<div class="grid2"><div class="mini-card"><h3>Partition predicate wrapped in a function</h3><p><span class="inline-code">YEAR(sale_date)=2026</span> may scan more partitions than a direct date range. Prefer <span class="inline-code">sale_date BETWEEN '2026-01-01' AND '2026-12-31'</span>.</p></div><div class="mini-card"><h3>Data skew</h3><p>A region or customer with a huge fraction of rows can create a slow reducer even with ORC and Tez. Inspect key distribution.</p></div><div class="mini-card"><h3>Too many buckets</h3><p>Many buckets across many partitions multiply file count. Empty and tiny bucket files can cost more than they save.</p></div><div class="mini-card"><h3>Bucket compatibility</h3><p>Join optimizations usually require compatible bucket keys, counts, types, and correct file layout.</p></div><div class="mini-card"><h3>Schema evolution</h3><p>ORC carries type information, but unsafe type changes and mismatched readers can still fail or return unexpected values.</p></div><div class="mini-card"><h3>Vector fallback</h3><p>One unsupported expression can force a section of the plan into row mode. Diagnose rather than assuming all-or-nothing behavior.</p></div><div class="mini-card"><h3>CBO overconfidence</h3><p>Statistics are estimates. Correlated columns and skew can make estimates inaccurate even when statistics exist.</p></div><div class="mini-card"><h3>Tez memory pressure</h3><p>Container size, Java heap, sort buffers, and large map joins must fit together. Oversizing also reduces cluster concurrency.</p></div></div>
+</section>
+
+<section id="troubleshooting" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="troubleshooting"> Mark as prepared</label><h2>15. Troubleshooting</h2>
+<div class="table-wrap"><table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Exact checks and fix</th></tr></thead><tbody>
+<tr><td><code>Invalid value for hive.execution.engine: tez</code> or class-not-found</td><td>Tez is absent or misconfigured.</td><td>Verify Tez installation, HDFS library URI, <code>tez-site.xml</code>, Hive auxiliary JAR path, and YARN access. Restart HiveServer2 after server-side changes.</td></tr>
+<tr><td>Query scans every date</td><td>No direct partition predicate, wrong type, or pruning disabled by expression.</td><td>Use <code>EXPLAIN DEPENDENCY</code>; filter the partition column directly with matching literals; confirm partitions via <code>SHOW PARTITIONS</code>.</td></tr>
+<tr><td><code>Column repeated in partitioning columns</code></td><td>Partition column also appears in the regular schema.</td><td>Remove it from the normal column list and keep it only under <code>PARTITIONED BY</code>.</td></tr>
+<tr><td>Dynamic partition insert blocked in strict mode</td><td>Every partition is dynamic.</td><td>Add at least one static partition or set <code>hive.exec.dynamic.partition.mode=nonstrict</code> if policy permits.</td></tr>
+<tr><td>Vectorization says “not enabled”</td><td>Feature disabled or unsupported operator/input path.</td><td>Set vectorization flags, run <code>EXPLAIN VECTORIZATION DETAIL</code>, remove/replace unsupported UDFs, and use ORC-compatible readers.</td></tr>
+<tr><td>CBO produces poor join order</td><td>Missing/stale statistics or skew/correlation.</td><td>Run table and column <code>ANALYZE</code>, inspect <code>DESCRIBE FORMATTED</code>, compare estimated versus actual rows, and consider query redesign for severe skew.</td></tr>
+<tr><td>Bucket join not selected</td><td>Layouts or settings are incompatible.</td><td>Verify bucket columns/counts/types, actual file organization, and join predicates. Check the plan rather than assuming metadata is sufficient.</td></tr>
+<tr><td>Many tasks process almost no data</td><td>Small-file explosion.</td><td>Compact/merge files, adjust ingestion batch size, and reduce unnecessary partition/bucket granularity.</td></tr>
+<tr><td>Tez container killed for memory</td><td>Heap or off-heap use exceeds YARN container.</td><td>Review container memory and Java opts together; reduce map-join size, tune sort buffers, or increase container resources within cluster limits.</td></tr>
+</tbody></table></div>
+</section>
+
+<section id="interview" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="interview"> Mark as prepared</label><h2>16. Interview Questions and Answers</h2>
+<p>Click a question to reveal the answer. After reading, rate recall to create a lightweight spaced-repetition schedule stored locally.</p>
+<div id="qaContainer"></div><button class="btn storage-feature" id="resetSchedule">Reset flashcard schedule</button>
+</section>
+
+<section id="exercises" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="exercises"> Mark as prepared</label><h2>17. Active Practice Exercises</h2>
+<h3>A. Fill in the blank</h3>
+<div class="exercise"><p>Enable Tez: <code>SET hive.execution.engine=<input id="fill1" style="width:110px;display:inline-block">;</code></p><button class="btn" onclick="checkFill('fill1','tez','fillFb1')">Check</button> <button class="btn" onclick="revealFill('fill1','tez')">Reveal</button><div id="fillFb1"></div></div>
+<div class="exercise"><p>Collect all column statistics: <code>ANALYZE TABLE sales COMPUTE STATISTICS FOR <input id="fill2" style="width:130px;display:inline-block">;</code></p><button class="btn" onclick="checkFill('fill2','columns','fillFb2')">Check</button> <button class="btn" onclick="revealFill('fill2','columns')">Reveal</button><div id="fillFb2"></div></div>
+<h3>B. Match the term</h3>
+<div class="exercise match-grid"><label>Tez <select id="m1"><option value="">Choose</option><option value="dag">DAG execution</option><option value="dirs">Directory pruning</option><option value="batch">Batch CPU execution</option><option value="cost">Plan cost</option></select></label><label>Partitioning <select id="m2"><option value="">Choose</option><option value="dag">DAG execution</option><option value="dirs">Directory pruning</option><option value="batch">Batch CPU execution</option><option value="cost">Plan cost</option></select></label><label>Vectorization <select id="m3"><option value="">Choose</option><option value="dag">DAG execution</option><option value="dirs">Directory pruning</option><option value="batch">Batch CPU execution</option><option value="cost">Plan cost</option></select></label><label>CBO <select id="m4"><option value="">Choose</option><option value="dag">DAG execution</option><option value="dirs">Directory pruning</option><option value="batch">Batch CPU execution</option><option value="cost">Plan cost</option></select></label><button class="btn primary" onclick="checkMatch()">Check matches</button><div id="matchFb"></div></div>
+<h3>C. Put the optimization workflow in order</h3>
+<div class="exercise"><ul class="order-list" id="orderList"><li data-step="3">Collect statistics <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-step="1">Create/load correct physical layout <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-step="4">Inspect EXPLAIN and execute <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li><li data-step="2">Enable required engine/features <span><button class="btn" onclick="moveItem(this,-1)">↑</button><button class="btn" onclick="moveItem(this,1)">↓</button></span></li></ul><button class="btn primary" onclick="checkOrder()">Check order</button> <button class="btn" onclick="revealOrder()">Reveal</button><div id="orderFb"></div></div>
+</section>
+
+<section id="quiz" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="quiz"> Mark as prepared</label><h2>18. Interactive Practice Quiz</h2><p>15 questions are drawn and shuffled. Mark each answer as Sure or Unsure. Explanations appear only after submission.</p><div id="quizQuestions"></div><button class="btn primary" id="submitQuiz">Submit Practice Quiz</button><button class="btn hidden" id="retryQuiz">Retry and Reshuffle</button><button class="btn hidden" id="wrongOnly">Review Wrong Answers Only</button><div id="quizResult" class="result"></div></section>
+
+<section id="exam" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="exam"> Mark as prepared</label><h2>19. Formal Timed Exam</h2><p>15 questions, 1 mark each, 15 minutes, no negative marking, pass mark 60%. Questions unlock after Start Test.</p><button class="btn primary" id="startExam">Start Test</button> <span id="timer" class="timer">15:00</span><div id="examQuestions" class="hidden"></div><button class="btn primary hidden" id="submitExam">Submit Exam</button><button class="btn hidden" id="restartExam">Restart Exam</button><button class="btn hidden" id="weakRetry">Practice My Weak Areas</button><div id="examResult" class="result"></div><div id="weakAreaBox"></div></section>
+
+<section id="glossary" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="glossary"> Mark as prepared</label><h2>20. Glossary</h2><div class="glossary">
+<div><strong>Bucket</strong><br>A file group selected by hashing one or more columns into a fixed bucket count.</div><div><strong>CBO</strong><br>Optimizer that compares estimated costs using statistics and Calcite rules.</div><div><strong>DAG</strong><br>A directed acyclic graph of vertices and data-flow edges.</div><div><strong>Edge</strong><br>The movement and relationship of data between Tez vertices.</div><div><strong>ORC stripe</strong><br>An independently readable section containing encoded column streams and indexes.</div><div><strong>Partition pruning</strong><br>Removing partitions from a scan based on partition predicates.</div><div><strong>Predicate pushdown</strong><br>Using a filter close to storage so unneeded row groups or stripes can be skipped.</div><div><strong>Statistics</strong><br>Metadata such as row count, size, distinct values, null count, and min/max.</div><div><strong>VectorizedRowBatch</strong><br>An in-memory batch of column vectors processed by vector operators.</div><div><strong>Vertex</strong><br>A parallel unit/stage of work in a Tez DAG.</div></div></section>
+
+<section id="summary" class="section"><label class="prepare storage-feature"><input type="checkbox" data-progress="summary"> Mark as prepared</label><h2>21. Summary and Next Steps</h2>
+<ul><li>Tez executes Hive work as a connected DAG on YARN.</li><li>ORC reads selected columns and uses metadata to skip irrelevant data.</li><li>Partitioning skips directories; bucketing hashes rows into a fixed file layout.</li><li>Vectorization reduces per-row CPU overhead by processing column batches.</li><li>CBO requires accurate table and column statistics.</li><li>Use EXPLAIN to verify every optimization rather than assuming it happened.</li></ul>
+<div class="memory"><strong>Quick revision:</strong> Partition = directory. Bucket = hash file. ORC = columnar stripe. Vector = batch. CBO = statistics-driven choice. Tez = DAG execution.</div>
+<h3>What to learn next</h3><p>Hive EXPLAIN plans → map joins and sort-merge bucket joins → data skew handling → ORC compression and Bloom filters → Tez memory/parallelism tuning → ACID compaction and LLAP.</p>
+<h3>Official references used</h3><ul class="source-list"><li><a href="https://tez.apache.org/" target="_blank" rel="noopener">Apache Tez project</a></li><li><a href="https://hive.apache.org/docs/latest/user/configuration-properties/" target="_blank" rel="noopener">Apache Hive configuration properties</a></li><li><a href="https://hive.apache.org/docs/latest/language/languagemanual-orc/" target="_blank" rel="noopener">Hive ORC language manual</a></li><li><a href="https://orc.apache.org/docs/" target="_blank" rel="noopener">Apache ORC documentation</a></li><li><a href="https://hive.apache.org/docs/latest/language/languagemanual-ddl/" target="_blank" rel="noopener">Hive DDL manual</a></li><li><a href="https://hive.apache.org/docs/latest/user/cost-based-optimization-in-hive/" target="_blank" rel="noopener">Hive cost-based optimization</a></li><li><a href="https://hive.apache.org/docs/latest/language/languagemanual-explain/" target="_blank" rel="noopener">Hive EXPLAIN manual</a></li></ul>
+<div class="certificate storage-feature"><h2>Certificate of Completion</h2><p>This certifies that</p><input id="learnerName" placeholder="Enter learner name"><h3 id="certName">Learner Name</h3><p>completed the tutorial <strong>Hive Tez, ORC, Partitioning, Bucketing, Vectorization & CBO</strong>.</p><p id="certDate"></p><button class="btn primary interactive-only" onclick="window.print()">Print Certificate</button></div>
+</section>
+<div class="footer">Single-file offline classroom tutorial • Learning data stays in this browser</div>
+</main>
+</div>
+
+<div id="notesPanel" class="notes-panel hidden storage-feature"><div style="display:flex;justify-content:space-between;align-items:center"><h3 style="margin:0">My Notes</h3><button class="btn" id="closeNotes">✕</button></div><p>Double-click a word in tutorial text to create a note.</p><div id="notesList"></div><button class="btn danger" id="clearNotes">Clear all notes</button></div>
+<div id="noteDialog" class="note-dialog hidden storage-feature"><div class="box"><h3 id="noteTitle">Quick Note</h3><input id="noteWord" readonly><textarea id="noteText" rows="5" placeholder="Write your preparation note..."></textarea><div style="display:flex;gap:.5rem;margin-top:.7rem"><button class="btn primary" id="saveNote">Save</button><button class="btn danger" id="deleteNote">Delete</button><button class="btn" id="cancelNote">Cancel</button></div></div></div>
+<button class="backtop" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<script>
+const STORAGE_KEY='hivePerfTutorialV1';
+let storageOK=true;try{localStorage.setItem('__hpt','1');localStorage.removeItem('__hpt')}catch(e){storageOK=false}
+const defaultState={progress:{},notes:[],xp:0,badges:[],history:[],theme:'light',fontScale:1,sound:true,lastSection:'title',schedule:{},learnerName:''};
+let state=JSON.parse(JSON.stringify(defaultState));
+if(storageOK){try{state=Object.assign(state,JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'))}catch(e){}}
+else document.querySelectorAll('.storage-feature').forEach(e=>e.classList.add('hidden'));
+function save(){if(storageOK)try{localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}catch(e){}}
+function addXP(n){if(!storageOK)return;state.xp=(state.xp||0)+n;if(state.xp>=50&&!state.badges.includes('Explorer'))state.badges.push('Explorer');if(state.xp>=150&&!state.badges.includes('Optimizer'))state.badges.push('Optimizer');if(state.xp>=300&&!state.badges.includes('Hive Performance Pro'))state.badges.push('Hive Performance Pro');save();renderXP()}
+function renderXP(){document.getElementById('xpText').textContent=(state.xp||0)+' XP';document.getElementById('badges').innerHTML=(state.badges||[]).map(x=>'<span class="badge">🏅 '+x+'</span>').join('')}
+
+// Theme, font and sound
+function applyPrefs(){document.documentElement.dataset.theme=state.theme||'light';document.documentElement.style.setProperty('--fontScale',state.fontScale||1);document.getElementById('soundBtn').textContent=state.sound?'🔊 Sound':'🔇 Muted'}
+applyPrefs();
+document.getElementById('themeBtn').onclick=()=>{state.theme=state.theme==='dark'?'light':'dark';save();applyPrefs()};
+document.getElementById('fontUp').onclick=()=>{state.fontScale=Math.min(1.25,(state.fontScale||1)+.05);save();applyPrefs()};
+document.getElementById('fontDown').onclick=()=>{state.fontScale=Math.max(.85,(state.fontScale||1)-.05);save();applyPrefs()};
+document.getElementById('soundBtn').onclick=()=>{state.sound=!state.sound;save();applyPrefs()};
+
+// Sidebar and reading progress
+document.getElementById('menuBtn').onclick=()=>document.getElementById('sidebar').classList.toggle('open');
+document.querySelectorAll('#toc a').forEach(a=>a.onclick=()=>document.getElementById('sidebar').classList.remove('open'));
+window.addEventListener('scroll',()=>{const h=document.documentElement.scrollHeight-innerHeight;document.getElementById('readingProgress').style.width=(h?scrollY/h*100:0)+'%'});
+const sections=[...document.querySelectorAll('main section[id]')];
+const io=new IntersectionObserver(entries=>{entries.forEach(en=>{if(en.isIntersecting){const id=en.target.id;document.querySelectorAll('#toc a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+id));if(storageOK){state.lastSection=id;save();document.getElementById('resumeBox').innerHTML='Resume point: <a href="#'+id+'">'+(en.target.querySelector('h2,h1')?.textContent||id)+'</a>'}}})},{rootMargin:'-25% 0px -65% 0px'});sections.forEach(s=>io.observe(s));
+if(storageOK&&state.lastSection){const el=document.getElementById(state.lastSection);document.getElementById('resumeBox').innerHTML='Resume point: <a href="#'+state.lastSection+'">'+(el?.querySelector('h2,h1')?.textContent||state.lastSection)+'</a>'}
+
+// Progress checklist
+const checks=[...document.querySelectorAll('[data-progress]')];
+function renderProgress(){checks.forEach(c=>c.checked=!!state.progress[c.dataset.progress]);const done=checks.filter(c=>c.checked).length;document.getElementById('progressText').textContent=done+' / '+checks.length+' topics prepared';document.getElementById('progressFill').style.width=(done/checks.length*100)+'%';if(done===checks.length&&!state.badges.includes('Completed All Topics')){state.badges.push('Completed All Topics');state.xp+=100;save();renderXP()}}
+checks.forEach(c=>c.onchange=()=>{state.progress[c.dataset.progress]=c.checked;if(c.checked)addXP(5);save();renderProgress()});
+document.getElementById('resetProgress').onclick=()=>{state.progress={};save();renderProgress()};renderProgress();renderXP();
+
+// Copy buttons
+document.querySelectorAll('.copy-btn').forEach(btn=>btn.onclick=async()=>{const txt=btn.closest('.code-wrap').querySelector('code').innerText;try{await navigator.clipboard.writeText(txt);btn.textContent='Copied ✓';setTimeout(()=>btn.textContent='Copy',1400)}catch(e){btn.textContent='Select manually'}});
+
+// Audio feedback
+function playTone(percent){if(!state.sound)return;try{const ac=new (window.AudioContext||window.webkitAudioContext)();const notes=percent>=90?[523,659,784]:percent>=60?[440,554]:[220,196];notes.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.frequency.value=f;o.connect(g);g.connect(ac.destination);g.gain.setValueAtTime(.08,ac.currentTime+i*.13);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+i*.13+.22);o.start(ac.currentTime+i*.13);o.stop(ac.currentTime+i*.13+.24)})}catch(e){}}
+function mood(p){if(p===100)return['🤩🎉','Perfect! Flawless run.'];if(p>=90)return['😄','Excellent — interview-ready!'];if(p>=75)return['🙂','Well done — solid grasp.'];if(p>=60)return['😌','Good — revise the misses.'];return['💪😤','Needs focus — review and retry.']}
+
+// Sparkle cursor
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches){let last=0;document.addEventListener('pointermove',e=>{if(Date.now()-last<45)return;last=Date.now();const s=document.createElement('i');s.className='sparkle';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),750)})}
+
+// Notes
+let currentNoteId=null,currentRange=null;
+const panel=document.getElementById('notesPanel'),dialog=document.getElementById('noteDialog');
+document.getElementById('notesBtn').onclick=()=>panel.classList.toggle('hidden');document.getElementById('closeNotes').onclick=()=>panel.classList.add('hidden');document.getElementById('cancelNote').onclick=()=>{dialog.classList.add('hidden');currentRange=null};
+function openNote(note,range=null){currentNoteId=note?.id||null;currentRange=range;document.getElementById('noteWord').value=note?.word||range?.toString().trim()||'';document.getElementById('noteText').value=note?.text||'';document.getElementById('deleteNote').style.display=note?'inline-block':'none';dialog.classList.remove('hidden');document.getElementById('noteText').focus()}
+document.getElementById('mainContent').addEventListener('dblclick',e=>{if(!storageOK||e.target.closest('button,a,input,select,textarea,label,pre,code,.quiz-question,.note-word'))return;const sel=getSelection();const word=sel.toString().trim();if(!/^[A-Za-z][A-Za-z0-9_-]{1,40}$/.test(word)||sel.rangeCount===0)return;const r=sel.getRangeAt(0).cloneRange();openNote(null,r)});
+document.getElementById('mainContent').addEventListener('click',e=>{const n=e.target.closest('.note-word');if(n){const note=state.notes.find(x=>x.id===n.dataset.noteId);if(note)openNote(note)}});
+document.getElementById('saveNote').onclick=()=>{const word=document.getElementById('noteWord').value.trim(),text=document.getElementById('noteText').value.trim();if(!word||!text)return;let section='general';if(currentRange){section=currentRange.commonAncestorContainer.parentElement?.closest('section')?.id||'general';const id='note_'+Date.now();try{const sp=document.createElement('span');sp.className='note-word';sp.dataset.noteId=id;currentRange.surroundContents(sp)}catch(e){}state.notes.push({id,word,text,section,time:new Date().toISOString()})}else{const n=state.notes.find(x=>x.id===currentNoteId);if(n){n.text=text;n.time=new Date().toISOString()}}save();renderNotes();dialog.classList.add('hidden');addXP(2)};
+document.getElementById('deleteNote').onclick=()=>{state.notes=state.notes.filter(x=>x.id!==currentNoteId);document.querySelectorAll('[data-note-id="'+currentNoteId+'"]').forEach(sp=>sp.replaceWith(document.createTextNode(sp.textContent)));save();renderNotes();dialog.classList.add('hidden')};
+document.getElementById('clearNotes').onclick=()=>{if(confirm('Clear every saved note?')){state.notes=[];document.querySelectorAll('.note-word').forEach(sp=>sp.replaceWith(document.createTextNode(sp.textContent)));save();renderNotes()}};
+function renderNotes(){document.getElementById('notesList').innerHTML=state.notes.length?state.notes.map(n=>'<div class="note-item"><strong>'+esc(n.word)+'</strong> <small>('+esc(n.section)+')</small><br>'+esc(n.text)+'<br><small>'+new Date(n.time).toLocaleString()+'</small> <button class="btn" onclick="editNote(\''+n.id+'\')">Edit</button></div>').join(''):'<p>No notes yet.</p>'}
+function editNote(id){const n=state.notes.find(x=>x.id===id);if(n)openNote(n)}window.editNote=editNote;
+function applyNoteHighlights(){state.notes.forEach(n=>{if(document.querySelector('[data-note-id="'+n.id+'"]'))return;const root=document.getElementById(n.section)||document.getElementById('mainContent');const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(node){if(!node.nodeValue.includes(n.word))return NodeFilter.FILTER_REJECT;if(node.parentElement.closest('script,style,pre,code,button,a,input,select,textarea,.note-word'))return NodeFilter.FILTER_REJECT;return NodeFilter.FILTER_ACCEPT}});const node=walker.nextNode();if(node){const idx=node.nodeValue.indexOf(n.word),r=document.createRange();r.setStart(node,idx);r.setEnd(node,idx+n.word.length);const sp=document.createElement('span');sp.className='note-word';sp.dataset.noteId=n.id;try{r.surroundContents(sp)}catch(e){}}})}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}renderNotes();setTimeout(applyNoteHighlights,50);
+
+// Import/export
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='hive-performance-learning-data.json';a.click();URL.revokeObjectURL(a.href)}
+document.getElementById('exportBtn').onclick=exportData;document.getElementById('importFile').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{state=Object.assign(JSON.parse(JSON.stringify(defaultState)),JSON.parse(r.result));save();location.reload()}catch(err){alert('Invalid learning-data file.')}};r.readAsText(f)};
+
+// Interview Q&A and schedule
+const qaData=[
+['Beginner','What is Tez in Hive?','Tez is a YARN-based execution framework that represents processing as a DAG of vertices and edges. Hive compiles SQL into Tez work so multiple stages can run in a connected job rather than a chain of independent MapReduce jobs.'],
+['Beginner','What does ORC stand for?','ORC stands for Optimized Row Columnar. It stores typed data by columns inside stripes and keeps indexes and statistics that allow projection and predicate-based skipping.'],
+['Beginner','What is partition pruning?','Partition pruning means Hive removes partitions from the scan when predicates identify which partition directories are required. It happens before the file data is fully read.'],
+['Beginner','How is bucketing different from partitioning?','Partitioning separates data by exact values into directories. Bucketing hashes values into a fixed number of files, normally inside each partition or table.'],
+['Beginner','What is vectorization?','Vectorization processes a batch of values stored in column arrays instead of invoking row-mode logic for each individual row. This reduces CPU and object-handling overhead.'],
+['Intermediate','Why is ORC suitable for Hive?','ORC supports Hive types, column projection, compression, row indexes, statistics, predicate pushdown, and efficient vectorized reads. These capabilities align closely with Hive analytical scans.'],
+['Intermediate','When is a partition key bad?','A partition key is poor when it has extremely high cardinality, is rarely filtered, creates tiny directories, or does not align with ingestion and retention. A unique order ID is usually a poor partition key.'],
+['Intermediate','What determines a bucket number?','Hive applies a type-specific hash to the bucket column value and maps it to the configured bucket count. Compatible tables must use compatible definitions and correct physical layout for bucket-aware joins.'],
+['Intermediate','Why can stale statistics damage CBO?','The optimizer estimates rows after filters and joins. If row counts or distinct-value estimates are wrong, it may broadcast a table that is too large or choose an inefficient join order.'],
+['Intermediate','How do you verify vectorization?','Use EXPLAIN VECTORIZATION, preferably DETAIL, and inspect whether map/reduce work, operators, and expressions are vectorized. The output also explains fallback reasons.'],
+['Intermediate','Why does Tez reduce disk I/O?','A connected Tez DAG can pass intermediate results directly between vertices without writing every stage boundary to HDFS as a separate MapReduce job output. Some shuffles still use local/network buffers and spill when needed.'],
+['Advanced','Can partitioning and ORC predicate pushdown both apply?','Yes. Partition pruning first removes directories. ORC predicate pushdown then uses stripe and row-group metadata inside the remaining files. Column projection further reduces streams read.'],
+['Advanced','What conditions help a bucket map join?','The join keys must correspond to compatible bucket columns, bucket counts must be compatible, and the files must genuinely follow the declared bucket layout. The optimizer and relevant settings must also permit the conversion.'],
+['Advanced','What does EXPLAIN CBO COST show?','In Hive 4, it prints the Calcite CBO plan and costs using the default cost model. JOINCOST can show the cost model used for join reordering.'],
+['Advanced','Why might a vectorized query partially fall back?','Vectorization is operator and expression specific. A supported scan and filter may be vectorized while a custom UDF, complex expression, or unsupported operator executes in row mode.'],
+['Advanced','How do small files affect Tez and ORC?','Each small file may create split-planning and task overhead, reduce compression efficiency, and pressure the NameNode. Tez reduces some framework overhead but cannot make millions of tiny files free.'],
+['Advanced','What is the relationship between logical and physical optimization?','Logical optimization rewrites relational operations independent of the engine, such as predicate pushdown. Physical optimization selects engine-aware operations such as map joins, reducer count, partition pruning, and Tez job reduction.'],
+['Advanced','How would you troubleshoot an unexpectedly slow partitioned ORC query?','Check direct partition filters and EXPLAIN DEPENDENCY, inspect selected columns and predicate pushdown, confirm file sizes, run EXPLAIN VECTORIZATION, verify statistics and join order, then inspect Tez vertices, skew, shuffle, spills, and container memory.']
+];
+function renderQA(){document.getElementById('qaContainer').innerHTML=qaData.map((q,i)=>{const due=state.schedule[i]?.due?new Date(state.schedule[i].due)<=new Date():true;return '<div class="qa" data-qa="'+i+'"><button><span class="tag">'+q[0]+'</span>'+q[1]+' '+(due?'• Due':'')+'</button><div class="answer"><p>'+q[2]+'</p><div class="flash-actions storage-feature"><button class="btn" onclick="rateCard('+i+',0)">Again</button><button class="btn" onclick="rateCard('+i+',1)">Hard</button><button class="btn" onclick="rateCard('+i+',3)">Good</button><button class="btn" onclick="rateCard('+i+',5)">Easy</button></div></div></div>'}).join('');document.querySelectorAll('.qa>button').forEach(b=>b.onclick=()=>b.parentElement.classList.toggle('open'))}
+function rateCard(i,r){const days=r===0?0:r===1?1:r===3?3:7;state.schedule[i]={rating:r,due:new Date(Date.now()+days*86400000).toISOString()};save();addXP(r>1?3:1);renderQA()}window.rateCard=rateCard;document.getElementById('resetSchedule').onclick=()=>{state.schedule={};save();renderQA()};renderQA();
+
+// Exercises
+function checkFill(id,ans,fb){const ok=document.getElementById(id).value.trim().toLowerCase()===ans;document.getElementById(fb).innerHTML=ok?'✅ Correct.':'❌ Try again. Expected Hive keyword/value.';if(ok)addXP(2)}function revealFill(id,ans){document.getElementById(id).value=ans}window.checkFill=checkFill;window.revealFill=revealFill;
+function checkMatch(){const vals=['m1','m2','m3','m4'].map(id=>document.getElementById(id).value),ok=JSON.stringify(vals)===JSON.stringify(['dag','dirs','batch','cost']);document.getElementById('matchFb').innerHTML=ok?'✅ All matches are correct.':'❌ Correct mapping: Tez–DAG, Partitioning–Directory pruning, Vectorization–Batch CPU, CBO–Plan cost.';if(ok)addXP(5)}window.checkMatch=checkMatch;
+function moveItem(btn,d){const li=btn.closest('li'),p=li.parentElement;if(d<0&&li.previousElementSibling)p.insertBefore(li,li.previousElementSibling);if(d>0&&li.nextElementSibling)p.insertBefore(li.nextElementSibling,li)}window.moveItem=moveItem;
+function checkOrder(){const arr=[...document.querySelectorAll('#orderList li')].map(x=>+x.dataset.step),ok=arr.every((v,i)=>v===i+1);document.getElementById('orderFb').innerHTML=ok?'✅ Correct sequence.':'❌ Revisit the workflow: layout → enable → statistics → explain/execute.';if(ok)addXP(5)}function revealOrder(){const p=document.getElementById('orderList'),items=[...p.children].sort((a,b)=>a.dataset.step-b.dataset.step);items.forEach(x=>p.appendChild(x));document.getElementById('orderFb').textContent='Revealed: create/load layout, enable features, collect statistics, inspect and execute.'}window.checkOrder=checkOrder;window.revealOrder=revealOrder;
+
+// Question bank
+const bank=[
+{t:'Tez',q:'Which Hive setting selects Tez for the current session?',o:['SET hive.execution.engine=tez','SET hive.storage.engine=tez','SET yarn.engine=hive','SET tez.hive=true'],a:'SET hive.execution.engine=tez',e:'hive.execution.engine chooses mr, tez, or spark in supported releases.'},
+{t:'Tez',q:'What is the central execution model of Tez?',o:['Directed acyclic graph','Single reducer only','Relational index tree','Shared-memory thread pool'],a:'Directed acyclic graph',e:'Tez represents processing as vertices connected by directed edges without cycles.'},
+{t:'Tez',q:'A primary Tez advantage over a chain of MapReduce jobs is:',o:['Fewer job boundaries and intermediate materializations','Automatic conversion of text to JSON','No need for YARN','Unlimited memory'],a:'Fewer job boundaries and intermediate materializations',e:'Connected vertices can reduce repeated startup and HDFS intermediate writes.'},
+{t:'Tez',q:'What does a Tez vertex represent?',o:['A stage of parallel work','A Hive database','An ORC column','A partition directory'],a:'A stage of parallel work',e:'Vertices contain tasks that perform a stage of processing.'},
+{t:'Tez',q:'Which setting lets Tez adjust reducer parallelism using runtime samples?',o:['hive.tez.auto.reducer.parallelism','hive.cbo.enable','orc.create.index','hive.exec.dynamic.partition'],a:'hive.tez.auto.reducer.parallelism',e:'The Tez auto reducer feature samples upstream output and adjusts reducer estimates.'},
+{t:'ORC',q:'ORC is primarily what kind of format?',o:['Type-aware columnar','Plain row-delimited text','Image archive','Graph database'],a:'Type-aware columnar',e:'ORC stores typed column streams and metadata.'},
+{t:'ORC',q:'Which ORC feature helps skip stripes for a filter?',o:['Column statistics and indexes','CSS selectors','YARN queues','Hive variables'],a:'Column statistics and indexes',e:'Predicate pushdown consults metadata such as min/max and row indexes.'},
+{t:'ORC',q:'Which clause creates an ORC-backed Hive table?',o:['STORED AS ORC','FORMAT BY ORC','USING ORCFILE ONLY','ROW AS ORC'],a:'STORED AS ORC',e:'Hive DDL uses STORED AS ORC.'},
+{t:'ORC',q:'Column projection means:',o:['Read only columns required by the query','Create one partition per column','Hash every column','Sort all columns globally'],a:'Read only columns required by the query',e:'Columnar readers avoid unrelated column streams.'},
+{t:'ORC',q:'What is an ORC stripe?',o:['A large independently readable section of an ORC file','A YARN queue','A Hive role','A bucket hash function'],a:'A large independently readable section of an ORC file',e:'Stripes contain column streams, indexes, and a stripe footer.'},
+{t:'Partitioning',q:'Hive partitioning physically creates:',o:['Directories by partition value combinations','One Java object per row','A fixed number of reducers','A Calcite rule'],a:'Directories by partition value combinations',e:'Partition paths encode partition columns and values.'},
+{t:'Partitioning',q:'Which is usually the best partition key?',o:['A frequently filtered date with manageable cardinality','Unique order_id','Random UUID','Free-text comments'],a:'A frequently filtered date with manageable cardinality',e:'Good keys support pruning without creating excessive directories.'},
+{t:'Partitioning',q:'In a dynamic partition INSERT SELECT, dynamic partition columns normally appear:',o:['At the end of the SELECT list in partition order','Only in WHERE','Before every regular column','Inside CLUSTERED BY'],a:'At the end of the SELECT list in partition order',e:'Hive maps trailing selected values to dynamic partition columns.'},
+{t:'Partitioning',q:'What does strict dynamic partition mode require?',o:['At least one static partition','All partitions dynamic','ORC compression disabled','Exactly one reducer'],a:'At least one static partition',e:'Strict mode protects against accidentally overwriting every partition.'},
+{t:'Partitioning',q:'Which query is most likely to prune daily partitions?',o:["WHERE sale_date='2026-07-15'","WHERE YEAR(order_ts)=2026","WHERE customer_id>0","WHERE category IS NOT NULL"],a:"WHERE sale_date='2026-07-15'",e:'A direct predicate on the partition column identifies the exact directory.'},
+{t:'Bucketing',q:'Bucketing distributes rows using:',o:['Hash modulo bucket count','Exact directory value only','Lexical page number','CBO cost'],a:'Hash modulo bucket count',e:'The bucket key hash maps each row to one of N buckets.'},
+{t:'Bucketing',q:'Which DDL declares buckets?',o:['CLUSTERED BY (...) INTO N BUCKETS','PARTITION HASH N','BUCKET TABLE BY N','DISTRIBUTE TABLE N'],a:'CLUSTERED BY (...) INTO N BUCKETS',e:'Hive uses CLUSTERED BY and INTO number BUCKETS.'},
+{t:'Bucketing',q:'Declaring bucket metadata alone:',o:['Does not reorganize existing files','Rewrites every partition automatically','Collects all statistics','Enables Tez installation'],a:'Does not reorganize existing files',e:'The physical files must be written in accordance with the metadata.'},
+{t:'Bucketing',q:'A typical direct use of bucketing is:',o:['Repeatable TABLESAMPLE','Creating HDFS users','Encrypting columns','Starting HiveServer2'],a:'Repeatable TABLESAMPLE',e:'TABLESAMPLE can select a bucket fraction on a column.'},
+{t:'Bucketing',q:'Too many buckets can cause:',o:['Many tiny or empty files','Loss of SQL syntax','Cycles in the DAG','No metastore schema'],a:'Many tiny or empty files',e:'Bucket count multiplies files per partition and can create overhead.'},
+{t:'Vectorization',q:'Vectorized execution processes:',o:['Column batches','One database at a time','Only partition names','Only metadata'],a:'Column batches',e:'Values are held in typed arrays and evaluated in batches.'},
+{t:'Vectorization',q:'Which command diagnoses vectorization in Hive 2.3+?',o:['EXPLAIN VECTORIZATION DETAIL','SHOW VECTOR FILES','DESCRIBE TEZ VECTOR','ANALYZE VECTOR'],a:'EXPLAIN VECTORIZATION DETAIL',e:'This explain clause reports vectorization of work, operators, and expressions.'},
+{t:'Vectorization',q:'A common vectorization blocker is:',o:['Unsupported custom UDF','Direct primitive arithmetic','ORC input','Simple filter'],a:'Unsupported custom UDF',e:'Not every function or expression has a vector implementation.'},
+{t:'Vectorization',q:'Why is ORC a strong match for vectorization?',o:['It naturally supplies typed column batches','It converts every row to XML','It disables compression','It removes YARN'],a:'It naturally supplies typed column batches',e:'ORC readers can fill column vectors directly.'},
+{t:'Vectorization',q:'Vectorization mainly reduces:',o:['Per-row CPU and object overhead','HDFS replication factor','Number of databases','Kerberos principals'],a:'Per-row CPU and object overhead',e:'Batch loops avoid repetitive row-object interpretation.'},
+{t:'CBO',q:'Hive CBO uses which framework?',o:['Apache Calcite','Apache Tomcat','Apache Ant','Apache ZooKeeper only'],a:'Apache Calcite',e:'Calcite provides relational planning and cost-based optimization components.'},
+{t:'CBO',q:'Which command gathers column statistics?',o:['ANALYZE TABLE t COMPUTE STATISTICS FOR COLUMNS','DESCRIBE TABLE t FOR COST','COLLECT CBO t','SET STATS=t'],a:'ANALYZE TABLE t COMPUTE STATISTICS FOR COLUMNS',e:'ANALYZE computes metadata used for selectivity and row estimates.'},
+{t:'CBO',q:'What most directly harms cost estimates?',o:['Missing or stale statistics','Using aliases','Writing SQL keywords uppercase','Adding comments'],a:'Missing or stale statistics',e:'The optimizer relies on row counts and column distributions.'},
+{t:'CBO',q:'Which decision can CBO improve?',o:['Join order','HDFS user password','Java installation directory','Beeline prompt color'],a:'Join order',e:'Cardinality and cost estimates help select an efficient join sequence.'},
+{t:'CBO',q:'EXPLAIN CBO COST is documented for:',o:['Hive 4.0 and later','Hive 0.7 only','Hadoop 1 only','ORC C++ only'],a:'Hive 4.0 and later',e:'The CBO clause with COST/JOINCOST was added in Hive 4.0.'}
+];
+let practice=[],exam=[],examTimer=null,examSeconds=900,lastMissed=[];
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function prepareAttempts(){const s=shuffle(bank);practice=s.slice(0,15);exam=s.slice(15,30)}
+function renderQuestions(list,target,prefix,confidence){target.innerHTML=list.map((q,i)=>{const opts=shuffle(q.o);return '<div class="quiz-question" data-index="'+i+'" data-topic="'+q.t+'"><strong>'+(i+1)+'. '+q.q+'</strong>'+opts.map(o=>'<label class="option"><input type="radio" name="'+prefix+i+'" value="'+esc(o)+'"> '+esc(o)+'</label>').join('')+(confidence?'<div>Confidence: <label><input type="radio" name="conf'+prefix+i+'" value="sure"> Sure</label> <label><input type="radio" name="conf'+prefix+i+'" value="unsure"> Unsure</label></div>':'')+'<div class="feedback hidden"></div></div>'}).join('')}
+function renderQuiz(){renderQuestions(practice,document.getElementById('quizQuestions'),'p',true);document.getElementById('submitQuiz').classList.remove('hidden');document.getElementById('retryQuiz').classList.add('hidden');document.getElementById('wrongOnly').classList.add('hidden');document.getElementById('quizResult').style.display='none'}
+function grade(list,target,prefix,confidence){let score=0,miss=[];[...target.children].forEach((box,i)=>{const selected=box.querySelector('input[name="'+prefix+i+'"]:checked')?.value,correct=list[i].a,ok=selected===correct,conf=confidence?box.querySelector('input[name="conf'+prefix+i+'"]:checked')?.value:'';if(ok)score++;else miss.push(list[i]);box.classList.add(ok?'correct':'wrong');box.dataset.wrong=ok?'0':'1';const flag=ok&&conf==='unsure'?' Shaky spot: correct but unsure.':!ok&&conf==='sure'?' Priority fix: wrong but marked sure.':'';const fb=box.querySelector('.feedback');fb.classList.remove('hidden');fb.innerHTML=(ok?'✅ Correct.':'❌ Correct answer: '+esc(correct)+'.')+' '+esc(list[i].e)+flag});return{score,miss}}
+document.getElementById('submitQuiz').onclick=()=>{const g=grade(practice,document.getElementById('quizQuestions'),'p',true),pct=Math.round(g.score/15*100),m=mood(pct),r=document.getElementById('quizResult');r.style.display='block';r.innerHTML='<div style="font-size:2rem">'+m[0]+'</div><strong>'+g.score+'/15 ('+pct+'%)</strong><br>'+m[1];playTone(pct);addXP(g.score*2);state.history.push({type:'Practice',score:g.score,total:15,date:new Date().toISOString()});save();renderHistory();document.getElementById('submitQuiz').classList.add('hidden');document.getElementById('retryQuiz').classList.remove('hidden');document.getElementById('wrongOnly').classList.remove('hidden')};
+document.getElementById('retryQuiz').onclick=()=>{prepareAttempts();renderQuiz();resetExam()};document.getElementById('wrongOnly').onclick=()=>document.querySelectorAll('#quizQuestions .quiz-question').forEach(b=>b.classList.toggle('hidden',b.dataset.wrong!=='1'));
+
+// Exam
+function resetExam(){clearInterval(examTimer);examSeconds=900;document.getElementById('timer').textContent='15:00';document.getElementById('timer').classList.remove('danger');document.getElementById('examQuestions').classList.add('hidden');document.getElementById('submitExam').classList.add('hidden');document.getElementById('startExam').classList.remove('hidden');document.getElementById('restartExam').classList.add('hidden');document.getElementById('weakRetry').classList.add('hidden');document.getElementById('examResult').style.display='none';document.getElementById('weakAreaBox').innerHTML='';renderQuestions(exam,document.getElementById('examQuestions'),'e',false)}
+function tick(){examSeconds--;const m=String(Math.floor(examSeconds/60)).padStart(2,'0'),s=String(examSeconds%60).padStart(2,'0');document.getElementById('timer').textContent=m+':'+s;if(examSeconds<=60)document.getElementById('timer').classList.add('danger');if(examSeconds<=0)submitExam(true)}
+document.getElementById('startExam').onclick=()=>{document.getElementById('examQuestions').classList.remove('hidden');document.getElementById('submitExam').classList.remove('hidden');document.getElementById('startExam').classList.add('hidden');examTimer=setInterval(tick,1000)};
+function submitExam(auto=false){clearInterval(examTimer);const g=grade(exam,document.getElementById('examQuestions'),'e',false),pct=Math.round(g.score/15*100),m=mood(pct),pass=pct>=60,last={};exam.forEach((q,i)=>{last[q.t]=last[q.t]||[0,0];last[q.t][1]++;const sel=document.querySelector('#examQuestions input[name="e'+i+'"]:checked')?.value;if(sel===q.a)last[q.t][0]++});const breakdown=Object.entries(last).map(([t,v])=>t+': '+v[0]+'/'+v[1]).join(' • ');const r=document.getElementById('examResult');r.style.display='block';r.innerHTML='<div style="font-size:2rem">'+m[0]+'</div><strong>'+g.score+'/15 — '+pct+'% — '+(pass?'PASS':'FAIL')+'</strong><br>'+m[1]+(auto?'<br>Time expired; exam auto-submitted.':'')+'<br><small>'+breakdown+'</small>';playTone(pct);addXP(g.score*3+(pass?20:0));state.history.push({type:'Exam',score:g.score,total:15,date:new Date().toISOString()});save();renderHistory();lastMissed=g.miss;document.getElementById('submitExam').classList.add('hidden');document.getElementById('restartExam').classList.remove('hidden');if(lastMissed.length)document.getElementById('weakRetry').classList.remove('hidden')}
+document.getElementById('submitExam').onclick=()=>submitExam(false);document.getElementById('restartExam').onclick=()=>{prepareAttempts();renderQuiz();resetExam()};document.getElementById('weakRetry').onclick=()=>{const box=document.getElementById('weakAreaBox');box.innerHTML='<h3>Weak-area mini quiz</h3><div id="weakQs"></div><button class="btn primary" id="weakSubmit">Submit Mini Quiz</button>';renderQuestions(lastMissed,document.getElementById('weakQs'),'w',false);document.getElementById('weakSubmit').onclick=()=>{const g=grade(lastMissed,document.getElementById('weakQs'),'w',false),pct=Math.round(g.score/lastMissed.length*100);box.insertAdjacentHTML('beforeend','<div class="result" style="display:block">'+g.score+'/'+lastMissed.length+' ('+pct+'%)</div>');addXP(g.score*2)}};
+function renderHistory(){document.getElementById('scoreHistory').innerHTML=state.history?.length?state.history.slice(-6).reverse().map(h=>'<div>'+esc(h.type)+': '+h.score+'/'+h.total+' — '+new Date(h.date).toLocaleDateString()+'</div>').join(''):'No attempts yet.'}renderHistory();prepareAttempts();renderQuiz();resetExam();
+
+// Certificate
+document.getElementById('learnerName').value=state.learnerName||'';function cert(){const v=document.getElementById('learnerName').value.trim();document.getElementById('certName').textContent=v||'Learner Name';state.learnerName=v;save()}document.getElementById('learnerName').oninput=cert;cert();document.getElementById('certDate').textContent='Date: '+new Date().toLocaleDateString();
+</script>
+</body>
+</html>
