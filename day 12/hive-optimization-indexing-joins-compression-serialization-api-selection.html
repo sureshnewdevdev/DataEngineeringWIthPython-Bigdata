@@ -112,6 +112,96 @@ GROUP BY o.order_date,o.city,p.category;</pre><h3>Expected evidence</h3><table><
 <section id="quiz"><h2>13. Practice quiz</h2><form id="qf"></form><button class="btn" onclick="score('qf','qr')" type="button">Score quiz</button><button class="btn" onclick="resetQ()" type="button">Reset</button><b id="qr"></b></section>
 <section id="exam"><h2>14. Timed exam</h2><p>10 questions • 10 minutes • auto-submit.</p><b id="timer">10:00</b> <button class="btn" id="start" type="button">Start</button><form id="ef"></form><button class="btn" onclick="score('ef','er')" type="button">Submit</button> <b id="er"></b></section>
 <section id="lab"><h2>15. Practical lab, rubric and conclusion</h2><ol><li>Create a 30-row CSV orders table with two dates and one malformed row.</li><li>Convert it to partitioned ORC + Snappy.</li><li>Create a 10-row product dimension.</li><li>Collect table and product_id statistics.</li><li>Run the target query and save EXPLAIN FORMATTED.</li><li>Test a map join and record shuffle bytes.</li><li>Test ZLIB and compare size/runtime.</li><li>Explain why legacy indexes are not preferred.</li></ol><table><tr><th>Assessment</th><th>Marks</th></tr><tr><td>DDL/types/partitions</td><td>4</td></tr><tr><td>ORC/compression</td><td>3</td></tr><tr><td>Join decision</td><td>4</td></tr><tr><td>Statistics/plan evidence</td><td>4</td></tr><tr><td>Correct result</td><td>3</td></tr><tr><td>Conclusion</td><td>2</td></tr></table><h3>Conclusion</h3><p>Fast Hive workloads come from pruning most input, using columnar compressed storage, minimizing shuffle, maintaining statistics and expressing logic through optimizer-visible APIs—not from one magic setting.</p><div class="task"><input type="checkbox" data-track> I completed the lab and documented before/after evidence.</div></section>
+<section id="data"><h2>Practice dataset: database, tables and inserts</h2><p>Run these HiveQL panels in order. The dataset supports joins, partition pruning, compression, statistics and execution-plan practice.</p>
+<h3>1. Create database and dimensions</h3><button class="copy">Copy</button><pre>CREATE DATABASE IF NOT EXISTS retail_optimization_db;
+USE retail_optimization_db;
+
+CREATE TABLE products(
+ product_id INT, product_name STRING, category STRING,
+ brand STRING, unit_cost DECIMAL(10,2)
+) STORED AS ORC TBLPROPERTIES('orc.compress'='SNAPPY');
+
+INSERT INTO products VALUES
+(101,'Laptop','Electronics','Dell',55000.00),
+(102,'Smartphone','Electronics','Samsung',28000.00),
+(103,'Headphones','Electronics','Sony',3500.00),
+(104,'Office Chair','Furniture','GreenSoul',7500.00),
+(105,'Study Table','Furniture','IKEA',12000.00),
+(106,'Running Shoes','Fashion','Nike',4200.00),
+(107,'Backpack','Fashion','Wildcraft',2200.00),
+(108,'Mixer Grinder','Home Appliances','Philips',4800.00),
+(109,'Coffee Maker','Home Appliances','Prestige',3200.00),
+(110,'Data Engineering Book','Books','OReilly',1800.00);
+
+CREATE TABLE customers(
+ customer_id INT,customer_name STRING,segment STRING,state STRING
+) STORED AS ORC TBLPROPERTIES('orc.compress'='SNAPPY');
+
+INSERT INTO customers VALUES
+(1,'Asha','Consumer','Karnataka'),
+(2,'Rahul','Corporate','Maharashtra'),
+(3,'Meena','Consumer','Tamil Nadu'),
+(4,'Arjun','Home Office','Telangana'),
+(5,'Kavya','Corporate','Delhi'),
+(6,'Vikram','Consumer','Kerala'),
+(7,'Neha','Home Office','Gujarat'),
+(8,'Suresh','Consumer','West Bengal');</pre>
+<h3>2. Create partitioned fact table</h3><button class="copy">Copy</button><pre>CREATE TABLE sales_orders(
+ order_id INT,customer_id INT,product_id INT,city STRING,
+ quantity INT,amount DECIMAL(12,2),status STRING
+) PARTITIONED BY(order_date DATE)
+STORED AS ORC TBLPROPERTIES('orc.compress'='SNAPPY');</pre>
+<h3>3. Insert 20 orders</h3><button class="copy">Copy</button><pre>INSERT INTO sales_orders PARTITION(order_date='2026-07-15') VALUES
+(1001,1,101,'Bengaluru',1,65000.00,'DELIVERED'),
+(1002,2,104,'Mumbai',2,17000.00,'DELIVERED'),
+(1003,3,103,'Chennai',1,4500.00,'CANCELLED'),
+(1004,4,108,'Hyderabad',1,6000.00,'SHIPPED'),
+(1005,5,106,'Delhi',2,10000.00,'DELIVERED');
+
+INSERT INTO sales_orders PARTITION(order_date='2026-07-16') VALUES
+(1006,6,102,'Kochi',1,32000.00,'DELIVERED'),
+(1007,7,107,'Ahmedabad',3,7500.00,'DELIVERED'),
+(1008,8,110,'Kolkata',2,4000.00,'DELIVERED'),
+(1009,1,105,'Bengaluru',1,14000.00,'RETURNED'),
+(1010,2,109,'Pune',1,4200.00,'SHIPPED');
+
+INSERT INTO sales_orders PARTITION(order_date='2026-07-17') VALUES
+(1011,3,101,'Chennai',1,64000.00,'DELIVERED'),
+(1012,4,103,'Hyderabad',2,9000.00,'DELIVERED'),
+(1013,5,108,'Delhi',1,5900.00,'DELIVERED'),
+(1014,6,106,'Kochi',1,4900.00,'CANCELLED'),
+(1015,7,104,'Ahmedabad',1,8500.00,'DELIVERED'),
+(1016,8,102,'Kolkata',1,31000.00,'SHIPPED'),
+(1017,1,107,'Bengaluru',2,5000.00,'DELIVERED'),
+(1018,2,110,'Mumbai',3,6000.00,'DELIVERED'),
+(1019,3,109,'Chennai',1,4100.00,'RETURNED'),
+(1020,4,105,'Hyderabad',1,13500.00,'DELIVERED');</pre>
+<h3>4. Verify, join and analyze</h3><button class="copy">Copy</button><pre>SHOW PARTITIONS sales_orders;
+SELECT order_date,COUNT(*) row_count,SUM(amount) total
+FROM sales_orders GROUP BY order_date ORDER BY order_date;
+
+SET hive.auto.convert.join=true;
+SELECT /*+ MAPJOIN(p) */ o.order_date,p.category,
+ COUNT(*) order_count,SUM(o.amount) revenue
+FROM sales_orders o JOIN products p
+ON o.product_id=p.product_id
+WHERE o.order_date='2026-07-17' AND o.status='DELIVERED'
+GROUP BY o.order_date,p.category;
+
+ANALYZE TABLE products COMPUTE STATISTICS;
+ANALYZE TABLE products
+COMPUTE STATISTICS FOR COLUMNS product_id,category;
+ANALYZE TABLE sales_orders PARTITION(order_date='2026-07-17')
+COMPUTE STATISTICS;
+
+EXPLAIN FORMATTED
+SELECT /*+ MAPJOIN(p) */ p.category,SUM(o.amount)
+FROM sales_orders o JOIN products p
+ON o.product_id=p.product_id
+WHERE o.order_date='2026-07-17' AND o.status='DELIVERED'
+GROUP BY p.category;</pre>
+<h3>Expected checks</h3><table><tr><th>Check</th><th>Expected</th></tr><tr><td>Partitions</td><td>3</td></tr><tr><td>Total orders</td><td>20</td></tr><tr><td>2026-07-17 rows</td><td>10</td></tr><tr><td>Delivered rows on that date</td><td>7</td></tr><tr><td>Delivered revenue</td><td>111,900.00</td></tr></table>
+<h3>Exercises</h3><ol><li>Revenue by state and category.</li><li>Products never delivered.</li><li>Compare plans with and without date pruning.</li><li>Highest-revenue customer segment.</li><li>Cancelled and returned revenue by date.</li></ol></section>
 </main></div><div class="notes" id="notes"><b>Private class note</b><p id="sel"></p><textarea id="nt"></textarea><button class="btn" id="save">Save</button><button class="btn" id="close">Close</button><small id="ns"></small></div>
 <script>
 const interviews=[['First tuning step?','Capture baseline metrics and inspect EXPLAIN.'],['Why uncommon indexing?','Pruning, columnar statistics, bucketing and materialized views better suit analytical scans; legacy Hive indexes were removed.'],['Partitioning vs bucketing?','Partitions create value-based directories; bucketing hashes rows into a fixed file count.'],['Map join?','Load a small side into mapper memory to avoid large-table shuffle.'],['Map-join risk?','Wrong size estimates can exhaust mapper memory.'],['Data skew?','A few keys own disproportionate rows and overload reducers.'],['Pre-aggregation benefit?','Fewer fact rows enter the join and shuffle.'],['Why ORC?','Columnar reads, stripe statistics, compression, predicate pushdown and Hive integration.'],['Snappy vs ZLIB?','Snappy favors speed; ZLIB favors compression ratio.'],['Splittable meaning?','Independent tasks can process different portions of an input.'],['SerDe vs codec?','SerDe maps rows/bytes; codec compresses bytes.'],['Why avoid SELECT *?','It increases I/O and defeats useful column pruning.'],['Why column statistics?','CBO needs cardinality/distribution estimates.'],['Built-ins vs UDF?','Built-ins are optimizer-visible and often vectorized.'],['When Parquet?','When cross-engine interoperability is central.'],['Proof of optimization?','Same correct result with improved measured metrics.']];
