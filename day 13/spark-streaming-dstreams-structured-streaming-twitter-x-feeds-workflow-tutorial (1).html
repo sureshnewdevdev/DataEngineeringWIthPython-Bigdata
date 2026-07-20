@@ -1,0 +1,355 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Spark Streaming on Windows Complete Tutorial</title>
+<style>:root{--nav:#102a43;--blue:#1261a0;--light:#eaf4ff;--green:#14804a;--amber:#a15c00;--red:#b42318;--purple:#6d28d9;--ink:#17212b}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font:16px/1.64 system-ui,Segoe UI,sans-serif;color:var(--ink);background:#f3f7fb}header{padding:42px 5vw;background:linear-gradient(120deg,#0b2743,#6d28d9);color:#fff}header h1{font-size:clamp(2rem,5vw,3.3rem);line-height:1.12;margin:.2em 0}.layout{max-width:1500px;margin:auto;padding:24px;display:grid;grid-template-columns:260px minmax(0,1fr);gap:24px}aside{position:sticky;top:12px;height:calc(100vh - 24px);overflow:auto;background:var(--nav);color:#fff;padding:18px;border-radius:14px}aside a{display:block;color:#dcecff;text-decoration:none;padding:7px;border-radius:6px}aside a:hover{background:#ffffff20}.meter{height:9px;background:#ffffff2d;border-radius:9px;overflow:hidden}.meter i{display:block;height:100%;width:0;background:#4ade80}section{background:#fff;padding:clamp(20px,3vw,34px);border-radius:14px;margin-bottom:22px;box-shadow:0 5px 20px #102a4312}section:hover{outline:2px solid #bfdbfe}h2{color:#0b4a6f;border-bottom:3px solid #dbeafe;padding-bottom:8px}h3{color:#174a72}.call{border-left:5px solid var(--blue);background:var(--light);padding:14px 17px;border-radius:8px;margin:15px 0}.warn{border-color:#f59e0b;background:#fff8e6}.bad{border-color:#ef4444;background:#fff1f0}.good{border-color:#22c55e;background:#effdf4}.memory{border:2px dashed var(--purple);background:#f7f2ff;padding:14px;border-radius:10px}.flow{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap;background:#f8fbff;border:1px solid #cbd5e1;padding:18px;border-radius:10px}.node{border:2px solid #3984bd;background:#fff;border-radius:9px;padding:11px;text-align:center;min-width:120px}.arrow{font-size:1.7rem;color:#3984bd}.timeline{display:flex;gap:7px;align-items:center;overflow:auto;padding:18px;background:#f8fbff}.batch{min-width:125px;border:2px solid #7c3aed;border-radius:8px;background:#f7f2ff;padding:12px;text-align:center}.arch{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.box{border:2px solid #3984bd;border-radius:9px;padding:12px;background:#f8fbff}table{width:100%;border-collapse:collapse;display:block;overflow:auto}th,td{border:1px solid #cbd5e1;padding:10px;text-align:left;vertical-align:top}th{background:#e8f3ff}pre{background:#0d1726;color:#e7edf7;padding:18px;border-radius:10px;overflow:auto;white-space:pre;font:14px/1.55 Consolas,monospace}.copy,.btn{border:0;border-radius:7px;padding:8px 12px;background:var(--blue);color:#fff;cursor:pointer;margin:4px}.copy{float:right}.taskline{padding:8px;background:#f7fafc;margin:7px 0}.q{border:1px solid #d6e0ea;padding:14px;border-radius:9px;margin:10px 0}.choice{display:block;padding:6px}.answer{display:none;background:#effaf4;border-left:4px solid var(--green);padding:10px;margin-top:8px}.timer{font:700 1.2rem Consolas;background:#111827;color:#fff;padding:8px;border-radius:7px}.notes{display:none;position:fixed;z-index:10;right:15px;bottom:15px;width:min(390px,calc(100vw - 30px));background:#fff;border:2px solid var(--blue);padding:14px;border-radius:12px;box-shadow:0 10px 35px #0004}.notes textarea{width:100%;height:100px}.spark{position:fixed;pointer-events:none;color:#a78bfa;animation:f .7s forwards}@keyframes f{to{transform:translateY(-20px) scale(0);opacity:0}}a{color:#075ea5}@media(max-width:900px){.layout{grid-template-columns:1fr}aside{position:relative;height:auto}aside nav{columns:2}.arch{grid-template-columns:1fr}}</style></head><body>
+<header><small>WINDOWS 10/11 • VS CODE • POWERSHELL • PYSPARK</small><h1>Spark Streaming on Windows</h1><p>A complete trainer-style tutorial covering streaming, DStreams, Structured Streaming, X/Twitter feeds, Windows setup, PowerShell commands, fault tolerance, monitoring and a practical social-feed use case.</p></header>
+<div class="layout"><aside><b>Lesson progress</b><div class="meter"><i id="bar"></i></div><small id="pt">0% completed</small><nav><a href="#streaming">1. What is streaming?</a><a href="#types">2. Batch vs stream</a><a href="#dstream">3. DStreams</a><a href="#dflow">4. DStream workflow</a><a href="#structured">5. Structured Streaming</a><a href="#model">6. Programming model</a><a href="#sources">7. Sources & sinks</a><a href="#modes">8. Output modes</a><a href="#time">9. Event time</a><a href="#fault">10. Fault tolerance</a><a href="#xfeed">11. X/Twitter feeds</a><a href="#xprod">12. Production architecture</a><a href="#local">13. Local demo</a><a href="#workflow">14. Full workflow</a><a href="#monitor">15. Monitoring</a><a href="#compare">16. Comparison</a><a href="#best">17. Best practices</a><a href="#trouble">18. Troubleshooting</a><a href="#interview">19. Interview Q&A</a><a href="#quiz">20. Quiz</a><a href="#exam">21. Timed exam</a><a href="#lab">22. Lab</a></nav><hr><small>Double-click text to add your own note.</small></aside><main>
+<section id="streaming"><h2>1. What is streaming?</h2><p><b>Streaming</b> is continuous processing of data that arrives over time instead of waiting for the entire dataset to finish arriving.</p><div class="call"><b>Simple example:</b> A retail company receives one order event whenever a customer checks out. The dashboard should update every few seconds without waiting until midnight.</div><table><tr><th>Question</th><th>Answer</th></tr><tr><td>What?</td><td>Continuous or near-real-time processing of unbounded events.</td></tr><tr><td>Why?</td><td>Faster alerts, dashboards, personalization and operational decisions.</td></tr><tr><td>Who?</td><td>Banking, retail, telecom, transport, social media, IoT and security teams.</td></tr><tr><td>Examples</td><td>Card fraud, clickstream, device telemetry, logs, orders and social posts.</td></tr></table><div class="flow"><div class="node">Event producers</div><b class="arrow">→</b><div class="node">Message broker</div><b class="arrow">→</b><div class="node">Spark Streaming</div><b class="arrow">→</b><div class="node">Dashboard / alerts / lake</div></div><div class="memory"><b>Memory aid:</b> Source → Ingest → Process → Store/Serve → Monitor.</div><div class="taskline"><input type="checkbox" data-track> I can explain why streaming data is called unbounded.</div></section>
+<section id="types"><h2>2. Batch versus streaming</h2><table><tr><th>Area</th><th>Batch</th><th>Streaming</th></tr><tr><td>Input</td><td>Bounded, already stored</td><td>Unbounded, continuously arriving</td></tr><tr><td>Execution</td><td>Run and finish</td><td>Long-running query</td></tr><tr><td>Latency</td><td>Minutes/hours/days</td><td>Milliseconds/seconds/minutes</td></tr><tr><td>Example</td><td>Yesterday’s sales report</td><td>Live fraud alerts</td></tr><tr><td>Failure recovery</td><td>Rerun batch</td><td>Resume from offsets/checkpoints</td></tr><tr><td>Complexity</td><td>Usually simpler</td><td>Time, state, late data and delivery guarantees</td></tr></table><div class="call good">Spark commonly processes streaming input through <b>micro-batches</b>: small groups of events are processed repeatedly at short intervals.</div></section>
+<section id="dstream"><h2>3. Discretized Streaming (DStreams)</h2><p>A <b>Discretized Stream (DStream)</b> is the original Spark Streaming abstraction. Internally, it is a sequence of RDDs created at fixed batch intervals.</p><div class="timeline"><div class="batch">0–2 sec<br>RDD 1</div><b class="arrow">→</b><div class="batch">2–4 sec<br>RDD 2</div><b class="arrow">→</b><div class="batch">4–6 sec<br>RDD 3</div><b class="arrow">→</b><div class="batch">6–8 sec<br>RDD 4</div></div><p>If the batch interval is 2 seconds, all records received in each 2-second window form one RDD. DStream transformations create new DStreams, and output operations run a Spark job for each batch.</p><h3>Simple socket word count</h3><button class="copy">Copy</button><pre>from pyspark import SparkContext
+from pyspark.streaming import StreamingContext
+
+sc = SparkContext("local[2]", "DStreamWordCount")
+sc.setLogLevel("WARN")
+
+# Create one RDD every 2 seconds
+ssc = StreamingContext(sc, 2)
+ssc.checkpoint("checkpoint/dstream-wordcount")
+
+lines = ssc.socketTextStream("localhost", 9999)
+words = lines.flatMap(lambda line: line.split())
+pairs = words.map(lambda word: (word.lower(), 1))
+counts = pairs.reduceByKey(lambda a, b: a + b)
+counts.pprint()
+
+ssc.start()
+ssc.awaitTermination()</pre><h3>Windows Python socket sender</h3><p>Save this as <code>socket_sender.py</code>. It replaces the Linux <code>nc</code> command.</p><button class="copy">Copy</button><pre>import socket
+
+HOST = "127.0.0.1"
+PORT = 9999
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind((HOST, PORT))
+    server.listen(1)
+    print(f"Waiting for Spark at {HOST}:{PORT}")
+
+    connection, address = server.accept()
+    with connection:
+        print("Spark connected:", address)
+        while True:
+            message = input("Enter streaming text: ")
+            connection.sendall((message + "\n").encode("utf-8"))</pre><h3>Run in two PowerShell terminals</h3><button class="copy">Copy</button><pre># Terminal 1
+.\.venv\Scripts\Activate.ps1
+python socket_sender.py
+
+# Terminal 2
+.\.venv\Scripts\Activate.ps1
+python dstream_wordcount.py</pre><div class="call warn"><b>Training only:</b> Socket input is easy for a demo but does not provide production end-to-end fault tolerance.</div></section>
+<section id="dflow"><h2>4. DStream execution workflow</h2><div class="flow"><div class="node">Receiver/input</div><b class="arrow">→</b><div class="node">Batch interval</div><b class="arrow">→</b><div class="node">RDD generation</div><b class="arrow">→</b><div class="node">Transformations</div><b class="arrow">→</b><div class="node">Output operation</div></div><ol><li>Create <code>SparkContext</code> and <code>StreamingContext</code>.</li><li>Set a batch interval.</li><li>Connect a source such as Kafka/Kinesis/socket.</li><li>Split incoming records into RDD batches.</li><li>Apply DStream transformations.</li><li>Run output operations for every batch.</li><li>Use checkpointing or reliable source offsets for recovery.</li><li>Monitor batch processing time and scheduling delay.</li></ol><table><tr><th>DStream operation</th><th>Purpose</th></tr><tr><td><code>map</code>, <code>flatMap</code>, <code>filter</code></td><td>Per-record transformations</td></tr><tr><td><code>reduceByKey</code></td><td>Aggregate within each batch</td></tr><tr><td><code>window</code></td><td>Calculate across multiple recent batches</td></tr><tr><td><code>updateStateByKey</code></td><td>Maintain state across batches</td></tr><tr><td><code>foreachRDD</code></td><td>Write/process every generated RDD</td></tr></table><div class="memory"><b>Stable streaming rule:</b> batch processing time should remain below the batch interval; otherwise backlog grows.</div></section>
+<section id="structured"><h2>5. Structured Streaming</h2><p><b>Structured Streaming</b> is Spark’s DataFrame/SQL-based streaming engine. It treats the live stream as an unbounded table that receives new rows continuously.</p><div class="flow"><div class="node">Static table<br>existing rows</div><b class="arrow">+</b><div class="node">New events<br>new rows</div><b class="arrow">→</b><div class="node">Incremental query</div><b class="arrow">→</b><div class="node">Updated result</div></div><h3>Rate-source demonstration</h3><button class="copy">Copy</button><pre>from pyspark.sql import SparkSession, functions as F
+
+spark = SparkSession.builder.appName("StructuredRateDemo").getOrCreate()
+spark.sparkContext.setLogLevel("WARN")
+
+events = (
+    spark.readStream
+    .format("rate")
+    .option("rowsPerSecond", 5)
+    .load()
+)
+
+classified = events.withColumn(
+    "event_type",
+    F.when(F.col("value") % 2 == 0, "EVEN").otherwise("ODD")
+)
+
+query = (
+    classified.groupBy("event_type").count()
+    .writeStream
+    .format("console")
+    .outputMode("complete")
+    .option("checkpointLocation", "checkpoint/rate-demo")
+    .start()
+)
+
+query.awaitTermination()</pre><div class="call good">Use Structured Streaming for new Spark streaming applications unless a specific existing DStream integration requires the legacy API.</div></section>
+<section id="model"><h2>6. Structured Streaming programming model</h2><table><tr><th>Batch DataFrame</th><th>Streaming DataFrame</th></tr><tr><td><code>spark.read</code></td><td><code>spark.readStream</code></td></tr><tr><td>Finite rows</td><td>New rows keep arriving</td></tr><tr><td><code>df.write</code></td><td><code>df.writeStream</code></td></tr><tr><td>Action finishes</td><td>Query object stays active</td></tr></table><h3>Core lifecycle</h3><button class="copy">Copy</button><pre>stream_df = (
+    spark.readStream
+    .format("source")
+    .options(...)
+    .load()
+)
+
+result_df = stream_df.filter(...).groupBy(...).agg(...)
+
+query = (
+    result_df.writeStream
+    .format("sink")
+    .outputMode("append")
+    .option("checkpointLocation", "durable/path")
+    .start()
+)
+
+query.awaitTermination()</pre><p>Transformations are lazily described. <code>start()</code> begins the long-running query and returns a <code>StreamingQuery</code> handle.</p></section>
+<section id="sources"><h2>7. Sources and sinks</h2><table><tr><th>Type</th><th>Examples</th><th>Use</th></tr><tr><td>Production sources</td><td>Kafka, Kinesis, file/object storage integrations</td><td>Durable ingestion</td></tr><tr><td>Test sources</td><td>Rate, socket</td><td>Learning and benchmarking</td></tr><tr><td>Sinks</td><td>Kafka, files, tables, console, memory, <code>foreachBatch</code></td><td>Publish or persist results</td></tr></table><h3>File-stream source</h3><button class="copy">Copy</button><pre>from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+
+schema = StructType([
+    StructField("post_id", StringType()),
+    StructField("text", StringType()),
+    StructField("author_id", StringType()),
+    StructField("created_at", TimestampType())
+])
+
+posts = (
+    spark.readStream
+    .schema(schema)
+    .json("data/incoming_posts")
+)</pre><div class="call warn">Files should be placed atomically into the watched directory. Do not keep appending lines to a file Spark has already discovered.</div></section>
+<section id="modes"><h2>8. Output modes and triggers</h2><table><tr><th>Output mode</th><th>Meaning</th><th>Typical use</th></tr><tr><td>Append</td><td>Only finalized new result rows</td><td>Stateless transformations, finalized windows</td></tr><tr><td>Update</td><td>Rows changed since last trigger</td><td>Changing aggregates when sink supports it</td></tr><tr><td>Complete</td><td>Entire result table every trigger</td><td>Small aggregate tables/testing</td></tr></table><button class="copy">Copy</button><pre># Process approximately every 10 seconds
+.writeStream.trigger(processingTime="10 seconds")
+
+# Process all currently available data and stop
+.writeStream.trigger(availableNow=True)</pre><div class="call">Valid mode depends on the query and sink. An append-mode stateful aggregation commonly needs a watermark so Spark knows when a window is final.</div></section>
+<section id="time"><h2>9. Event time, windows, watermarks and late data</h2><p><b>Event time</b> is when the event happened. <b>Processing time</b> is when Spark processed it. Network delay can make events arrive late or out of order.</p><div class="flow"><div class="node">Event created<br>10:00:02</div><b class="arrow">network delay</b><div class="node">Spark receives<br>10:00:25</div><b class="arrow">watermark rule</b><div class="node">Keep or drop from state</div></div><button class="copy">Copy</button><pre>trends = (
+    posts
+    .withWatermark("created_at", "10 minutes")
+    .groupBy(
+        F.window("created_at", "5 minutes"),
+        F.explode(F.split(F.lower("text"), r"\s+")).alias("word")
+    )
+    .count()
+)</pre><table><tr><th>Concept</th><th>Purpose</th></tr><tr><td>Window</td><td>Group events into time ranges</td></tr><tr><td>Watermark</td><td>Bound how long Spark retains state for late data</td></tr><tr><td>State store</td><td>Persist intermediate counts/joins/deduplication state</td></tr></table><div class="call warn">A “10 minutes” watermark is not simply “drop every event older than exactly 10 minutes.” It advances based on observed event-time progress and the query semantics.</div></section>
+<section id="fault"><h2>10. Checkpoints, offsets and fault tolerance</h2><div class="flow"><div class="node">Source offsets</div><b class="arrow">+</b><div class="node">Query plan metadata</div><b class="arrow">+</b><div class="node">State store</div><b class="arrow">→</b><div class="node">Checkpoint</div></div><p>A checkpoint records progress so a restarted query can continue consistently. Store production checkpoints in durable distributed storage, not a temporary local folder.</p><button class="copy">Copy</button><pre>query = (
+    result.writeStream
+    .format("parquet")
+    .outputMode("append")
+    .option("path", "hdfs:///retail/output/social_trends")
+    .option("checkpointLocation", "hdfs:///retail/checkpoints/social_trends")
+    .start()
+)</pre><div class="call bad"><b>Do not reuse one checkpoint directory for different queries.</b> Avoid deleting checkpoints casually; it can cause replay, duplicates, lost state or incompatible recovery.</div></section>
+<section id="xfeed"><h2>11. Processing real-time feeds from Twitter/X on Windows</h2><p>Twitter is now X. For new integrations, use <b>X API v2</b>. The filtered-stream endpoint requires developer access and bearer authentication; current access is pay-per-use or enterprise.</p><div class="call warn"><b>Important update:</b> Old Twitter streaming connectors may no longer work. Never paste bearer tokens into Python files, screenshots or Git.</div><h3>PowerShell environment variable</h3><button class="copy">Copy</button><pre>$env:X_BEARER_TOKEN = "paste-your-token-for-this-session"
+python x_to_kafka.py
+
+# Remove it after the session
+Remove-Item Env:X_BEARER_TOKEN</pre><h3>PowerShell filtered-stream calls</h3><button class="copy">Copy</button><pre>$headers = @{
+    Authorization = "Bearer $env:X_BEARER_TOKEN"
+    "Content-Type" = "application/json"
+}
+
+$body = @{
+    add = @(
+        @{
+            value = "(spark OR pyspark) lang:en"
+            tag   = "spark-posts"
+        }
+    )
+} | ConvertTo-Json -Depth 5
+
+Invoke-RestMethod -Method Post `
+    -Uri "https://api.x.com/2/tweets/search/stream/rules" `
+    -Headers $headers `
+    -Body $body
+
+# curl.exe is used explicitly because curl may be a PowerShell alias
+curl.exe "https://api.x.com/2/tweets/search/stream?tweet.fields=created_at,lang,author_id" `
+    -H "Authorization: Bearer $env:X_BEARER_TOKEN"</pre></section>
+<section id="xprod"><h2>12. Production X feed architecture</h2><div class="flow"><div class="node">X filtered stream</div><b class="arrow">HTTPS JSON</b><div class="node">Python/Java producer</div><b class="arrow">Kafka publish</b><div class="node">Kafka topic</div><b class="arrow">Spark readStream</b><div class="node">Clean/window/count</div><b class="arrow">writeStream</b><div class="node">Lake/dashboard</div></div><h3>Why Kafka between X and Spark?</h3><ul><li>Durable buffering when Spark is stopped or restarted.</li><li>Offsets support replay and recovery.</li><li>Producer/API connection is separated from analytics.</li><li>Multiple consumers can reuse the same feed.</li><li>Back-pressure is easier to manage operationally.</li></ul><h3>Illustrative ingestion producer</h3><button class="copy">Copy</button><pre>import os
+import requests
+from kafka import KafkaProducer
+
+token = os.environ["X_BEARER_TOKEN"]
+producer = KafkaProducer(
+    bootstrap_servers=["localhost:9092"],
+    value_serializer=lambda value: value.encode("utf-8")
+)
+
+url = (
+    "https://api.x.com/2/tweets/search/stream"
+    "?tweet.fields=created_at,lang,author_id"
+)
+
+with requests.get(
+    url,
+    headers={"Authorization": f"Bearer {token}"},
+    stream=True,
+    timeout=90
+) as response:
+    response.raise_for_status()
+    for line in response.iter_lines(decode_unicode=True):
+        if line:
+            producer.send("social-posts", line)
+            producer.flush()</pre><div class="call warn">Production code must implement reconnect with backoff, rate-limit handling, secret rotation, metrics, graceful shutdown, error/dead-letter handling and X developer terms.</div><h3>Spark Kafka consumer</h3><button class="copy">Copy</button><pre>from pyspark.sql import functions as F
+from pyspark.sql.types import StructType, StructField, StringType
+
+post_schema = StructType([
+    StructField("id", StringType()),
+    StructField("text", StringType()),
+    StructField("author_id", StringType()),
+    StructField("created_at", StringType()),
+    StructField("lang", StringType())
+])
+envelope_schema = StructType([
+    StructField("data", post_schema)
+])
+
+raw = (
+    spark.readStream
+    .format("kafka")
+    .option("kafka.bootstrap.servers", "localhost:9092")
+    .option("subscribe", "social-posts")
+    .option("startingOffsets", "latest")
+    .load()
+)
+
+posts = (
+    raw.select(F.from_json(F.col("value").cast("string"), envelope_schema).alias("j"))
+    .select("j.data.*")
+    .withColumn("created_at", F.to_timestamp("created_at"))
+    .filter(F.col("lang") == "en")
+)
+
+trends = (
+    posts
+    .withWatermark("created_at", "10 minutes")
+    .groupBy(F.window("created_at", "5 minutes"))
+    .agg(F.count("*").alias("post_count"))
+)
+
+query = (
+    trends.writeStream
+    .format("console")
+    .outputMode("update")
+    .option("checkpointLocation", "checkpoint/x-trends")
+    .start()
+)
+query.awaitTermination()</pre></section>
+<section id="local"><h2>13. Credential-free classroom demo</h2><p>This demo simulates social posts by placing JSON files into a watched directory. It requires no X account, Kafka or secret.</p><h3>Sample JSON records</h3><button class="copy">Copy</button><pre>{"post_id":"p101","text":"Learning Spark streaming today","author_id":"u1","created_at":"2026-07-20T09:00:05"}
+{"post_id":"p102","text":"PySpark makes data engineering practical","author_id":"u2","created_at":"2026-07-20T09:01:10"}
+{"post_id":"p103","text":"Spark structured streaming with Kafka","author_id":"u3","created_at":"2026-07-20T09:02:15"}</pre><h3>Structured Streaming file demo</h3><button class="copy">Copy</button><pre>from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.types import StructType, StructField, StringType, TimestampType
+
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+INPUT_PATH = (PROJECT_ROOT / "data" / "incoming_posts").as_posix()
+CHECKPOINT_PATH = (PROJECT_ROOT / "checkpoint" / "social_demo").as_posix()
+
+spark = (
+    SparkSession.builder
+    .appName("SocialFeedSimulatorWindows")
+    .master("local[2]")
+    .config("spark.sql.shuffle.partitions", "2")
+    .getOrCreate()
+)
+spark.sparkContext.setLogLevel("WARN")
+
+schema = StructType([
+    StructField("post_id", StringType()),
+    StructField("text", StringType()),
+    StructField("author_id", StringType()),
+    StructField("created_at", TimestampType())
+])
+
+posts = (
+    spark.readStream
+    .schema(schema)
+    .option("maxFilesPerTrigger", 1)
+    .json(INPUT_PATH)
+)
+
+words = (
+    posts
+    .withWatermark("created_at", "10 minutes")
+    .select(
+        "created_at",
+        F.explode(F.split(F.lower(F.regexp_replace("text", r"[^a-zA-Z0-9 ]", "")), r"\s+"))
+         .alias("word")
+    )
+    .filter(F.length("word") >= 4)
+)
+
+counts = words.groupBy(
+    F.window("created_at", "5 minutes"), "word"
+).count()
+
+query = (
+    counts.writeStream
+    .format("console")
+    .outputMode("update")
+    .option("truncate", False)
+    .option("checkpointLocation", CHECKPOINT_PATH)
+    .start()
+)
+
+query.awaitTermination()</pre><div class="call good">Create each new JSON file outside the input folder and then move it into the folder. Spark treats each newly discovered file as new streaming input.</div></section>
+<section id="workflow"><h2>14. Complete Spark Streaming workflow</h2><div class="flow"><div class="node">1. Define business need</div><b class="arrow">→</b><div class="node">2. Choose source</div><b class="arrow">→</b><div class="node">3. Define schema</div><b class="arrow">→</b><div class="node">4. Transform</div><b class="arrow">→</b><div class="node">5. Time/state</div><b class="arrow">→</b><div class="node">6. Sink/checkpoint</div><b class="arrow">→</b><div class="node">7. Monitor/recover</div></div><table><tr><th>Workflow step</th><th>Retail social-listening example</th></tr><tr><td>Requirement</td><td>Count product mentions every 5 minutes</td></tr><tr><td>Source</td><td>X API → Kafka</td></tr><tr><td>Schema</td><td>post ID, text, author, language, event time</td></tr><tr><td>Quality</td><td>Reject malformed JSON; deduplicate post ID</td></tr><tr><td>Transformation</td><td>Normalize text and identify product terms</td></tr><tr><td>State/time</td><td>5-minute window, 10-minute watermark</td></tr><tr><td>Sink</td><td>Kafka/dashboard and Parquet/Delta history</td></tr><tr><td>Recovery</td><td>Kafka offsets + durable checkpoint</td></tr><tr><td>Monitoring</td><td>Input rate, process rate, batch duration, state size</td></tr></table></section>
+<section id="monitor"><h2>15. Monitoring and performance</h2><p>For each micro-batch, watch whether Spark processes data as fast as it arrives.</p><table><tr><th>Metric</th><th>Meaning</th><th>Concern</th></tr><tr><td>Input rows/sec</td><td>Arrival rate</td><td>Sudden spikes</td></tr><tr><td>Processed rows/sec</td><td>Processing capacity</td><td>Lower than input for long periods</td></tr><tr><td>Trigger/batch duration</td><td>Time to process one trigger</td><td>Exceeds trigger interval</td></tr><tr><td>State rows/bytes</td><td>Window/join/dedup state</td><td>Unbounded growth</td></tr><tr><td>Watermark</td><td>Event-time progress</td><td>Stalled by bad timestamps</td></tr><tr><td>Source end offsets</td><td>Consumed progress</td><td>Lag grows</td></tr></table><button class="copy">Copy</button><pre>print(query.status)
+print(query.lastProgress)
+print(query.recentProgress)
+
+# Spark UI is normally available while the application runs:
+# http://localhost:4040</pre></section>
+<section id="compare"><h2>16. DStreams versus Structured Streaming</h2><table><tr><th>Area</th><th>DStreams</th><th>Structured Streaming</th></tr><tr><td>Abstraction</td><td>Sequence of RDDs</td><td>Unbounded DataFrame/table</td></tr><tr><td>API</td><td>RDD transformations</td><td>DataFrame/SQL</td></tr><tr><td>Optimization</td><td>Limited RDD-level optimization</td><td>Catalyst/Tungsten and incremental execution</td></tr><tr><td>Event time</td><td>More manual</td><td>Window/watermark APIs</td></tr><tr><td>State</td><td><code>updateStateByKey</code>, maps</td><td>Stateful operators and state store</td></tr><tr><td>Recommended for new work</td><td>Usually no</td><td>Yes</td></tr><tr><td>Monitoring</td><td>Streaming tab</td><td>Structured Streaming progress + SQL UI</td></tr></table><div class="memory"><b>DStream:</b> “stream = many RDDs.” <b>Structured Streaming:</b> “stream = an unbounded table updated incrementally.”</div></section>
+<section id="best"><h2>17. Best practices and limitations</h2><ul><li>Prefer Structured Streaming for new applications.</li><li>Use Kafka/Kinesis or another durable source for production.</li><li>Define schemas explicitly; avoid repeated inference.</li><li>Keep checkpoints on durable storage and separate per query.</li><li>Use event time and realistic watermarks.</li><li>Deduplicate using stable event IDs where required.</li><li>Control state growth and monitor state-store metrics.</li><li>Make <code>foreachBatch</code> writes idempotent.</li><li>Protect API tokens with a secret manager/environment injection.</li><li>Respect source licensing, privacy, rate limits and developer terms.</li></ul><h3>Limitations</h3><ul><li>Micro-batch processing is not identical to record-at-a-time processing.</li><li>Stateful operations consume storage and memory.</li><li>Late-data guarantees depend on source, watermark, query and sink.</li><li>Console, memory, rate and socket are training/testing tools.</li><li>External API availability and pricing are outside Spark’s control.</li></ul></section>
+<section id="trouble"><h2>18. Troubleshooting</h2><table><tr><th>Problem</th><th>Cause</th><th>Fix</th></tr><tr><td>No socket data</td><td>Sender not listening/host wrong</td><td>Start sender first; verify port/firewall</td></tr><tr><td>File stream ignores data</td><td>Appended to old file</td><td>Move new complete files atomically</td></tr><tr><td>Kafka package/class missing</td><td>Connector not supplied</td><td>Add Spark-compatible Kafka connector package</td></tr><tr><td>X API 401/403</td><td>Token/access/rule permission</td><td>Verify developer app, auth and access</td></tr><tr><td>X API 429</td><td>Rate limit</td><td>Honor reset/backoff; reduce calls</td></tr><tr><td>Streaming lag grows</td><td>Input faster than processing</td><td>Optimize, add resources/partitions, control source rate</td></tr><tr><td>State grows continuously</td><td>No/poor watermark</td><td>Correct event time and watermark</td></tr><tr><td>Duplicate sink rows</td><td>Retry/non-idempotent output</td><td>Use stable keys, transactions or idempotent upsert</td></tr><tr><td>Checkpoint recovery error</td><td>Changed incompatible query</td><td>Restore compatible code or use carefully planned new checkpoint</td></tr></table></section>
+<section id="interview"><h2>19. Interview questions and answers</h2><div id="iq"></div></section>
+<section id="quiz"><h2>20. Practice quiz</h2><form id="qf"></form><button class="btn" type="button" onclick="score('qf','qr')">Score quiz</button><button class="btn" type="button" onclick="resetQ()">Reset</button><b id="qr"></b></section>
+<section id="exam"><h2>21. Timed examination</h2><p>10 questions • 10 minutes • auto-submit.</p><span class="timer" id="timer">10:00</span><button class="btn" id="start" type="button">Start</button><form id="ef"></form><button class="btn" type="button" onclick="score('ef','er')">Submit</button><b id="er"></b></section>
+<section id="lab"><h2>22. Practical lab and assignment</h2><h3>Requirement</h3><p>Build a live social-post trend counter using the credential-free JSON file source, then design how the same pipeline would receive X posts through Kafka.</p><ol><li>Create three JSON files containing at least 30 posts.</li><li>Define the streaming schema.</li><li>Read one new file per trigger.</li><li>Clean and tokenize text using built-in functions.</li><li>Create 5-minute word windows.</li><li>Add a 10-minute watermark.</li><li>Write results to console and a durable sink.</li><li>Configure a unique checkpoint.</li><li>Add one late record and document behavior.</li><li>Draw X API → Kafka → Spark → dashboard architecture.</li></ol><h3>Expected result</h3><p>New files are detected automatically, word counts change by window, progress metrics are visible, and the query restarts from its checkpoint without reprocessing completed input unexpectedly.</p><h3>Evaluation rubric (20 marks)</h3><table><tr><th>Criterion</th><th>Marks</th></tr><tr><td>Schema/source setup</td><td>3</td></tr><tr><td>Transformation/tokenization</td><td>4</td></tr><tr><td>Window/watermark</td><td>4</td></tr><tr><td>Sink/checkpoint</td><td>3</td></tr><tr><td>Monitoring/restart evidence</td><td>3</td></tr><tr><td>Production architecture explanation</td><td>3</td></tr></table><h3>Official references</h3><ul><li><a href="https://spark.apache.org/docs/latest/streaming-programming-guide.html" target="_blank">Spark Streaming DStream Guide</a></li><li><a href="https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html" target="_blank">Structured Streaming DataFrame APIs</a></li><li><a href="https://spark.apache.org/docs/latest/web-ui.html" target="_blank">Spark Web UI</a></li><li><a href="https://docs.x.com/x-api/introduction" target="_blank">X API Introduction and Filtered Stream</a></li><li><a href="https://docs.x.com/x-api/fundamentals/rate-limits" target="_blank">X API Rate Limits</a></li></ul><h3>Conclusion</h3><p>DStreams divide a continuous feed into RDD batches, while Structured Streaming represents it as an unbounded table processed incrementally. A reliable social-feed design separates API ingestion from Spark through a durable broker, uses event-time controls and checkpoints, and monitors whether processing keeps pace with arrival.</p><div class="taskline"><input type="checkbox" data-track> I completed the streaming lab and can explain the full workflow.</div></section>
+<section id="winsetup"><h2>Windows 10/11 setup from scratch</h2><h3>Required software</h3><table><tr><th>Software</th><th>Purpose</th><th>Check</th></tr><tr><td>64-bit Java supported by Spark</td><td>Spark JVM</td><td><code>java -version</code></td></tr><tr><td>Python</td><td>PySpark code</td><td><code>python --version</code></td></tr><tr><td>VS Code</td><td>Edit/run files</td><td>Python extension</td></tr><tr><td>PySpark</td><td>Spark Python runtime</td><td><code>pyspark --version</code></td></tr></table>
+<h3>Create the project in PowerShell</h3><button class="copy">Copy</button><pre>mkdir spark-streaming-windows
+cd spark-streaming-windows
+python -m venv .venv
+
+# Only if PowerShell blocks activation:
+Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
+
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install pyspark requests kafka-python
+code .</pre>
+<h3>Recommended structure</h3><button class="copy">Copy</button><pre>spark-streaming-windows/
+|-- .venv/
+|-- data/incoming_posts/
+|-- checkpoint/rate_demo/
+|-- checkpoint/social_demo/
+|-- output/
+|-- 01_rate_stream.py
+|-- 02_socket_sender.py
+|-- 03_dstream_wordcount.py
+|-- 04_social_file_stream.py</pre>
+<h3>Windows-safe Spark session</h3><button class="copy">Copy</button><pre>import os
+import sys
+from pyspark.sql import SparkSession
+
+os.environ["SPARK_LOCAL_IP"] = "127.0.0.1"
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
+spark = (
+    SparkSession.builder
+    .appName("WindowsSparkStreaming")
+    .master("local[2]")
+    .config("spark.sql.shuffle.partitions", "2")
+    .getOrCreate()
+)
+spark.sparkContext.setLogLevel("WARN")</pre>
+<div class="call warn"><b>winutils.exe warning:</b> First run the rate-source demo. If it works, do not download random Hadoop binaries only to hide a warning. Investigate when an actual local-filesystem permission operation fails.</div>
+<h3>Run and stop</h3><button class="copy">Copy</button><pre>.\.venv\Scripts\Activate.ps1
+python 01_rate_stream.py
+
+# Stop a streaming query with Ctrl+C</pre>
+<h3>Windows Kafka recommendation</h3><p>For a classroom laptop, complete the rate, JSON-file and Python-socket demos first. Run Kafka through Docker Desktop or WSL when Kafka practice is required; do not expect the Kafka consumer to work until a broker, topic and matching Spark connector are available.</p></section>
+</main></div><div class="notes" id="notes"><b>Class note</b><p id="sel"></p><textarea id="nt"></textarea><button class="btn" id="save">Save</button><button class="btn" id="close">Close</button><small id="ns"></small></div>
+<script>
+const I=[['What is streaming?','Continuous or near-real-time processing of unbounded events.'],['What is a DStream?','A discretized stream represented internally as a sequence of RDDs.'],['What is batch interval?','The time range of records grouped into one DStream RDD.'],['DStream entry point?','StreamingContext.'],['What is Structured Streaming?','A DataFrame/SQL streaming engine treating input as an unbounded table.'],['read vs readStream?','read creates a bounded DataFrame; readStream creates a streaming DataFrame.'],['Why define schema?','Stable parsing, correctness and lower startup work.'],['What is event time?','Timestamp when the event occurred at the source.'],['What is processing time?','Timestamp when Spark processes the event.'],['What is a watermark?','A policy for event-time progress that helps bound late-data state.'],['What is checkpointing?','Persisting progress, metadata and state for recovery.'],['Why Kafka before Spark?','Durable buffering, offsets, replay and producer/consumer separation.'],['Append mode?','Outputs newly finalized rows.'],['Update mode?','Outputs result rows changed since the last trigger.'],['Complete mode?','Outputs the whole result table each trigger.'],['Why can lag grow?','Input arrives faster than triggers process it.'],['How process X posts now?','Use X API v2 filtered stream with authenticated access, preferably publish to Kafka.'],['Why avoid old Twitter connectors?','Legacy endpoints/connectors may be retired or incompatible.'],['What is foreachBatch?','Runs custom batch logic for every micro-batch DataFrame.'],['DStream or Structured Streaming for new apps?','Structured Streaming is normally preferred.']];
+iq.innerHTML=I.map((x,i)=>'<div class="q"><b>'+(i+1)+'. '+x[0]+'</b> <button class="btn" onclick="this.nextElementSibling.style.display=\'block\'">Show answer</button><div class="answer">'+x[1]+'</div></div>').join('');
+const Q=[['DStream internally contains?',['DataFrames only','Sequence of RDDs','One SQL row','One file'],1,'DStream is a sequence of RDD batches.'],['Structured stream is modeled as?',['Bounded list','Unbounded table','Single RDD','Driver array'],1,'New rows continuously extend the table.'],['Production buffer for X feed?',['Console','Kafka','collect','Memory sink'],1,'Kafka provides durable offsets and replay.'],['Late-data control?',['Watermark','UDF','Broadcast','Cache'],0,'Watermarks bound event-time state.'],['Recovery location?',['Checkpoint','Console','print','Header'],0,'Checkpoint stores streaming progress/state.'],['Testing-only source?',['Kafka','Socket','Kinesis','Durable files'],1,'Spark documents socket as testing-only.']];
+const E=Q.concat([['Processing slower than input causes?',['Backlog/lag','Fewer events','No state','Faster sink'],0,'Lag grows.'],['X API new integrations use?',['v2','v0','FTP','JDBC'],0,'X recommends API v2.'],['Five-minute aggregation uses?',['Window','Broadcast','Coalesce only','Driver collect'],0,'Window groups by time range.'],['New application API?',['DStreams always','Structured Streaming','MapReduce','Hive SerDe'],1,'Structured Streaming is preferred.']]);
+function render(a,id){document.getElementById(id).innerHTML=a.map((q,i)=>'<div class="q" data-a="'+q[2]+'" data-e="'+q[3]+'"><b>'+(i+1)+'. '+q[0]+'</b>'+q[1].map((v,j)=>'<label class="choice"><input type="radio" name="'+id+i+'" value="'+j+'"> '+v+'</label>').join('')+'<div class="answer"></div></div>').join('')}render(Q,'qf');render(E,'ef');
+function score(f,r){let a=[...document.querySelectorAll('#'+f+' .q')],s=0;a.forEach(q=>{let x=q.querySelector(':checked'),ok=x&&+x.value===+q.dataset.a;s+=ok;let d=q.querySelector('.answer');d.style.display='block';d.textContent=(ok?'Correct. ':'Review. ')+q.dataset.e});document.getElementById(r).textContent=' Score: '+s+'/'+a.length+' ('+Math.round(s/a.length*100)+'%)';localStorage.setItem(r,document.getElementById(r).textContent)}function resetQ(){qf.reset();document.querySelectorAll('#qf .answer').forEach(x=>x.style.display='none');qr.textContent='';localStorage.removeItem('qr')}
+document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{navigator.clipboard.writeText(b.nextElementSibling.innerText);b.textContent='Copied';setTimeout(()=>b.textContent='Copy',900)});
+const tr=[...document.querySelectorAll('[data-track]')];tr.forEach((x,i)=>{x.checked=localStorage.getItem('streamtrack'+i)==='1';x.onchange=()=>{localStorage.setItem('streamtrack'+i,x.checked?'1':'0');prog()}});function prog(){let s=new Set(JSON.parse(localStorage.getItem('streamseen')||'[]')),p=Math.min(100,Math.round((s.size+tr.filter(x=>x.checked).length)/(22+tr.length)*100));bar.style.width=p+'%';pt.textContent=p+'% completed'}let ob=new IntersectionObserver(es=>{let s=new Set(JSON.parse(localStorage.getItem('streamseen')||'[]'));es.forEach(e=>{if(e.isIntersecting)s.add(e.target.id)});localStorage.setItem('streamseen',JSON.stringify([...s]));prog()},{threshold:.45});document.querySelectorAll('section').forEach(s=>ob.observe(s));prog();
+let ti;start.onclick=()=>{clearInterval(ti);let n=600;ti=setInterval(()=>{n--;timer.textContent=String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');if(n<=0){clearInterval(ti);score('ef','er')}},1000)};
+document.addEventListener('dblclick',()=>{let s=String(getSelection()).trim();if(!s)return;sel.textContent='Selected: '+s;notes.dataset.k=s;nt.value=localStorage.getItem('streamnote:'+s)||'';notes.style.display='block'});save.onclick=()=>{localStorage.setItem('streamnote:'+notes.dataset.k,nt.value);ns.textContent='Saved in this browser.'};close.onclick=()=>notes.style.display='none';
+document.addEventListener('mousemove',e=>{if(Math.random()>.94){let s=document.createElement('i');s.className='spark';s.textContent='✦';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),700)}});if(localStorage.getItem('qr'))qr.textContent=localStorage.getItem('qr');
+</script></body></html>
