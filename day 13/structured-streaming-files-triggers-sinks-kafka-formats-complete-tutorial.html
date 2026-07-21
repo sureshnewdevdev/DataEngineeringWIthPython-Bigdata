@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Structured Streaming: Files, Triggers, Sinks, Kafka and Formats</title>
+<style>
+:root{--ink:#14213d;--blue:#155eef;--cyan:#08a6c9;--paper:#f4f7fb;--card:#fff;--line:#d7e1ef;--code:#091525;--green:#08775d;--amber:#b75e05;--red:#b42318}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.62 "Segoe UI",Arial,sans-serif}
+header{padding:64px max(5vw,22px) 46px;background:linear-gradient(125deg,#07172f,#123d78 62%,#087a91);color:white}.hero{max-width:1150px;margin:auto}.eyebrow{text-transform:uppercase;letter-spacing:.14em;color:#85e8f7;font-weight:800}h1{font-size:clamp(2.2rem,5vw,4.2rem);line-height:1.05;margin:.2em 0}.lead{max-width:900px;font-size:1.2rem}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid #fff5;border-radius:99px;padding:5px 12px;background:#fff1}
+nav{position:sticky;top:0;z-index:20;background:#fff;border-bottom:1px solid var(--line);display:flex;overflow:auto;padding:10px 4vw;gap:7px}nav a{white-space:nowrap;text-decoration:none;color:#25466f;padding:7px 10px;border-radius:8px}nav a:hover{background:#eaf2ff}
+main{max-width:1180px;margin:auto;padding:30px 22px 100px}section{margin:48px 0;scroll-margin-top:78px}h2{font-size:1.9rem;color:#113464;border-bottom:3px solid #56d5ec;padding-bottom:7px}h3{color:#184d86;margin-top:28px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.card,.callout,.lab{background:white;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 4px 18px #102a4d0a}.callout{border-left:5px solid var(--cyan)}.warning{border-left-color:#f59e0b}.danger{border-left-color:#ef4444}.success{border-left-color:#10b981}.memory{background:#e9fbff;border:2px dashed #22bfd8;border-radius:14px;padding:18px}
+.flow{display:grid;grid-template-columns:repeat(7,auto);gap:8px;align-items:center}.node{padding:13px;background:#e9f3ff;border:1px solid #bcd4f5;border-radius:10px;text-align:center}.arrow{font-size:1.4rem;color:var(--blue);text-align:center}
+table{width:100%;border-collapse:collapse;background:white;margin:14px 0;display:block;overflow:auto}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#e7f0ff;color:#153c6d;white-space:nowrap}
+pre{position:relative;background:var(--code);color:#d8e8ff;padding:45px 18px 18px;border-radius:12px;overflow:auto;border:1px solid #273952;line-height:1.48}code{font-family:Consolas,Monaco,monospace}.lang{position:absolute;left:14px;top:10px;color:#65e1f5;font:800 12px sans-serif}.copy{position:absolute;right:9px;top:8px;border:0;border-radius:7px;background:#284568;color:white;padding:6px 10px;cursor:pointer}.copy:hover{background:#2869df}
+details{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 15px;margin:10px 0}summary{cursor:pointer;font-weight:750;color:#174778}.task{background:#f4f2ff;border-left:4px solid #786ce6;padding:10px 13px;margin:9px 0}.kbd{font-family:Consolas;background:#e8edf5;border:1px solid #cbd5e1;padding:1px 5px;border-radius:4px}.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:.82rem;font-weight:700}.ok{background:#d1fae5;color:#05603f}.caution{background:#fef3c7;color:#8a4c06}.no{background:#fee2e2;color:#991b1b}
+.btn{border:0;border-radius:8px;background:var(--blue);color:white;padding:9px 14px;cursor:pointer}.btn.alt{background:#526070}.quiz-option{display:block;padding:4px}.result{font-weight:800;margin:12px 0}.tracker label{display:block;padding:8px;border-bottom:1px solid #edf1f6}.progress{height:14px;background:#d9e4f1;border-radius:99px;overflow:hidden}.bar{height:100%;width:0;background:linear-gradient(90deg,#08a6c9,#155eef)}
+#notesPanel{display:none;position:fixed;right:18px;bottom:18px;width:min(400px,calc(100vw - 36px));background:white;border:2px solid var(--blue);border-radius:15px;padding:15px;box-shadow:0 20px 65px #0b163a55;z-index:50}#notesPanel.open{display:block}#noteText{width:100%;height:145px;border:1px solid #afbdd0;border-radius:8px;padding:10px}.noteHint{position:fixed;right:18px;bottom:18px;background:#102c5d;color:white;padding:9px 13px;border-radius:99px;z-index:30}.highlight{background:#fff6a8!important}.spark{position:fixed;pointer-events:none;color:#18bdd8;z-index:99;animation:pop .65s forwards}@keyframes pop{to{transform:translateY(-28px) scale(0);opacity:0}}
+footer{text-align:center;padding:24px;color:#64748b}@media(max-width:760px){.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}}@media print{nav,.copy,.noteHint,#notesPanel{display:none!important}body{background:white}section{break-inside:avoid}}
+</style></head><body>
+<header><div class="hero"><div class="eyebrow">Trainer-ready Databricks + PySpark tutorial</div><h1>Structured Streaming<br>Files • Triggers • Sinks • Kafka • Formats</h1><p class="lead">A practical path from newly arriving files to Kafka event pipelines, with CSV, JSON and Avro serialization, checkpoints, output modes, monitoring and production-safe choices.</p><div class="chips"><span class="chip">File streams</span><span class="chip">4 trigger styles</span><span class="chip">Kafka read/write</span><span class="chip">CSV ⇄ JSON ⇄ Avro</span><span class="chip">Labs + assessment</span></div></div></header>
+<nav><a href="#concept">Concept</a><a href="#setup">Setup</a><a href="#files">File streaming</a><a href="#triggers">Triggers</a><a href="#sinks">Sinks</a><a href="#kafka">Kafka</a><a href="#formats">Formats</a><a href="#labs">Labs</a><a href="#production">Production</a><a href="#interview">Interview</a><a href="#assessment">Assessment</a></nav>
+<main>
+<section id="concept"><h2>1. What is Structured Streaming?</h2>
+<p>Structured Streaming is Spark’s incremental processing engine. We describe a continuously growing table with the same DataFrame operations used for batch processing. Spark tracks source progress, processes new rows, updates state when required, and sends results to a sink.</p>
+<div class="flow"><div class="node"><b>Source</b><br>files / Kafka</div><div class="arrow">→</div><div class="node"><b>readStream</b></div><div class="arrow">→</div><div class="node"><b>Transform</b><br>parse / filter / aggregate</div><div class="arrow">→</div><div class="node"><b>writeStream</b><br>sink + checkpoint</div></div>
+<div class="grid"><div class="card"><h3>Batch</h3><p>Reads a bounded dataset once. The input has a known end.</p></div><div class="card"><h3>Streaming</h3><p>Treats new events as additions to an unbounded table. The query maintains progress between triggers.</p></div><div class="memory"><b>Memory aid: S–T–O–C</b><p><b>Source → Transform → Output → Checkpoint.</b> If a streaming design omits one of these, ask why.</p></div></div>
+<h3>Micro-batch workflow</h3><ol><li>A trigger checks for newly available input.</li><li>Spark determines the unprocessed file names or Kafka offsets.</li><li>Transformations run only for the new input plus any maintained state.</li><li>The sink commits output.</li><li>The checkpoint records progress and state for recovery.</li></ol>
+<div class="callout warning"><b>Exactly-once is an end-to-end property, not a magic label.</b> It depends on replayable sources, checkpoint recovery, deterministic processing, and an idempotent or transactional sink. Kafka’s streaming sink is at-least-once and may contain duplicates; Delta supports transactional streaming writes.</div>
+</section>
+
+<section id="setup"><h2>2. Databricks notebook setup</h2>
+<ol><li>Create a notebook named <b>structured-streaming-complete-lab</b>.</li><li>Attach available compute. Features vary by cloud, runtime, serverless/classic compute and permissions.</li><li>Use Python cells. Run a cell with <span class="kbd">Shift + Enter</span>.</li><li>Create a writable catalog/schema and volume or storage location. The lab below uses Unity Catalog volumes.</li><li>For Kafka, obtain broker endpoints, topic names and security configuration from the Kafka administrator. Do not paste production secrets directly into notebook code.</li></ol>
+<pre><span class="lang">PYTHON — Cell 1: paths and imports</span><button class="copy">Copy</button><code>from pyspark.sql import functions as F
+from pyspark.sql.types import *
+from pyspark.sql.avro.functions import from_avro, to_avro
+
+catalog = "main"
+schema_name = "streaming_training"
+volume = "streaming_lab"
+
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema_name}")
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {catalog}.{schema_name}.{volume}")
+
+base = f"/Volumes/{catalog}/{schema_name}/{volume}"
+input_json = f"{base}/input/json"
+input_csv = f"{base}/input/csv"
+output_delta = f"{base}/output/delta"
+checkpoints = f"{base}/checkpoints"</code></pre>
+<div class="callout"><b>Fallback:</b> If you cannot create a schema or volume, ask the trainer for an approved catalog, schema and storage path. Do not use a random checkpoint path shared by several students.</div>
+<pre><span class="lang">PYTHON — Cell 2: explicit schemas</span><button class="copy">Copy</button><code>order_schema = StructType([
+    StructField("order_id", LongType(), False),
+    StructField("customer_id", LongType(), True),
+    StructField("event_time", TimestampType(), True),
+    StructField("product", StringType(), True),
+    StructField("quantity", IntegerType(), True),
+    StructField("unit_price", DoubleType(), True),
+    StructField("status", StringType(), True)
+])
+
+order_ddl = """
+order_id BIGINT,
+customer_id BIGINT,
+event_time TIMESTAMP,
+product STRING,
+quantity INT,
+unit_price DOUBLE,
+status STRING
+"""</code></pre>
+<div class="memory"><b>Streaming rule:</b> Prefer an explicit schema. A stream must know how to interpret future records consistently; do not depend on uncontrolled inference in production.</div>
+</section>
+
+<section id="files"><h2>3. File streaming</h2>
+<p>A file stream watches a directory and incrementally processes files that appear after the query starts or files not yet recorded in its checkpoint. Files should be placed atomically into the directory; repeatedly modifying an already discovered file is not a safe event-ingestion pattern.</p>
+<h3>Create sample files</h3>
+<pre><span class="lang">PYTHON — Cell 3: seed JSON landing files</span><button class="copy">Copy</button><code>seed_1 = [
+ (1001,501,"2026-07-21 09:00:00","Laptop",1,65000.0,"CREATED"),
+ (1002,502,"2026-07-21 09:00:05","Mouse",2,750.0,"CREATED")
+]
+seed_schema = "order_id long, customer_id long, event_time string, product string, quantity int, unit_price double, status string"
+
+(spark.createDataFrame(seed_1, seed_schema)
+ .coalesce(1)
+ .write.mode("append").json(input_json))</code></pre>
+<h3>Read new JSON files and write Delta</h3>
+<pre><span class="lang">PYTHON — Cell 4: file source → Delta sink</span><button class="copy">Copy</button><code>orders_stream = (
+    spark.readStream
+         .schema(order_schema)
+         .option("maxFilesPerTrigger", 2)
+         .json(input_json)
+)
+
+clean_orders = (
+    orders_stream
+    .filter(F.col("order_id").isNotNull())
+    .withColumn("amount", F.col("quantity") * F.col("unit_price"))
+    .withColumn("ingested_at", F.current_timestamp())
+)
+
+file_query = (
+    clean_orders.writeStream
+    .format("delta")
+    .outputMode("append")
+    .queryName("json_orders_to_delta")
+    .option("checkpointLocation", f"{checkpoints}/json_to_delta")
+    .trigger(availableNow=True)
+    .start(output_delta)
+)
+file_query.awaitTermination()</code></pre>
+<pre><span class="lang">SQL — Cell 5: validate</span><button class="copy">Copy</button><code>%sql
+SELECT * FROM delta.`/Volumes/main/streaming_training/streaming_lab/output/delta`
+ORDER BY order_id;</code></pre>
+<h3>Add a second file and rerun</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>seed_2 = [(1003,503,"2026-07-21 09:01:00","Keyboard",1,1800.0,"CREATED")]
+(spark.createDataFrame(seed_2, seed_schema)
+ .coalesce(1).write.mode("append").json(input_json))
+
+# Rerun Cell 4 with the SAME checkpoint.
+# Only the new file should be processed.</code></pre>
+<div class="callout warning"><b>Checkpoint experiment:</b> Rerunning with the same checkpoint processes only unseen input. Using a new checkpoint makes the query start as a new stream and may reprocess available files. Never delete a production checkpoint merely to “fix” a failure without understanding the duplication impact.</div>
+<h3>File source options</h3>
+<table><thead><tr><th>Option</th><th>Purpose</th><th>Teaching note</th></tr></thead><tbody><tr><td>schema</td><td>Defines record structure</td><td>Required/recommended for predictable streaming</td></tr><tr><td>maxFilesPerTrigger</td><td>Limits files per micro-batch</td><td>Rate control, not a total limit</td></tr><tr><td>maxBytesPerTrigger</td><td>Approximate byte limit</td><td>Support varies by source/runtime</td></tr><tr><td>latestFirst</td><td>Prioritizes recent files</td><td>Use cautiously when old data must not starve</td></tr><tr><td>pathGlobFilter</td><td>Filters file names</td><td>Does not change partition discovery behavior</td></tr></tbody></table>
+<div class="callout success"><b>Databricks note:</b> For scalable cloud file discovery, Auto Loader (<code>cloudFiles</code>) is usually preferred over a basic file source. Learn the basic source first because it makes checkpoints and triggers easy to see.</div>
+</section>
+
+<section id="triggers"><h2>4. Trigger intervals</h2>
+<p>The trigger answers: <em>When should Spark check and process newly available data?</em> It does not change the business transformation.</p>
+<table><thead><tr><th>Trigger</th><th>PySpark syntax</th><th>Stops?</th><th>Use</th><th>Databricks guidance</th></tr></thead><tbody>
+<tr><td>Unspecified</td><td>No <code>.trigger(...)</code></td><td>No</td><td>Lowest-delay default micro-batches</td><td>Can cause frequent cloud listing calls; choose intentionally</td></tr>
+<tr><td>Time interval</td><td><code>.trigger(processingTime="30 seconds")</code></td><td>No</td><td>Balance latency and overhead</td><td>Common on supported non-serverless compute</td></tr>
+<tr><td>One time</td><td><code>.trigger(once=True)</code></td><td>Yes</td><td>One micro-batch, then stop</td><td>Deprecated; use AvailableNow</td></tr>
+<tr><td>Available Now</td><td><code>.trigger(availableNow=True)</code></td><td>Yes</td><td>All currently available input, possibly multiple batches</td><td>Recommended incremental-batch trigger</td></tr>
+<tr><td>Continuous processing</td><td><code>.trigger(continuous="1 second")</code></td><td>No</td><td>Experimental OSS low-latency mode</td><td><span class="badge no">Not supported by Databricks</span></td></tr>
+</tbody></table>
+<h3>1) Unspecified trigger</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>query = (
+  clean_orders.writeStream
+  .format("console")
+  .outputMode("append")
+  .option("truncate", False)
+  .start()
+)</code></pre>
+<p>Spark starts another micro-batch as soon as it can. If there is no data, it keeps checking. This is simple for demonstrations but can create unnecessary source-listing overhead.</p>
+<h3>2) Time interval</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>query = (
+  clean_orders.writeStream
+  .format("delta")
+  .option("checkpointLocation", f"{checkpoints}/orders_30s")
+  .trigger(processingTime="30 seconds")
+  .start(f"{base}/output/orders_30s")
+)</code></pre>
+<p>If a batch takes longer than 30 seconds, Spark cannot run overlapping batches for the same query. The next batch begins after the prior batch finishes.</p>
+<h3>3) One-time vs AvailableNow</h3>
+<pre><span class="lang">PYTHON — historical Once syntax</span><button class="copy">Copy</button><code># Syllabus completeness only: deprecated on Databricks.
+.trigger(once=True)</code></pre>
+<pre><span class="lang">PYTHON — recommended</span><button class="copy">Copy</button><code>query = (
+  clean_orders.writeStream
+  .format("delta")
+  .option("checkpointLocation", f"{checkpoints}/orders_available")
+  .trigger(availableNow=True)
+  .start(f"{base}/output/orders_available")
+)
+query.awaitTermination()</code></pre>
+<div class="grid"><div class="card"><b>Once</b><p>Attempts to process available input in one micro-batch and stops.</p></div><div class="card"><b>AvailableNow</b><p>Consumes everything currently available, can respect per-trigger rate limits across several micro-batches, then stops.</p></div></div>
+<h3>4) Continuous processing</h3>
+<pre><span class="lang">PYTHON — Apache Spark OSS concept</span><button class="copy">Copy</button><code># Experimental OSS feature with restricted operations/sinks.
+query = df.writeStream     .format("console")     .trigger(continuous="1 second")     .start()</code></pre>
+<div class="callout danger"><b>Do not run this on Databricks.</b> Databricks does not support Spark’s continuous-processing trigger. It is also different from a Databricks Job configured to run continuously. For supported ultra-low-latency scenarios, review Databricks real-time mode availability and limitations for your runtime.</div>
+<h3>Stop and inspect queries</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>[(q.name, q.id, q.isActive) for q in spark.streams.active]
+
+query.status
+query.lastProgress
+query.stop()</code></pre>
+</section>
+
+<section id="sinks"><h2>5. Output modes and sinks</h2>
+<h3>Output modes</h3>
+<table><thead><tr><th>Mode</th><th>What is emitted</th><th>Typical use</th></tr></thead><tbody><tr><td>append</td><td>Only final new rows</td><td>Event-level pipelines and watermark-finalized aggregates</td></tr><tr><td>update</td><td>Rows changed since the last trigger</td><td>Changing aggregates when supported by sink</td></tr><tr><td>complete</td><td>Entire result table every trigger</td><td>Small aggregate result tables, console/memory demos</td></tr></tbody></table>
+<h3>Sink comparison</h3>
+<table><thead><tr><th>Sink</th><th>Purpose</th><th>Production?</th><th>Key caution</th></tr></thead><tbody>
+<tr><td>Console</td><td>Print micro-batches</td><td><span class="badge no">No</span></td><td>Driver output; use small demo data</td></tr>
+<tr><td>Memory</td><td>Query a temporary in-memory table</td><td><span class="badge no">No</span></td><td>Driver memory and restart limitations</td></tr>
+<tr><td>File</td><td>Parquet/JSON/CSV/ORC output</td><td><span class="badge ok">Yes</span></td><td>Use checkpoint; small files may accumulate</td></tr>
+<tr><td>Delta</td><td>Transactional lakehouse table/path</td><td><span class="badge ok">Preferred</span></td><td>Plan partitioning and maintenance</td></tr>
+<tr><td>Kafka</td><td>Publish key/value messages</td><td><span class="badge ok">Yes</span></td><td>At-least-once; consumers must handle duplicates</td></tr>
+<tr><td>foreach</td><td>Custom logic per row</td><td><span class="badge caution">Careful</span></td><td>Connection lifecycle and idempotency</td></tr>
+<tr><td>foreachBatch</td><td>Batch DataFrame per micro-batch</td><td><span class="badge ok">Yes</span></td><td>Use batch_id for idempotent writes</td></tr>
+</tbody></table>
+<pre><span class="lang">PYTHON — console and memory</span><button class="copy">Copy</button><code>console_q = (clean_orders.writeStream.format("console")
+             .outputMode("append").option("truncate", False).start())
+
+memory_q = (clean_orders.writeStream.format("memory")
+            .queryName("live_orders").outputMode("append").start())
+spark.sql("SELECT * FROM live_orders").show()</code></pre>
+<pre><span class="lang">PYTHON — foreachBatch</span><button class="copy">Copy</button><code>def write_batch(batch_df, batch_id):
+    # Keep the logic idempotent when a failed batch is retried.
+    (batch_df
+      .dropDuplicates(["order_id"])
+      .write.mode("append")
+      .format("delta")
+      .saveAsTable("main.streaming_training.orders_foreach"))
+
+q = (clean_orders.writeStream
+     .foreachBatch(write_batch)
+     .option("checkpointLocation", f"{checkpoints}/foreach_orders")
+     .trigger(availableNow=True)
+     .start())
+q.awaitTermination()</code></pre>
+</section>
+
+<section id="kafka"><h2>6. Kafka with Structured Streaming</h2>
+<div class="flow"><div class="node"><b>Producer</b></div><div class="arrow">→</div><div class="node"><b>orders_raw</b><br>Kafka topic</div><div class="arrow">→</div><div class="node"><b>Spark</b><br>parse + validate</div><div class="arrow">→</div><div class="node"><b>orders_clean</b><br>Kafka / Delta</div></div>
+<h3>Kafka source columns</h3>
+<table><thead><tr><th>Column</th><th>Type</th><th>Meaning</th></tr></thead><tbody><tr><td>key</td><td>binary</td><td>Message key</td></tr><tr><td>value</td><td>binary</td><td>Message payload</td></tr><tr><td>topic</td><td>string</td><td>Source topic</td></tr><tr><td>partition</td><td>int</td><td>Kafka partition</td></tr><tr><td>offset</td><td>long</td><td>Position inside partition</td></tr><tr><td>timestamp</td><td>timestamp</td><td>Kafka record timestamp</td></tr><tr><td>timestampType</td><td>int</td><td>Kafka timestamp classification</td></tr></tbody></table>
+<h3>Read a Kafka topic</h3>
+<pre><span class="lang">PYTHON — Cell K1</span><button class="copy">Copy</button><code>bootstrap_servers = "broker1.example.com:9093,broker2.example.com:9093"
+source_topic = "orders_raw"
+target_topic = "orders_clean"
+
+kafka_options = {
+  "kafka.bootstrap.servers": bootstrap_servers,
+  "subscribe": source_topic,
+  "startingOffsets": "latest",
+  "failOnDataLoss": "true",
+  "maxOffsetsPerTrigger": "10000"
+}
+
+raw_kafka = (
+  spark.readStream
+       .format("kafka")
+       .options(**kafka_options)
+       .load()
+)
+
+display(raw_kafka.select("topic","partition","offset","timestamp"))</code></pre>
+<div class="callout warning"><b>startingOffsets matters only when a new query starts.</b> After a checkpoint exists, progress resumes from checkpointed offsets. <code>latest</code> ignores old records on the first start; <code>earliest</code> reads retained history.</div>
+<h3>Parse JSON Kafka values</h3>
+<pre><span class="lang">PYTHON — Cell K2</span><button class="copy">Copy</button><code>parsed_orders = (
+  raw_kafka
+  .select(
+      F.col("key").cast("string").alias("message_key"),
+      F.col("value").cast("string").alias("json_value"),
+      "topic", "partition", "offset",
+      F.col("timestamp").alias("kafka_timestamp")
+  )
+  .withColumn("data", F.from_json("json_value", order_schema))
+  .select("message_key", "data.*", "topic", "partition",
+          "offset", "kafka_timestamp")
+  .filter(F.col("order_id").isNotNull())
+  .withColumn("amount", F.col("quantity") * F.col("unit_price"))
+)</code></pre>
+<h3>Write to a Kafka topic</h3>
+<p>The Kafka sink requires a binary/string <code>value</code> column. A <code>key</code> is optional. A topic can be supplied as an option or a per-row column.</p>
+<pre><span class="lang">PYTHON — Cell K3</span><button class="copy">Copy</button><code>kafka_output = (
+  parsed_orders
+  .select(
+    F.col("order_id").cast("string").alias("key"),
+    F.to_json(F.struct(
+      "order_id","customer_id","event_time","product",
+      "quantity","unit_price","amount","status"
+    )).alias("value")
+  )
+)
+
+kafka_query = (
+  kafka_output.writeStream
+  .format("kafka")
+  .option("kafka.bootstrap.servers", bootstrap_servers)
+  .option("topic", target_topic)
+  .option("checkpointLocation", f"{checkpoints}/kafka_orders_clean")
+  .trigger(processingTime="10 seconds")
+  .start()
+)</code></pre>
+<h3>Kafka security patterns</h3>
+<pre><span class="lang">PYTHON — example; values should come from secret management</span><button class="copy">Copy</button><code>secured = (
+ spark.readStream.format("kafka")
+ .option("kafka.bootstrap.servers", bootstrap_servers)
+ .option("subscribe", source_topic)
+ .option("kafka.security.protocol", "SASL_SSL")
+ .option("kafka.sasl.mechanism", "PLAIN")
+ .option("kafka.sasl.jaas.config",
+         'org.apache.kafka.common.security.plain.PlainLoginModule required '
+         'username="&lt;secret-user&gt;" password="&lt;secret-password&gt;";')
+ .load()
+)</code></pre>
+<div class="callout danger"><b>Security:</b> The exact protocol may be SASL_SSL, SSL, OAuth or a cloud-specific mechanism. Retrieve credentials from a secret manager, restrict network access, validate TLS certificates and grant only the required topic permissions.</div>
+<h3>Read/write loop validation</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>verify = (
+ spark.readStream.format("kafka")
+ .option("kafka.bootstrap.servers", bootstrap_servers)
+ .option("subscribe", target_topic)
+ .option("startingOffsets", "latest")
+ .load()
+ .selectExpr("CAST(key AS STRING) key", "CAST(value AS STRING) value",
+             "partition", "offset", "timestamp")
+)
+display(verify)</code></pre>
+</section>
+
+<section id="formats"><h2>7. CSV, JSON and Avro functions</h2>
+<div class="callout"><b>Do not confuse record functions with file readers.</b> <code>from_json</code>, <code>from_csv</code> and <code>from_avro</code> parse a value inside a column—especially useful for Kafka’s binary <code>value</code>. <code>spark.readStream.json/csv/format("avro")</code> reads files.</div>
+<h3>1) from_csv and to_csv</h3>
+<pre><span class="lang">PYTHON — CSV message → columns → CSV message</span><button class="copy">Copy</button><code>csv_schema = "order_id BIGINT, customer_id BIGINT, product STRING, quantity INT, unit_price DOUBLE"
+
+csv_messages = spark.createDataFrame([
+ ("2001,601,Monitor,2,15000.0",),
+ ("2002,602,Chair,4,8000.0",)
+], ["value"])
+
+parsed_csv = (
+ csv_messages
+ .select(F.from_csv("value", csv_schema).alias("r"))
+ .select("r.*")
+ .withColumn("amount", F.col("quantity") * F.col("unit_price"))
+)
+
+csv_again = parsed_csv.select(
+ F.to_csv(F.struct("order_id","customer_id","product","quantity",
+                   "unit_price","amount")).alias("value")
+)
+display(csv_again)</code></pre>
+<h3>2) from_json and to_json</h3>
+<pre><span class="lang">PYTHON — JSON message round trip</span><button class="copy">Copy</button><code>json_messages = spark.createDataFrame([
+ ('{"order_id":3001,"customer_id":701,"product":"SSD","quantity":2,"unit_price":6000.0}',)
+], ["value"])
+
+json_schema = "order_id BIGINT, customer_id BIGINT, product STRING, quantity INT, unit_price DOUBLE"
+
+json_rows = (json_messages
+ .select(F.from_json("value", json_schema).alias("r"))
+ .select("r.*")
+ .withColumn("amount", F.col("quantity") * F.col("unit_price")))
+
+json_again = json_rows.select(
+ F.to_json(F.struct("*")).alias("value")
+)
+display(json_again)</code></pre>
+<h3>3) from_avro and to_avro</h3>
+<pre><span class="lang">PYTHON — Avro binary message round trip</span><button class="copy">Copy</button><code>import json
+
+avro_schema = json.dumps({
+ "type": "record",
+ "name": "Order",
+ "namespace": "training.streaming",
+ "fields": [
+   {"name":"order_id","type":"long"},
+   {"name":"customer_id","type":["null","long"],"default":None},
+   {"name":"product","type":["null","string"],"default":None},
+   {"name":"quantity","type":["null","int"],"default":None},
+   {"name":"unit_price","type":["null","double"],"default":None}
+ ]
+})
+
+avro_payload = json_rows.select(
+ to_avro(F.struct("order_id","customer_id","product",
+                  "quantity","unit_price")).alias("value")
+)
+
+decoded_avro = (
+ avro_payload
+ .select(from_avro("value", avro_schema).alias("r"))
+ .select("r.*")
+)
+display(decoded_avro)</code></pre>
+<div class="callout warning"><b>Schema Registry framing:</b> Confluent and other schema registries may add headers/schema IDs around raw Avro bytes. Plain <code>from_avro</code> expects bytes compatible with the supplied Avro schema. Use the appropriate registry-aware functions/connector for your platform rather than manually trimming production payloads.</div>
+
+<h3>Read JSON files and write Avro files</h3>
+<pre><span class="lang">PYTHON — streaming file conversion</span><button class="copy">Copy</button><code>json_stream = (
+ spark.readStream.schema(order_schema).json(input_json)
+)
+
+json_to_avro_q = (
+ json_stream.writeStream
+ .format("avro")
+ .outputMode("append")
+ .option("path", f"{base}/output/orders_avro")
+ .option("checkpointLocation", f"{checkpoints}/json_files_to_avro")
+ .trigger(availableNow=True)
+ .start()
+)
+json_to_avro_q.awaitTermination()
+
+display(spark.read.format("avro").load(f"{base}/output/orders_avro"))</code></pre>
+<h3>Read Avro files and write JSON files</h3>
+<pre><span class="lang">PYTHON — streaming file conversion</span><button class="copy">Copy</button><code>avro_stream = (
+ spark.readStream
+ .format("avro")
+ .schema(order_schema)
+ .load(f"{base}/output/orders_avro")
+)
+
+avro_to_json_q = (
+ avro_stream.writeStream
+ .format("json")
+ .outputMode("append")
+ .option("path", f"{base}/output/orders_json_again")
+ .option("checkpointLocation", f"{checkpoints}/avro_files_to_json")
+ .trigger(availableNow=True)
+ .start()
+)
+avro_to_json_q.awaitTermination()
+
+display(spark.read.json(f"{base}/output/orders_json_again"))</code></pre>
+<h3>Format comparison</h3>
+<table><thead><tr><th>Format</th><th>Strength</th><th>Trade-off</th><th>Best fit</th></tr></thead><tbody><tr><td>CSV</td><td>Simple and human-readable</td><td>Weak typing, escaping ambiguity, no nested model</td><td>Simple exchange files</td></tr><tr><td>JSON</td><td>Readable, flexible, nested</td><td>Verbose; repeated field names</td><td>APIs and debuggable events</td></tr><tr><td>Avro</td><td>Compact binary with schema evolution support</td><td>Not human-readable; schema management required</td><td>Kafka and high-volume record pipelines</td></tr><tr><td>Delta</td><td>Transactional tables and lakehouse operations</td><td>Table/storage format, not message wire format</td><td>Reliable streaming lakehouse sink</td></tr></tbody></table>
+</section>
+
+<section id="labs"><h2>8. Practical labs</h2>
+<h3>Lab A — File landing zone to Delta</h3><div class="lab"><p><b>Requirement:</b> Ingest newly arriving JSON order files. Reject missing IDs, calculate amount, append valid rows to Delta, and use AvailableNow.</p><ol><li>Create three landing files separately.</li><li>Use an explicit schema and <code>maxFilesPerTrigger=1</code>.</li><li>Add <code>source_file</code> using <code>input_file_name()</code>.</li><li>Write valid and invalid records to separate Delta locations using <code>foreachBatch</code>.</li><li>Prove that rerunning with the same checkpoint does not duplicate input.</li></ol><p><b>Expected:</b> Three input files processed across controlled micro-batches; valid and quarantine counts reconcile to the source count.</p></div>
+<h3>Lab B — Kafka JSON enrichment</h3><div class="lab"><p><b>Requirement:</b> Consume <code>orders_raw</code>, parse JSON, join to a static product table, compute amount, and publish JSON to <code>orders_enriched</code>.</p><ol><li>Retain topic, partition and offset as lineage columns.</li><li>Send malformed messages to a quarantine Delta table.</li><li>Use order_id as Kafka key.</li><li>Add a 10-second trigger and a unique query name.</li><li>Validate output with a separate consumer.</li></ol></div>
+<h3>Lab C — JSON to Avro Kafka bridge</h3><div class="lab"><p><b>Requirement:</b> Read JSON from Kafka, convert the parsed struct with <code>to_avro</code>, and publish Avro bytes. Then build a second stream using <code>from_avro</code> to recover the fields.</p><p><b>Acceptance checks:</b> row count matches, order IDs match, nullable fields decode, and a deliberately incompatible schema produces a documented failure/quarantine result.</p></div>
+<h3>Associate questions — no answers initially</h3>
+<ol><li>Why is a checkpoint different from a data output location?</li><li>What happens when a new checkpoint is used on the same file directory?</li><li>When should AvailableNow be preferred to processingTime?</li><li>Why is Once not the current Databricks recommendation?</li><li>Why can a Kafka sink contain duplicates?</li><li>What is the difference between Kafka offset and Spark batch ID?</li><li>How does <code>maxOffsetsPerTrigger</code> protect a pipeline?</li><li>Why must Kafka value be cast before <code>from_json</code>?</li><li>When would <code>foreachBatch</code> be safer than <code>foreach</code>?</li><li>Why is explicit schema important for streaming?</li><li>Design a quarantine rule for malformed JSON.</li><li>Convert a CSV payload to JSON without writing an intermediate file.</li><li>Convert a struct to an Avro Kafka value.</li><li>Explain why changing a stateful aggregation can invalidate a checkpoint.</li><li>How would you prove a restarted query did not lose records?</li></ol>
+<details><summary>Trainer discussion guide</summary><ul><li>Checkpoints own offsets, commits and state; output owns business results.</li><li>AvailableNow is ideal for scheduled incremental processing and clean notebook labs.</li><li>Kafka’s sink is at-least-once; design consumer-side keys/idempotency.</li><li>Preserve raw payload and Kafka metadata in quarantine records.</li><li>Reconcile source offsets/counts, sink commits and progress metrics.</li></ul></details>
+</section>
+
+<section id="production"><h2>9. Production practices, edge cases and troubleshooting</h2>
+<h3>Production checklist</h3><div class="grid"><div class="card"><b>Reliability</b><ul><li>Stable unique checkpoint per query</li><li>Replayable source</li><li>Idempotent sink</li><li>Failure/restart test</li></ul></div><div class="card"><b>Performance</b><ul><li>Rate limits</li><li>Measured trigger interval</li><li>Partition awareness</li><li>State and watermark monitoring</li></ul></div><div class="card"><b>Operations</b><ul><li>Unique queryName</li><li>Progress metrics and alerts</li><li>Secret management</li><li>Runbook and ownership</li></ul></div></div>
+<h3>Watermark example</h3>
+<pre><span class="lang">PYTHON</span><button class="copy">Copy</button><code>windowed = (
+ parsed_orders
+ .withWatermark("event_time", "10 minutes")
+ .groupBy(F.window("event_time", "5 minutes"), "status")
+ .agg(F.count("*").alias("orders"),
+      F.sum("amount").alias("revenue"))
+)</code></pre>
+<p>A watermark limits how long state waits for late data. It is not a promise that every event older than the threshold is instantly dropped; behavior depends on the operation and trigger progress.</p>
+<h3>Troubleshooting</h3>
+<table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody>
+<tr><td>No file rows appear</td><td>Schema mismatch, wrong path, file already checkpointed</td><td>Verify path/schema and inspect checkpoint history; add a genuinely new file</td></tr>
+<tr><td>Kafka query connects but receives nothing</td><td><code>latest</code> used after messages were published</td><td>Publish a new message or start a new lab checkpoint with <code>earliest</code></td></tr>
+<tr><td>Kafka package/provider not found</td><td>Connector missing in local Spark</td><td>Add the matching <code>spark-sql-kafka-0-10</code> package; avoid mixing Spark/Scala versions</td></tr>
+<tr><td>Authentication failed</td><td>Protocol/mechanism/cert/secret/network mismatch</td><td>Validate with Kafka admin and approved client configuration</td></tr>
+<tr><td><code>from_json</code> returns NULL</td><td>Payload/schema mismatch or malformed JSON</td><td>Keep raw value, inspect it, use permissive parsing/quarantine</td></tr>
+<tr><td><code>from_avro</code> fails</td><td>Wrong schema or registry framing</td><td>Use correct writer/reader schema and registry-aware decoding</td></tr>
+<tr><td>Duplicate sink rows</td><td>Retry or new checkpoint; non-idempotent sink</td><td>Use business keys, transactional merge/idempotency and batch_id controls</td></tr>
+<tr><td>Stream will not recover</td><td>Incompatible source/state/query change</td><td>Restore compatible code/checkpoint or plan a controlled new-query migration</td></tr>
+<tr><td>Too many small files</td><td>Very frequent triggers and low event volume</td><td>Increase interval, use AvailableNow, compact/optimize output</td></tr>
+<tr><td>Notebook compute will not terminate</td><td>Active streaming query</td><td>Stop queries explicitly and use job-oriented production deployment</td></tr>
+</tbody></table>
+<h3>Do not change casually while reusing a checkpoint</h3><ul><li>Source type or subscribed topic</li><li>Stateful grouping keys or aggregation schema</li><li>Stream-stream join keys/type</li><li>Output path for a file sink</li><li>State-store schema</li></ul>
+</section>
+
+<section id="interview"><h2>10. Interview questions and answers</h2>
+<details><summary>1. What is Structured Streaming?</summary><p>A Spark engine that incrementally processes unbounded data using DataFrame/Dataset APIs and maintains progress and state through checkpoints.</p></details>
+<details><summary>2. read vs readStream?</summary><p><code>read</code> creates a bounded batch DataFrame. <code>readStream</code> creates a streaming DataFrame whose query consumes new input incrementally after <code>start()</code>.</p></details>
+<details><summary>3. What is a trigger?</summary><p>It controls when Spark initiates processing of newly available streaming input.</p></details>
+<details><summary>4. Unspecified vs processingTime?</summary><p>Unspecified runs micro-batches as quickly as possible; processingTime enforces a minimum scheduling interval to balance latency and overhead.</p></details>
+<details><summary>5. Once vs AvailableNow?</summary><p>Once runs one micro-batch. AvailableNow drains all currently available data, possibly across rate-limited batches, and is the Databricks recommendation.</p></details>
+<details><summary>6. Is Spark continuous processing supported in Databricks?</summary><p>No. Spark’s experimental continuous trigger is not supported by Databricks and is distinct from a continuously running Databricks Job.</p></details>
+<details><summary>7. What is a checkpoint?</summary><p>Fault-tolerant storage for query identity, processed offsets/files, commits and state required for recovery.</p></details>
+<details><summary>8. What are append, update and complete modes?</summary><p>Append emits final new rows, update emits changed rows, and complete emits the full result table each trigger.</p></details>
+<details><summary>9. Why preserve Kafka metadata?</summary><p>Topic, partition and offset enable lineage, debugging, replay analysis and duplicate investigation.</p></details>
+<details><summary>10. startingOffsets earliest vs latest?</summary><p>Earliest reads retained records from the beginning; latest begins after current end offsets. The setting applies only when a new query starts.</p></details>
+<details><summary>11. Why cast Kafka value?</summary><p>Kafka exposes key/value as binary. Text parsers such as <code>from_json</code> and <code>from_csv</code> need a string representation.</p></details>
+<details><summary>12. from_json vs spark.read.json?</summary><p><code>from_json</code> parses JSON inside a column. <code>read.json</code> reads JSON files into rows.</p></details>
+<details><summary>13. from_avro vs format("avro")?</summary><p><code>from_avro</code> decodes an Avro binary column; the Avro data source reads Avro container files.</p></details>
+<details><summary>14. Why use Avro with Kafka?</summary><p>It is compact, schema-driven and supports record evolution, but it requires compatible schema management.</p></details>
+<details><summary>15. foreach vs foreachBatch?</summary><p><code>foreach</code> processes individual rows/partitions. <code>foreachBatch</code> exposes each micro-batch as a batch DataFrame, enabling batch writers, MERGE and batch-level idempotency.</p></details>
+<details><summary>16. What is watermarking?</summary><p>A policy that bounds state for late event-time data and enables finalization/cleanup in supported stateful operations.</p></details>
+<details><summary>17. How do you control Kafka ingestion rate?</summary><p>Use options such as <code>maxOffsetsPerTrigger</code>, then measure batch duration, lag, throughput and state.</p></details>
+<details><summary>18. How do you monitor a query?</summary><p>Use a unique query name, Spark UI Streaming tab, query status/progress, input/output rates, batch duration, lag, state metrics and alerts.</p></details>
+</section>
+
+<section id="assessment"><h2>11. Quiz, timed exam and progress tracker</h2>
+<form id="quiz">
+<div class="lab"><b>1. Recommended Databricks trigger for scheduled incremental processing?</b><label class="quiz-option"><input type="radio" name="q1" value="0"> once=True</label><label class="quiz-option"><input type="radio" name="q1" value="1"> availableNow=True</label><label class="quiz-option"><input type="radio" name="q1" value="0"> continuous</label></div>
+<div class="lab"><b>2. Kafka value type immediately after load?</b><label class="quiz-option"><input type="radio" name="q2" value="1"> Binary</label><label class="quiz-option"><input type="radio" name="q2" value="0"> Struct</label><label class="quiz-option"><input type="radio" name="q2" value="0"> Integer</label></div>
+<div class="lab"><b>3. Which parses JSON stored inside a column?</b><label class="quiz-option"><input type="radio" name="q3" value="1"> from_json</label><label class="quiz-option"><input type="radio" name="q3" value="0"> readStream.json only</label></div>
+<div class="lab"><b>4. What should identify a stream’s recovery state?</b><label class="quiz-option"><input type="radio" name="q4" value="0"> Console output</label><label class="quiz-option"><input type="radio" name="q4" value="1"> Stable unique checkpoint</label></div>
+<div class="lab"><b>5. Which sink is best for classroom debugging only?</b><label class="quiz-option"><input type="radio" name="q5" value="1"> Console</label><label class="quiz-option"><input type="radio" name="q5" value="0"> Delta</label></div>
+<div class="lab"><b>6. Why can Kafka output contain duplicates?</b><label class="quiz-option"><input type="radio" name="q6" value="1"> Sink uses at-least-once delivery under retries</label><label class="quiz-option"><input type="radio" name="q6" value="0"> Kafka has no offsets</label></div>
+<button type="button" class="btn" id="gradeBtn">Grade quiz</button><div class="result" id="quizResult"></div></form>
+<details><summary>Quiz explanations</summary><ol><li>AvailableNow drains currently available data and is recommended over deprecated Once.</li><li>Kafka key and value are binary columns.</li><li>from_json converts a JSON string column to structured fields.</li><li>The checkpoint stores offsets, commits and state.</li><li>Console is for low-volume debugging.</li><li>Retries can publish a record more than once, so consumers/sinks need deduplication strategy.</li></ol></details>
+<h3>Timed exam — 60 minutes / 50 marks</h3>
+<table><thead><tr><th>Part</th><th>Task</th><th>Marks</th><th>Time</th></tr></thead><tbody><tr><td>A</td><td>Explain triggers, output modes and checkpoints</td><td>10</td><td>10 min</td></tr><tr><td>B</td><td>Build JSON file stream → Delta with AvailableNow</td><td>12</td><td>15 min</td></tr><tr><td>C</td><td>Build Kafka JSON read → parse → Kafka JSON write</td><td>16</td><td>20 min</td></tr><tr><td>D</td><td>Convert JSON to Avro and decode it again</td><td>8</td><td>10 min</td></tr><tr><td>E</td><td>State four production safeguards</td><td>4</td><td>5 min</td></tr></tbody></table>
+<p><b>Pass:</b> 35/50, with no hard-coded production credentials and a valid checkpoint strategy.</p>
+<h3>Preparation tracker</h3><div class="tracker" id="tracker">
+<label><input type="checkbox"> I can explain the streaming execution model.</label>
+<label><input type="checkbox"> I can build and restart a file stream.</label>
+<label><input type="checkbox"> I can select a trigger intentionally.</label>
+<label><input type="checkbox"> I can compare output modes and sinks.</label>
+<label><input type="checkbox"> I can read Kafka and preserve metadata.</label>
+<label><input type="checkbox"> I can publish key/value messages to Kafka.</label>
+<label><input type="checkbox"> I can use CSV and JSON record functions.</label>
+<label><input type="checkbox"> I can encode and decode Avro.</label>
+<label><input type="checkbox"> I can troubleshoot checkpoint and schema problems.</label>
+</div><p id="progressText">0% complete</p><div class="progress"><div class="bar" id="progressBar"></div></div>
+</section>
+
+<section><h2>12. Official references</h2><ul>
+<li><a href="https://spark.apache.org/docs/latest/streaming/apis-on-dataframes-and-datasets.html" target="_blank">Apache Spark Structured Streaming Programming Guide</a></li>
+<li><a href="https://spark.apache.org/docs/latest/structured-streaming-kafka-integration.html" target="_blank">Apache Spark Structured Streaming + Kafka Integration</a></li>
+<li><a href="https://spark.apache.org/docs/latest/sql-data-sources-avro.html" target="_blank">Apache Spark Avro Data Source Guide</a></li>
+<li><a href="https://spark.apache.org/docs/latest/api/python/reference/pyspark.sql/functions.html" target="_blank">PySpark built-in functions reference</a></li>
+<li><a href="https://docs.databricks.com/aws/en/structured-streaming/triggers" target="_blank">Databricks trigger intervals</a></li>
+<li><a href="https://docs.databricks.com/aws/en/connect/streaming/kafka/" target="_blank">Databricks Kafka connector</a></li>
+<li><a href="https://docs.databricks.com/aws/en/structured-streaming/checkpoints" target="_blank">Databricks Structured Streaming checkpoints</a></li>
+</ul><p>Examples were aligned to current documentation on 21 July 2026. Runtime and connector availability can differ by workspace, cloud and compute type; verify your environment before production use.</p></section>
+</main>
+<div class="noteHint">Double-click text to add a note ✎</div>
+<div id="notesPanel" role="dialog" aria-modal="true"><h3>My note</h3><p id="noteContext"></p><textarea id="noteText" placeholder="Write a trainer note, question or memory aid…"></textarea><p><button class="btn" id="saveNoteBtn">Save</button> <button class="btn alt" id="closeNoteBtn">Close</button></p><small>Notes are saved in this browser.</small></div>
+<footer>Structured Streaming Classroom Tutorial • Files, Triggers, Sinks, Kafka and Serialization</footer>
+<script>
+document.querySelectorAll('pre').forEach(pre=>{const b=pre.querySelector('.copy');if(!b)return;b.addEventListener('click',async()=>{await navigator.clipboard.writeText(pre.querySelector('code').innerText);b.textContent='Copied!';setTimeout(()=>b.textContent='Copy',1200)})});
+const notesPanel=document.getElementById('notesPanel'),noteText=document.getElementById('noteText'),noteContext=document.getElementById('noteContext'),saveNoteBtn=document.getElementById('saveNoteBtn'),closeNoteBtn=document.getElementById('closeNoteBtn');let activeNoteKey='';
+function closeNotes(){notesPanel.classList.remove('open');activeNoteKey=''}
+function openNotes(el){const c=(el.innerText||el.textContent).trim().slice(0,100);activeNoteKey='ss-note-'+btoa(unescape(encodeURIComponent(c))).slice(0,45);noteContext.textContent='For: '+c;noteText.value=localStorage.getItem(activeNoteKey)||'';notesPanel.classList.add('open');noteText.focus()}
+document.addEventListener('dblclick',e=>{const el=e.target.closest('p,li,h2,h3,td');if(el&&!notesPanel.contains(el))openNotes(el)});
+saveNoteBtn.addEventListener('click',()=>{if(activeNoteKey)localStorage.setItem(activeNoteKey,noteText.value);closeNotes()});closeNoteBtn.addEventListener('click',closeNotes);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNotes()});document.addEventListener('mousedown',e=>{if(notesPanel.classList.contains('open')&&!notesPanel.contains(e.target))closeNotes()});
+document.getElementById('gradeBtn').addEventListener('click',()=>{let s=0,a=0;for(let i=1;i<=6;i++){const x=document.querySelector('input[name=q'+i+']:checked');if(x){a++;s+=Number(x.value)}}document.getElementById('quizResult').textContent=a<6?'Answer all six questions.':'Score: '+s+'/6 — '+(s>=5?'Strong result.':'Review the explanations and try again.')});
+const checks=[...document.querySelectorAll('#tracker input')],bar=document.getElementById('progressBar'),pt=document.getElementById('progressText');function progress(){const n=checks.filter(x=>x.checked).length,p=Math.round(n/checks.length*100);bar.style.width=p+'%';pt.textContent=p+'% complete';localStorage.setItem('ss-progress',JSON.stringify(checks.map(x=>x.checked)))}try{const a=JSON.parse(localStorage.getItem('ss-progress'));if(Array.isArray(a))checks.forEach((x,i)=>x.checked=!!a[i])}catch(e){}checks.forEach(x=>x.addEventListener('change',progress));progress();
+document.addEventListener('mouseover',e=>{const x=e.target.closest('.card,.callout,.lab');if(x)x.classList.add('highlight')});document.addEventListener('mouseout',e=>{const x=e.target.closest('.card,.callout,.lab');if(x)x.classList.remove('highlight')});let last=0;document.addEventListener('mousemove',e=>{if(Date.now()-last<90)return;last=Date.now();const s=document.createElement('span');s.className='spark';s.textContent='✦';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),650)});
+</script></body></html>
