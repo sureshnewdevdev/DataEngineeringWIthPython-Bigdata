@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+checkpoint/*
+!checkpoint/.gitkeep
+output/*
+!output/.gitkeep
+data/incoming_posts/batch_*.json
+.env
+

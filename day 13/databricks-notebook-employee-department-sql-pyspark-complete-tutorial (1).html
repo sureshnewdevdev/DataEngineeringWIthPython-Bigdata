@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Databricks Employee & Department — SQL + PySpark Classroom Lab</title>
+<style>
+:root{--navy:#101b35;--blue:#2563eb;--cyan:#06b6d4;--ink:#172033;--muted:#64748b;--paper:#f8fafc;--card:#fff;--line:#dbe3ef;--code:#0b1220;--good:#047857;--warn:#b45309}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font:16px/1.65 Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--paper)}
+header{background:linear-gradient(125deg,var(--navy),#173d78 66%,#0e7490);color:white;padding:62px max(6vw,24px) 48px}.eyebrow{letter-spacing:.13em;text-transform:uppercase;color:#a5f3fc;font-weight:800}.hero{max-width:1100px}h1{font-size:clamp(2rem,5vw,4rem);line-height:1.05;margin:.25em 0}.lead{font-size:1.18rem;max-width:850px}.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{padding:5px 11px;border:1px solid #ffffff55;border-radius:99px;background:#ffffff12}
+nav{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line);padding:10px 5vw;display:flex;gap:10px;overflow:auto}nav a{white-space:nowrap;color:#28436b;text-decoration:none;padding:7px 10px;border-radius:8px}nav a:hover{background:#eaf2ff}
+main{max-width:1180px;margin:auto;padding:30px 22px 100px}section{scroll-margin-top:75px;margin:42px 0}h2{font-size:1.9rem;color:#10254c;border-bottom:3px solid #67e8f9;padding-bottom:6px}h3{color:#183b70;margin-top:30px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.card,.callout,.exercise{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 4px 14px #15234a0a}.callout{border-left:5px solid var(--cyan)}.warn{border-left-color:#f59e0b}.good{border-left-color:#10b981}.memory{background:#ecfeff;border:2px dashed #22d3ee;border-radius:14px;padding:18px}
+table{width:100%;border-collapse:collapse;background:white;margin:14px 0;display:block;overflow:auto}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;white-space:nowrap}th{background:#e9f2ff;color:#17335f}
+pre{position:relative;background:var(--code);color:#d9e8ff;padding:46px 18px 18px;border-radius:12px;overflow:auto;line-height:1.48;border:1px solid #273755}code{font-family:Consolas,Monaco,monospace}.lang{position:absolute;top:10px;left:15px;color:#67e8f9;font:700 12px sans-serif}.copy{position:absolute;right:10px;top:8px;border:0;border-radius:7px;background:#294166;color:white;padding:6px 10px;cursor:pointer}.copy:hover{background:var(--blue)}
+details{background:white;border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:12px 15px}summary{font-weight:750;color:#193c71;cursor:pointer}.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-items:center}.flow div{background:#eaf4ff;border:1px solid #b8d4ff;padding:12px;text-align:center;border-radius:10px}.arrow{text-align:center;font-size:1.5rem;color:var(--blue)}
+.task{border-left:4px solid #818cf8;padding:10px 14px;margin:9px 0;background:#f5f3ff}.answer{border-left:4px solid #10b981}.quiz-option{display:block;margin:7px 0}.result{font-weight:800;margin:14px 0}.toolbar{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}.btn{border:0;border-radius:9px;background:var(--blue);color:white;padding:9px 14px;cursor:pointer}.btn.alt{background:#475569}.progress-wrap{height:14px;background:#dce5f1;border-radius:99px;overflow:hidden}.progress-bar{height:100%;width:0;background:linear-gradient(90deg,#06b6d4,#2563eb)}.checklist label{display:block;padding:8px;border-bottom:1px solid #eef2f7}
+#notesPanel{position:fixed;right:18px;bottom:18px;width:min(390px,calc(100vw - 36px));background:white;border:2px solid #2563eb;border-radius:15px;box-shadow:0 18px 60px #0f172a55;padding:15px;z-index:40;display:none}#notesPanel.open{display:block}#noteText{width:100%;height:150px;padding:10px;border:1px solid #bbc8da;border-radius:8px}.note-hint{position:fixed;right:18px;bottom:18px;background:#172554;color:white;padding:9px 13px;border-radius:99px;z-index:20}.highlight{background:#fef08a!important;transition:.3s}.spark{position:fixed;pointer-events:none;z-index:99;color:#22d3ee;animation:pop .65s forwards}@keyframes pop{to{transform:translateY(-25px) scale(0);opacity:0}}
+footer{text-align:center;color:var(--muted);padding:25px}@media(max-width:700px){.flow{grid-template-columns:1fr}.arrow{transform:rotate(90deg)}nav{padding-left:10px}}
+@media print{nav,.note-hint,#notesPanel,.copy{display:none!important}body{background:white}section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><div class="hero"><div class="eyebrow">Trainer-ready • Databricks Notebook Lab</div><h1>Employee & Department<br>SQL + PySpark</h1><p class="lead">A worked, run-in-order tutorial covering data creation, querying, joins, functions, windows, Delta CRUD, optimization, and a related Customer–Orders–Order Items practice project.</p><div class="chips"><span class="chip">SQL</span><span class="chip">PySpark</span><span class="chip">Delta Lake</span><span class="chip">30 practice questions</span><span class="chip">Interview Q&A</span><span class="chip">Quiz + timed exam</span></div></div></header>
+<nav><a href="#setup">Setup</a><a href="#model">Data</a><a href="#queries">Queries</a><a href="#joins">Joins</a><a href="#functions">Functions</a><a href="#advanced">Advanced</a><a href="#pyspark">PySpark</a><a href="#practice">Practice Project</a><a href="#interview">Interview</a><a href="#assessment">Assessment</a></nav>
+<main>
+<section id="setup"><h2>1. Databricks notebook setup</h2>
+<div class="grid"><div class="card"><h3>Learning outcomes</h3><ul><li>Create reusable Delta tables.</li><li>Write SQL and PySpark transformations.</li><li>Choose the correct join and function.</li><li>Use windows, CTEs, subqueries, views and MERGE.</li><li>Read an execution plan and avoid common mistakes.</li></ul></div><div class="memory"><b>Notebook memory aid: M–R–V</b><p><b>Markdown</b> explains, <b>Run</b> executes, <b>View</b> validates. Never run ten cells without checking the result of each logical stage.</p></div></div>
+<h3>Step-by-step</h3><ol><li>Sign in to your Databricks workspace.</li><li>Create a notebook and name it <b>employee-department-lab</b>.</li><li>Attach available compute. In a serverless-enabled workspace, select serverless compute; other workspaces may expose different compute choices.</li><li>Choose Python as the default language. A cell beginning with <code>%sql</code> runs SQL; <code>%python</code> runs Python.</li><li>Paste each cell below separately and run with <b>Shift + Enter</b>.</li></ol>
+<div class="callout warn"><b>Permission fallback:</b> If you cannot create a schema, skip the next cell and create the tables in a schema where you have permission. Your trainer can provide the catalog/schema name.</div>
+<pre><span class="lang">SQL — Cell 1: training schema</span><button class="copy">Copy</button><code>%sql
+CREATE SCHEMA IF NOT EXISTS employee_training;
+USE SCHEMA employee_training;
+SELECT current_catalog(), current_schema();</code></pre>
+</section>
+
+<section id="model"><h2>2. Employee–Department data model</h2>
+<div class="flow"><div><b>DEPARTMENTS</b><br>one row per department</div><div class="arrow">1 → many</div><div><b>EMPLOYEES</b><br>many employees per department</div><div class="arrow">employee → manager</div><div><b>EMPLOYEES</b><br>self relationship</div></div>
+<table><thead><tr><th>Table</th><th>Primary identifier</th><th>Logical relationship</th><th>Why included</th></tr></thead><tbody><tr><td>departments</td><td>dept_id</td><td>employees.dept_id → departments.dept_id</td><td>ordinary joins</td></tr><tr><td>employees</td><td>emp_id</td><td>manager_id → employees.emp_id</td><td>self join</td></tr></tbody></table>
+<div class="callout"><b>Important:</b> The relationship is demonstrated logically. Do not assume a foreign key is automatically enforced just because matching columns exist.</div>
+<pre><span class="lang">SQL — Cell 2: create Delta tables</span><button class="copy">Copy</button><code>%sql
+DROP TABLE IF EXISTS employees;
+DROP TABLE IF EXISTS departments;
+
+CREATE TABLE departments (
+  dept_id INT,
+  dept_name STRING,
+  location STRING,
+  budget DECIMAL(14,2)
+) USING DELTA;
+
+CREATE TABLE employees (
+  emp_id INT,
+  emp_name STRING,
+  gender STRING,
+  job_title STRING,
+  manager_id INT,
+  hire_date DATE,
+  salary DECIMAL(12,2),
+  commission DECIMAL(12,2),
+  dept_id INT,
+  email STRING,
+  city STRING
+) USING DELTA;</code></pre>
+<pre><span class="lang">SQL — Cell 3: insert departments</span><button class="copy">Copy</button><code>%sql
+INSERT INTO departments VALUES
+(10,'Human Resources','Bengaluru',2000000),
+(20,'Engineering','Hyderabad',8000000),
+(30,'Sales','Mumbai',4500000),
+(40,'Finance','Chennai',3000000),
+(50,'Operations','Pune',3500000),
+(60,'Research','Delhi',2500000); -- deliberately has no employee</code></pre>
+<pre><span class="lang">SQL — Cell 4: insert employees</span><button class="copy">Copy</button><code>%sql
+INSERT INTO employees VALUES
+(1001,'Asha','F','HR Manager',NULL,DATE'2017-04-10',90000,NULL,10,'asha@acme.com','Bengaluru'),
+(1002,'Ravi','M','Recruiter',1001,DATE'2021-08-16',50000,NULL,10,'ravi@acme.com','Mysuru'),
+(1003,'Meena','F','Engineering Manager',NULL,DATE'2015-02-20',130000,NULL,20,'meena@acme.com','Hyderabad'),
+(1004,'Arjun','M','Data Engineer',1003,DATE'2020-06-12',85000,NULL,20,'arjun@acme.com','Hyderabad'),
+(1005,'Kavya','F','Software Engineer',1003,DATE'2019-11-05',95000,NULL,20,'kavya@acme.com','Bengaluru'),
+(1006,'Vikram','M','Sales Manager',NULL,DATE'2016-01-14',110000,20000,30,'vikram@acme.com','Mumbai'),
+(1007,'Neha','F','Sales Executive',1006,DATE'2022-03-09',60000,15000,30,'neha@acme.com','Mumbai'),
+(1008,'Suresh','M','Accountant',1009,DATE'2020-09-21',70000,NULL,40,'suresh@acme.com','Chennai'),
+(1009,'Priya','F','Finance Manager',NULL,DATE'2014-07-01',115000,NULL,40,'priya@acme.com','Chennai'),
+(1010,'Kiran','M','Operations Analyst',1011,DATE'2023-01-10',65000,NULL,50,'kiran@acme.com','Pune'),
+(1011,'Deepa','F','Operations Manager',NULL,DATE'2018-05-18',100000,NULL,50,'deepa@acme.com','Pune'),
+(1012,'John','M','Data Engineer',1003,DATE'2021-10-25',88000,NULL,20,'john@acme.com','Kochi'),
+(1013,'Fatima','F','Sales Executive',1006,DATE'2023-07-03',62000,12000,30,'fatima@acme.com','Pune'),
+(1014,'Manoj','M','HR Associate',1001,DATE'2024-02-12',48000,NULL,10,'manoj@acme.com','Bengaluru'),
+(1015,'Riya','F','Consultant',NULL,DATE'2022-12-01',75000,NULL,NULL,'riya@partner.com','Delhi');</code></pre>
+<pre><span class="lang">SQL — Cell 5: validate before learning</span><button class="copy">Copy</button><code>%sql
+SELECT 'departments' AS table_name, COUNT(*) AS rows FROM departments
+UNION ALL
+SELECT 'employees', COUNT(*) FROM employees;</code></pre>
+<p><b>Expected:</b> 6 departments and 15 employees. If not, rerun Cells 2–5 in order.</p>
+</section>
+
+<section id="queries"><h2>3. Core queries: SELECT, filter, sort and derive</h2>
+<pre><span class="lang">SQL — projection and aliases</span><button class="copy">Copy</button><code>%sql
+SELECT emp_id,
+       emp_name AS employee,
+       job_title,
+       salary,
+       salary * 12 AS annual_salary
+FROM employees;</code></pre>
+<pre><span class="lang">SQL — WHERE, IN, BETWEEN, LIKE, NULL</span><button class="copy">Copy</button><code>%sql
+SELECT *
+FROM employees
+WHERE dept_id IN (20,30)
+  AND salary BETWEEN 60000 AND 100000
+  AND emp_name NOT LIKE 'A%'
+  AND manager_id IS NOT NULL;</code></pre>
+<pre><span class="lang">SQL — DISTINCT, ORDER BY, LIMIT</span><button class="copy">Copy</button><code>%sql
+SELECT DISTINCT city
+FROM employees
+WHERE city IS NOT NULL
+ORDER BY city
+LIMIT 10;</code></pre>
+<div class="grid"><div class="card"><h3>Logical SQL order</h3><p><b>FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT</b></p></div><div class="memory"><b>WHERE vs HAVING</b><p>WHERE filters <em>rows before grouping</em>. HAVING filters <em>groups after aggregation</em>.</p></div></div>
+<pre><span class="lang">SQL — aggregate and HAVING</span><button class="copy">Copy</button><code>%sql
+SELECT dept_id,
+       COUNT(*) AS employee_count,
+       ROUND(AVG(salary),2) AS avg_salary,
+       SUM(salary) AS monthly_payroll
+FROM employees
+WHERE dept_id IS NOT NULL
+GROUP BY dept_id
+HAVING COUNT(*) >= 2
+ORDER BY avg_salary DESC;</code></pre>
+</section>
+
+<section id="joins"><h2>4. Every practical join type</h2>
+<table><thead><tr><th>Join</th><th>Returns</th><th>Use case</th></tr></thead><tbody><tr><td>INNER</td><td>matched rows</td><td>employees with valid departments</td></tr><tr><td>LEFT</td><td>all left + matches</td><td>retain unassigned employees</td></tr><tr><td>RIGHT</td><td>all right + matches</td><td>retain empty departments</td></tr><tr><td>FULL</td><td>all rows from both</td><td>data reconciliation</td></tr><tr><td>LEFT SEMI</td><td>left rows that have a match</td><td>existence filter</td></tr><tr><td>LEFT ANTI</td><td>left rows without a match</td><td>missing relationship audit</td></tr><tr><td>SELF</td><td>table joined to itself</td><td>employee-manager hierarchy</td></tr><tr><td>CROSS</td><td>every combination</td><td>small scenario grids only</td></tr></tbody></table>
+<pre><span class="lang">SQL — inner, left and full joins</span><button class="copy">Copy</button><code>%sql
+-- Change INNER to LEFT, RIGHT or FULL OUTER and compare the row count.
+SELECT e.emp_id, e.emp_name, e.dept_id, d.dept_name, d.location
+FROM employees e
+FULL OUTER JOIN departments d
+  ON e.dept_id = d.dept_id
+ORDER BY COALESCE(e.dept_id,d.dept_id), e.emp_id;</code></pre>
+<pre><span class="lang">SQL — semi and anti joins</span><button class="copy">Copy</button><code>%sql
+-- Departments that have at least one employee
+SELECT d.* FROM departments d
+LEFT SEMI JOIN employees e ON d.dept_id = e.dept_id;
+
+-- Departments with no employee
+SELECT d.* FROM departments d
+LEFT ANTI JOIN employees e ON d.dept_id = e.dept_id;</code></pre>
+<pre><span class="lang">SQL — self join for managers</span><button class="copy">Copy</button><code>%sql
+SELECT e.emp_name AS employee,
+       e.job_title,
+       COALESCE(m.emp_name,'No manager') AS manager
+FROM employees e
+LEFT JOIN employees m
+  ON e.manager_id = m.emp_id
+ORDER BY manager, employee;</code></pre>
+<div class="callout warn"><b>Classic mistake:</b> A condition on the right table in the <code>WHERE</code> clause can turn a LEFT JOIN into an effective INNER JOIN. Put match-specific conditions in <code>ON</code> when unmatched left rows must survive.</div>
+</section>
+
+<section id="functions"><h2>5. SQL functions worked examples</h2>
+<h3>String functions</h3>
+<pre><span class="lang">SQL</span><button class="copy">Copy</button><code>%sql
+SELECT emp_name,
+       UPPER(emp_name) AS upper_name,
+       LOWER(email) AS clean_email,
+       INITCAP(job_title) AS title_case,
+       LENGTH(emp_name) AS name_length,
+       SUBSTRING(emp_name,1,3) AS first_three,
+       CONCAT_WS(' - ',emp_name,job_title) AS label,
+       SPLIT(email,'@')[1] AS email_domain,
+       REGEXP_REPLACE(city,'[aeiouAEIOU]','*') AS masked_city
+FROM employees;</code></pre>
+<h3>Numeric, NULL and conditional functions</h3>
+<pre><span class="lang">SQL</span><button class="copy">Copy</button><code>%sql
+SELECT emp_name,
+       salary,
+       COALESCE(commission,0) AS commission,
+       salary + COALESCE(commission,0) AS total_monthly_pay,
+       ROUND(salary * 1.08,2) AS salary_after_8_percent,
+       CASE
+         WHEN salary >= 100000 THEN 'A'
+         WHEN salary >= 70000  THEN 'B'
+         ELSE 'C'
+       END AS salary_band
+FROM employees
+ORDER BY total_monthly_pay DESC;</code></pre>
+<h3>Date functions</h3>
+<pre><span class="lang">SQL</span><button class="copy">Copy</button><code>%sql
+SELECT emp_name, hire_date,
+       YEAR(hire_date) AS hire_year,
+       MONTH(hire_date) AS hire_month,
+       DATEDIFF(CURRENT_DATE(),hire_date) AS days_served,
+       ROUND(MONTHS_BETWEEN(CURRENT_DATE(),hire_date)/12,1) AS years_served,
+       ADD_MONTHS(hire_date,6) AS confirmation_date,
+       DATE_FORMAT(hire_date,'MMM yyyy') AS hire_period
+FROM employees;</code></pre>
+<h3>Aggregate functions</h3>
+<pre><span class="lang">SQL</span><button class="copy">Copy</button><code>%sql
+SELECT d.dept_name,
+       COUNT(e.emp_id) AS headcount,
+       COUNT(DISTINCT e.city) AS cities,
+       MIN(e.salary) AS min_salary,
+       MAX(e.salary) AS max_salary,
+       ROUND(AVG(e.salary),2) AS avg_salary,
+       SUM(e.salary) AS payroll
+FROM departments d
+LEFT JOIN employees e ON d.dept_id=e.dept_id
+GROUP BY d.dept_name
+ORDER BY payroll DESC NULLS LAST;</code></pre>
+</section>
+
+<section id="advanced"><h2>6. Advanced SQL: windows, CTEs, subqueries and Delta CRUD</h2>
+<h3>Window functions: rows remain visible</h3>
+<pre><span class="lang">SQL — ranking, lag and department average</span><button class="copy">Copy</button><code>%sql
+SELECT emp_name, dept_id, salary,
+       ROW_NUMBER() OVER(PARTITION BY dept_id ORDER BY salary DESC) AS row_num,
+       RANK()       OVER(PARTITION BY dept_id ORDER BY salary DESC) AS salary_rank,
+       DENSE_RANK() OVER(PARTITION BY dept_id ORDER BY salary DESC) AS dense_rank,
+       LAG(salary)  OVER(PARTITION BY dept_id ORDER BY salary) AS previous_salary,
+       AVG(salary)  OVER(PARTITION BY dept_id) AS department_average,
+       SUM(salary)  OVER(PARTITION BY dept_id ORDER BY hire_date
+                         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_payroll
+FROM employees;</code></pre>
+<div class="memory"><b>ROW_NUMBER / RANK / DENSE_RANK</b><p>For values 100, 100, 90: row numbers are 1,2,3; ranks are 1,1,3; dense ranks are 1,1,2.</p></div>
+<pre><span class="lang">SQL — CTE: top two salaries per department</span><button class="copy">Copy</button><code>%sql
+WITH ranked AS (
+  SELECT e.*, DENSE_RANK() OVER(
+    PARTITION BY dept_id ORDER BY salary DESC
+  ) AS rnk
+  FROM employees e
+)
+SELECT emp_name, dept_id, salary, rnk
+FROM ranked
+WHERE rnk <= 2
+ORDER BY dept_id, rnk;</code></pre>
+<pre><span class="lang">SQL — correlated subquery: above department average</span><button class="copy">Copy</button><code>%sql
+SELECT e.emp_name, e.dept_id, e.salary
+FROM employees e
+WHERE e.salary > (
+  SELECT AVG(x.salary)
+  FROM employees x
+  WHERE x.dept_id = e.dept_id
+);</code></pre>
+<pre><span class="lang">SQL — temporary view and pivot</span><button class="copy">Copy</button><code>%sql
+CREATE OR REPLACE TEMP VIEW employee_department AS
+SELECT e.*, d.dept_name FROM employees e
+LEFT JOIN departments d ON e.dept_id=d.dept_id;
+
+SELECT * FROM (
+  SELECT dept_name, gender, salary FROM employee_department
+)
+PIVOT (
+  SUM(salary) FOR gender IN ('F' AS female, 'M' AS male)
+)
+ORDER BY dept_name;</code></pre>
+<h3>Delta INSERT, UPDATE, DELETE and MERGE</h3>
+<div class="callout warn"><b>Trainer rule:</b> CRUD changes the shared lab data. Run the reset cell after demonstrating it.</div>
+<pre><span class="lang">SQL — transactional changes</span><button class="copy">Copy</button><code>%sql
+INSERT INTO employees VALUES
+(1016,'Nitin','M','Trainee',1011,DATE'2026-07-01',42000,NULL,50,'nitin@acme.com','Pune');
+
+UPDATE employees
+SET salary = salary * 1.05
+WHERE dept_id = 20;
+
+DELETE FROM employees
+WHERE emp_id = 1016;
+
+DESCRIBE HISTORY employees;</code></pre>
+<pre><span class="lang">SQL — MERGE (upsert)</span><button class="copy">Copy</button><code>%sql
+CREATE OR REPLACE TEMP VIEW employee_updates AS
+SELECT 1004 AS emp_id, 90000.00 AS salary, 'Senior Data Engineer' AS job_title
+UNION ALL
+SELECT 1017, 55000.00, 'Support Engineer';
+
+MERGE INTO employees AS target
+USING employee_updates AS source
+ON target.emp_id = source.emp_id
+WHEN MATCHED THEN UPDATE SET
+  target.salary = source.salary,
+  target.job_title = source.job_title
+WHEN NOT MATCHED THEN INSERT
+  (emp_id,emp_name,gender,job_title,manager_id,hire_date,salary,commission,dept_id,email,city)
+VALUES
+  (source.emp_id,'New Associate','X',source.job_title,NULL,CURRENT_DATE(),
+   source.salary,NULL,50,'new.associate@acme.com','Pune');</code></pre>
+<h3>Read the plan before guessing</h3>
+<pre><span class="lang">SQL</span><button class="copy">Copy</button><code>%sql
+EXPLAIN FORMATTED
+SELECT d.dept_name, AVG(e.salary)
+FROM employees e JOIN departments d ON e.dept_id=d.dept_id
+GROUP BY d.dept_name;</code></pre>
+<div class="grid"><div class="card"><b>Look for</b><ul><li>scan and filter stages</li><li>exchange/shuffle</li><li>join strategy</li><li>partition pruning</li></ul></div><div class="card"><b>Good habits</b><ul><li>Select needed columns.</li><li>Filter early.</li><li>Avoid unnecessary DISTINCT.</li><li>Broadcast only a genuinely small side.</li><li>Measure with the plan and runtime.</li></ul></div></div>
+</section>
+
+<section id="pyspark"><h2>7. The same ideas in PySpark</h2>
+<pre><span class="lang">PYTHON — load and inspect</span><button class="copy">Copy</button><code>%python
+from pyspark.sql import functions as F
+from pyspark.sql.window import Window
+
+employees_df = spark.table("employees")
+departments_df = spark.table("departments")
+
+display(employees_df)
+employees_df.printSchema()</code></pre>
+<pre><span class="lang">PYTHON — select, filter, derive</span><button class="copy">Copy</button><code>%python
+result = (
+    employees_df
+    .filter((F.col("salary") >= 70000) & F.col("dept_id").isNotNull())
+    .withColumn("annual_salary", F.col("salary") * 12)
+    .withColumn("salary_band",
+        F.when(F.col("salary") >= 100000, "A")
+         .when(F.col("salary") >= 70000, "B")
+         .otherwise("C"))
+    .select("emp_id", "emp_name", "dept_id", "salary",
+            "annual_salary", "salary_band")
+    .orderBy(F.desc("salary"))
+)
+display(result)</code></pre>
+<pre><span class="lang">PYTHON — aggregate and join</span><button class="copy">Copy</button><code>%python
+payroll = (
+    employees_df
+    .join(departments_df, "dept_id", "left")
+    .groupBy("dept_id", "dept_name")
+    .agg(
+        F.count("emp_id").alias("headcount"),
+        F.round(F.avg("salary"), 2).alias("avg_salary"),
+        F.sum("salary").alias("payroll")
+    )
+    .orderBy(F.desc_nulls_last("payroll"))
+)
+display(payroll)</code></pre>
+<pre><span class="lang">PYTHON — window ranking</span><button class="copy">Copy</button><code>%python
+w = Window.partitionBy("dept_id").orderBy(F.desc("salary"))
+ranked = employees_df.withColumn("salary_rank", F.dense_rank().over(w))
+display(ranked.filter(F.col("salary_rank") <= 2)
+              .select("dept_id","emp_name","salary","salary_rank"))</code></pre>
+<pre><span class="lang">PYTHON — SQL ↔ DataFrame bridge</span><button class="copy">Copy</button><code>%python
+employees_df.createOrReplaceTempView("employees_python_view")
+spark.sql("""
+  SELECT dept_id, COUNT(*) AS headcount
+  FROM employees_python_view
+  GROUP BY dept_id
+""").show()
+
+payroll.explain("formatted")</code></pre>
+<table><thead><tr><th>SQL</th><th>PySpark DataFrame</th></tr></thead><tbody><tr><td>WHERE</td><td>filter / where</td></tr><tr><td>SELECT expression</td><td>select / withColumn</td></tr><tr><td>GROUP BY</td><td>groupBy(...).agg(...)</td></tr><tr><td>JOIN</td><td>join(other, condition, type)</td></tr><tr><td>ORDER BY</td><td>orderBy</td></tr></tbody></table>
+</section>
+
+<section id="practice"><h2>8. Related practice project: Customers, Orders & Order Items</h2>
+<div class="flow"><div><b>CUSTOMERS</b><br>customer_id</div><div class="arrow">1 → many</div><div><b>ORDERS</b><br>order_id, customer_id</div><div class="arrow">1 → many</div><div><b>ORDER_ITEMS</b><br>order_id</div></div>
+<pre><span class="lang">SQL — create and seed all three tables</span><button class="copy">Copy</button><code>%sql
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS customers;
+
+CREATE TABLE customers (
+ customer_id INT, customer_name STRING, segment STRING, city STRING,
+ state STRING, email STRING, customer_since DATE
+) USING DELTA;
+
+CREATE TABLE orders (
+ order_id INT, customer_id INT, order_date DATE, status STRING,
+ payment_method STRING, shipping_city STRING
+) USING DELTA;
+
+CREATE TABLE order_items (
+ order_item_id INT, order_id INT, product_name STRING, category STRING,
+ quantity INT, unit_price DECIMAL(10,2), discount_pct DECIMAL(5,2)
+) USING DELTA;
+
+INSERT INTO customers VALUES
+(1,'Ananya Stores','Retail','Bengaluru','Karnataka','ananya@mail.com',DATE'2022-01-10'),
+(2,'Bright Tech','Corporate','Hyderabad','Telangana','buy@bright.com',DATE'2021-06-15'),
+(3,'City Mart','Retail','Mumbai','Maharashtra','city@mail.com',DATE'2023-02-01'),
+(4,'Delta Services','Corporate','Chennai','Tamil Nadu','delta@mail.com',DATE'2020-09-20'),
+(5,'Eco Shop','Small Business','Pune','Maharashtra','eco@mail.com',DATE'2024-01-05'),
+(6,'Fresh Basket','Retail','Kochi','Kerala','fresh@mail.com',DATE'2022-11-11'),
+(7,'Global Labs','Corporate','Delhi','Delhi','global@mail.com',DATE'2019-05-03'),
+(8,'Hope Traders','Small Business','Jaipur','Rajasthan','hope@mail.com',DATE'2025-04-12');
+
+INSERT INTO orders VALUES
+(501,1,DATE'2026-01-05','Delivered','UPI','Bengaluru'),
+(502,2,DATE'2026-01-08','Delivered','Card','Hyderabad'),
+(503,1,DATE'2026-02-11','Shipped','Card','Mysuru'),
+(504,3,DATE'2026-02-15','Cancelled','UPI','Mumbai'),
+(505,4,DATE'2026-03-02','Delivered','Bank Transfer','Chennai'),
+(506,5,DATE'2026-03-10','Processing','COD','Pune'),
+(507,2,DATE'2026-04-01','Delivered','Card','Hyderabad'),
+(508,6,DATE'2026-04-18','Delivered','UPI','Kochi'),
+(509,7,DATE'2026-05-06','Shipped','Bank Transfer','Delhi'),
+(510,3,DATE'2026-05-22','Delivered','COD','Mumbai'),
+(511,1,DATE'2026-06-03','Delivered','UPI','Bengaluru'),
+(512,7,DATE'2026-06-20','Processing','Card','Delhi'),
+(513,5,DATE'2026-07-01','Processing','UPI','Pune'); -- deliberately no items
+
+INSERT INTO order_items VALUES
+(1,501,'Keyboard','Electronics',2,1500,5),(2,501,'Mouse','Electronics',2,700,0),
+(3,502,'Laptop','Electronics',3,65000,10),(4,502,'Dock','Electronics',3,6000,5),
+(5,503,'Chair','Furniture',4,8500,12),(6,503,'Desk','Furniture',2,15000,8),
+(7,504,'Phone','Electronics',1,30000,0),(8,505,'Printer','Electronics',2,18000,7),
+(9,505,'Paper Box','Office Supplies',10,450,0),(10,506,'Notebook','Office Supplies',20,120,5),
+(11,506,'Pen Set','Office Supplies',15,200,0),(12,507,'Monitor','Electronics',5,14000,10),
+(13,508,'Storage Rack','Furniture',2,12000,15),(14,508,'Labels','Office Supplies',20,90,0),
+(15,509,'Server','Electronics',2,120000,6),(16,509,'Cable Pack','Electronics',10,800,0),
+(17,510,'Table','Furniture',3,11000,5),(18,510,'Lamp','Furniture',6,1200,10),
+(19,511,'Headset','Electronics',4,2500,5),(20,512,'SSD','Electronics',8,6000,12);</code></pre>
+<h3>Business formula</h3><div class="memory"><b>Line amount</b> = quantity × unit price × (1 − discount percentage ÷ 100).<br><b>Order amount</b> = sum of its line amounts. Exclude cancelled orders only when the question says “sales/revenue”.</div>
+<h3>30 associate questions</h3>
+<div class="grid">
+<div class="card"><h3>Foundation (1–10)</h3><ol><li>List all customers alphabetically.</li><li>Show Corporate customers only.</li><li>Find customers from Maharashtra.</li><li>List distinct order statuses.</li><li>Find orders placed from March through May 2026.</li><li>Show items with quantity at least 5.</li><li>Create a lowercase email column.</li><li>Extract order month as <code>yyyy-MM</code>.</li><li>Calculate gross line amount before discount.</li><li>Calculate net line amount after discount.</li></ol></div>
+<div class="card"><h3>Joins & aggregates (11–20)</h3><ol start="11"><li>Show every order with customer name.</li><li>Show every customer, including those without orders.</li><li>Find customers who never ordered.</li><li>Find orders that have no item.</li><li>Calculate each order total.</li><li>Calculate delivered revenue by customer.</li><li>Find the top product category by revenue.</li><li>Count orders by status.</li><li>Find average order value, excluding cancelled orders.</li><li>Find customers with at least two orders.</li></ol></div>
+<div class="card"><h3>Advanced (21–30)</h3><ol start="21"><li>Rank customers by non-cancelled revenue.</li><li>Find the top two orders per customer.</li><li>Calculate monthly running revenue.</li><li>Show month-over-month revenue change with LAG.</li><li>Find products priced above their category average.</li><li>Find the highest-value item in each order.</li><li>Pivot order counts by payment method and status.</li><li>Find each customer's days between consecutive orders.</li><li>MERGE a status update for orders 506 and 513.</li><li>Build one customer summary with order count, last order date, and lifetime value.</li></ol></div>
+</div>
+<details><summary>Trainer answer key — sample solutions</summary>
+<pre><span class="lang">SQL — solutions 10, 13–16, 21–25, 30</span><button class="copy">Copy</button><code>%sql
+-- Q10
+SELECT *, quantity*unit_price*(1-discount_pct/100) AS net_amount FROM order_items;
+
+-- Q13
+SELECT c.* FROM customers c LEFT ANTI JOIN orders o ON c.customer_id=o.customer_id;
+
+-- Q14
+SELECT o.* FROM orders o LEFT ANTI JOIN order_items i ON o.order_id=i.order_id;
+
+-- Q15
+SELECT order_id, ROUND(SUM(quantity*unit_price*(1-discount_pct/100)),2) order_total
+FROM order_items GROUP BY order_id;
+
+-- Q16
+SELECT c.customer_id,c.customer_name,
+ ROUND(SUM(i.quantity*i.unit_price*(1-i.discount_pct/100)),2) delivered_revenue
+FROM customers c JOIN orders o ON c.customer_id=o.customer_id
+JOIN order_items i ON o.order_id=i.order_id
+WHERE o.status='Delivered'
+GROUP BY c.customer_id,c.customer_name ORDER BY delivered_revenue DESC;
+
+-- Q21
+WITH revenue AS (
+ SELECT c.customer_id,c.customer_name,
+        COALESCE(SUM(i.quantity*i.unit_price*(1-i.discount_pct/100)),0) revenue
+ FROM customers c LEFT JOIN orders o
+   ON c.customer_id=o.customer_id AND o.status&lt;&gt;'Cancelled'
+ LEFT JOIN order_items i ON o.order_id=i.order_id
+ GROUP BY c.customer_id,c.customer_name
+)
+SELECT *,DENSE_RANK() OVER(ORDER BY revenue DESC) revenue_rank FROM revenue;
+
+-- Q22
+WITH totals AS (
+ SELECT o.customer_id,o.order_id,
+   SUM(i.quantity*i.unit_price*(1-i.discount_pct/100)) order_total
+ FROM orders o JOIN order_items i ON o.order_id=i.order_id
+ GROUP BY o.customer_id,o.order_id
+), r AS (
+ SELECT *,ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY order_total DESC) rn
+ FROM totals
+) SELECT * FROM r WHERE rn&lt;=2;
+
+-- Q23/Q24
+WITH monthly AS (
+ SELECT DATE_TRUNC('month',o.order_date) month,
+   SUM(i.quantity*i.unit_price*(1-i.discount_pct/100)) revenue
+ FROM orders o JOIN order_items i ON o.order_id=i.order_id
+ WHERE o.status&lt;&gt;'Cancelled' GROUP BY DATE_TRUNC('month',o.order_date)
+)
+SELECT *,SUM(revenue) OVER(ORDER BY month) running_revenue,
+ revenue-LAG(revenue) OVER(ORDER BY month) mom_change FROM monthly;
+
+-- Q25
+SELECT * FROM order_items i
+WHERE unit_price &gt; (SELECT AVG(x.unit_price) FROM order_items x
+                    WHERE x.category=i.category);
+
+-- Q30
+SELECT c.customer_id,c.customer_name,COUNT(DISTINCT o.order_id) order_count,
+ MAX(o.order_date) last_order_date,
+ COALESCE(ROUND(SUM(CASE WHEN o.status&lt;&gt;'Cancelled'
+   THEN i.quantity*i.unit_price*(1-i.discount_pct/100) ELSE 0 END),2),0) lifetime_value
+FROM customers c LEFT JOIN orders o ON c.customer_id=o.customer_id
+LEFT JOIN order_items i ON o.order_id=i.order_id
+GROUP BY c.customer_id,c.customer_name;</code></pre>
+<p>Many solutions are valid. Grade the business logic, NULL handling, join grain and result validation—not just textual similarity.</p></details>
+</section>
+
+<section id="interview"><h2>9. Interview questions and concise answers</h2>
+<div id="faq">
+<details><summary>1. What is a Databricks notebook?</summary><p>An interactive document containing executable cells, text, results and visualizations, commonly used for collaborative data engineering and analytics.</p></details>
+<details><summary>2. SQL table vs DataFrame?</summary><p>A table is a named persisted or temporary relation. A DataFrame is a distributed logical dataset represented through an API. Both can be optimized by Spark's engine.</p></details>
+<details><summary>3. Why use Delta tables?</summary><p>They add reliable transactions and table-management features such as updates, deletes, merge and history over data lake storage.</p></details>
+<details><summary>4. WHERE vs HAVING?</summary><p>WHERE filters input rows; HAVING filters grouped results.</p></details>
+<details><summary>5. INNER vs LEFT JOIN?</summary><p>INNER keeps matches only. LEFT keeps every left row and supplies NULL for absent right matches.</p></details>
+<details><summary>6. Semi vs anti join?</summary><p>Semi returns left rows with a match. Anti returns left rows without a match; neither adds right-side columns.</p></details>
+<details><summary>7. Why can a join duplicate rows?</summary><p>The key may not be unique on one or both sides. Many-to-many matches multiply rows.</p></details>
+<details><summary>8. GROUP BY vs window function?</summary><p>GROUP BY collapses rows to group grain. A window computes across related rows while retaining row detail.</p></details>
+<details><summary>9. RANK vs DENSE_RANK?</summary><p>Both give ties the same rank; RANK leaves gaps after ties, DENSE_RANK does not.</p></details>
+<details><summary>10. What does PARTITION BY mean in a window?</summary><p>It restarts the window calculation independently for each key group.</p></details>
+<details><summary>11. CTE vs subquery?</summary><p>Both express a logical intermediate result. A CTE often improves readability and can be referenced cleanly in a larger statement.</p></details>
+<details><summary>12. What is MERGE?</summary><p>An atomic conditional operation that can update matching target rows and insert nonmatching source rows; often called an upsert pattern.</p></details>
+<details><summary>13. Why use COALESCE?</summary><p>It returns the first non-NULL expression, useful for defaulting absent amounts or labels.</p></details>
+<details><summary>14. count(*) vs count(column)?</summary><p>count(*) counts rows. count(column) ignores rows where that column is NULL.</p></details>
+<details><summary>15. What causes a Spark shuffle?</summary><p>Data must move between partitions, commonly for joins, distinct, grouping, repartitioning and global ordering.</p></details>
+<details><summary>16. When is broadcast join appropriate?</summary><p>When one relation is genuinely small enough to copy to executors, avoiding a large shuffle. Confirm with size and plan rather than guessing.</p></details>
+<details><summary>17. Why avoid SELECT * in production?</summary><p>It reads unnecessary columns, creates brittle downstream schemas and obscures intent.</p></details>
+<details><summary>18. How do you debug an incorrect aggregate?</summary><p>Confirm grain, row counts before and after joins, duplicate keys, NULL behavior, status filters and the exact formula.</p></details>
+</div>
+</section>
+
+<section id="assessment"><h2>10. Active learning and assessment</h2>
+<h3>Five micro-exercises</h3>
+<ol><li>Predict whether Riya appears in an INNER JOIN. Run it and explain.</li><li>Predict the headcount of Research in a LEFT JOIN aggregate using <code>COUNT(*)</code> versus <code>COUNT(emp_id)</code>.</li><li>Rewrite the above-average-salary subquery using a window function.</li><li>Change one salary to tie with another and compare all three ranking functions.</li><li>Deliberately join orders to items before grouping; state the resulting grain.</li></ol>
+<h3>Scored knowledge check</h3>
+<form id="quiz">
+<div class="exercise"><p><b>1. Which join finds customers with no orders?</b></p><label class="quiz-option"><input type="radio" name="q1" value="0"> INNER</label><label class="quiz-option"><input type="radio" name="q1" value="1"> LEFT ANTI</label><label class="quiz-option"><input type="radio" name="q1" value="0"> CROSS</label></div>
+<div class="exercise"><p><b>2. Which function gives 1,1,2 for tied values?</b></p><label class="quiz-option"><input type="radio" name="q2" value="0"> ROW_NUMBER</label><label class="quiz-option"><input type="radio" name="q2" value="1"> DENSE_RANK</label><label class="quiz-option"><input type="radio" name="q2" value="0"> LAG</label></div>
+<div class="exercise"><p><b>3. Which clause filters aggregate groups?</b></p><label class="quiz-option"><input type="radio" name="q3" value="1"> HAVING</label><label class="quiz-option"><input type="radio" name="q3" value="0"> WHERE only</label><label class="quiz-option"><input type="radio" name="q3" value="0"> LIMIT</label></div>
+<div class="exercise"><p><b>4. count(commission) does what?</b></p><label class="quiz-option"><input type="radio" name="q4" value="1"> Counts non-NULL commission values</label><label class="quiz-option"><input type="radio" name="q4" value="0"> Counts every row</label></div>
+<div class="exercise"><p><b>5. Best first response to a mysteriously slow join?</b></p><label class="quiz-option"><input type="radio" name="q5" value="0"> Broadcast both sides</label><label class="quiz-option"><input type="radio" name="q5" value="1"> Inspect sizes, plan, filters and join keys</label></div>
+<button class="btn" type="button" id="gradeBtn">Grade quiz</button><div id="quizResult" class="result"></div></form>
+<details><summary>Quiz explanations</summary><ol><li>LEFT ANTI is an efficient unmatched-left pattern.</li><li>DENSE_RANK preserves ties without gaps.</li><li>HAVING operates after grouping.</li><li>COUNT(column) ignores NULL.</li><li>Evidence from data sizes and the execution plan comes before tuning.</li></ol></details>
+<h3>Timed exam — 45 minutes / 40 marks</h3>
+<table><thead><tr><th>Part</th><th>Task</th><th>Marks</th><th>Time</th></tr></thead><tbody><tr><td>A</td><td>Five filtering/function queries on customers and orders</td><td>10</td><td>10 min</td></tr><tr><td>B</td><td>Order totals and customer revenue with correct joins</td><td>12</td><td>15 min</td></tr><tr><td>C</td><td>Top two orders and monthly running revenue</td><td>12</td><td>15 min</td></tr><tr><td>D</td><td>Explain plan, two risks, and two improvements</td><td>6</td><td>5 min</td></tr></tbody></table>
+<div class="callout good"><b>Pass standard:</b> 28/40, provided the solution does not double-count revenue. Suggested rubric: correctness 60%, grain/NULL handling 20%, readability 10%, validation 10%.</div>
+<h3>Preparation tracker</h3>
+<div class="checklist" id="tracker">
+<label><input type="checkbox"> I can create and validate Delta tables.</label>
+<label><input type="checkbox"> I can explain inner, outer, semi, anti and self joins.</label>
+<label><input type="checkbox"> I can use string, date, NULL and conditional functions.</label>
+<label><input type="checkbox"> I can use aggregate and window functions.</label>
+<label><input type="checkbox"> I can write CTEs and subqueries.</label>
+<label><input type="checkbox"> I can perform and explain MERGE.</label>
+<label><input type="checkbox"> I can translate SQL into PySpark.</label>
+<label><input type="checkbox"> I can validate the grain of a three-table join.</label>
+</div><p id="progressText">0% complete</p><div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+<h3>Troubleshooting</h3>
+<table><thead><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr></thead><tbody><tr><td>TABLE_OR_VIEW_NOT_FOUND</td><td>wrong schema or setup cell not run</td><td>run <code>SELECT current_schema()</code>, then Cells 2–5</td></tr><tr><td>Permission denied</td><td>no create privilege</td><td>use an authorized schema or ask workspace admin/trainer</td></tr><tr><td>Duplicate rows after join</td><td>nonunique join key</td><td>profile key counts; aggregate/deduplicate at intended grain</td></tr><tr><td>NULL totals</td><td>missing matches or NULL arithmetic</td><td>use LEFT JOIN deliberately and COALESCE where business-valid</td></tr><tr><td>Python name not defined</td><td>setup Python cell not run</td><td>run imports and DataFrame creation cell</td></tr><tr><td>MERGE changed unexpected rows</td><td>source key not unique</td><td>validate/deduplicate source before MERGE</td></tr></tbody></table>
+</section>
+
+<section><h2>11. Official references</h2><ul><li><a href="https://docs.databricks.com/aws/en/notebooks/" target="_blank">Databricks notebooks</a></li><li><a href="https://docs.databricks.com/aws/en/delta/" target="_blank">Delta Lake on Databricks</a></li><li><a href="https://docs.databricks.com/aws/en/delta/merge" target="_blank">Upsert with MERGE</a></li><li><a href="https://docs.databricks.com/aws/en/sql/language-manual/" target="_blank">Databricks SQL language reference</a></li></ul><p>Product UI and compute options can vary by cloud, workspace edition and permissions. The SQL/PySpark lab itself is designed to run in a Databricks notebook with Spark and Delta support.</p></section>
+</main>
+<div class="note-hint">Double-click text to add a note ✎</div>
+<div id="notesPanel" role="dialog" aria-modal="true" aria-labelledby="noteTitle"><h3 id="noteTitle">My note</h3><p id="noteContext"></p><textarea id="noteText" placeholder="Type your teaching note, question, or memory aid…"></textarea><div class="toolbar"><button class="btn" id="saveNoteBtn">Save</button><button class="btn alt" id="closeNoteBtn">Close</button></div><small>Saved only in this browser.</small></div>
+<footer>Databricks Employee & Department Classroom Lab • Double-click any paragraph, list item or heading to annotate it.</footer>
+<script>
+document.querySelectorAll('pre').forEach((pre,i)=>{
+ const btn=pre.querySelector('.copy'); if(!btn)return;
+ btn.addEventListener('click',async()=>{const code=pre.querySelector('code').innerText;await navigator.clipboard.writeText(code);btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1200)})
+});
+const notesPanel=document.getElementById('notesPanel');
+const noteText=document.getElementById('noteText');
+const noteContext=document.getElementById('noteContext');
+const saveNoteBtn=document.getElementById('saveNoteBtn');
+const closeNoteBtn=document.getElementById('closeNoteBtn');
+let activeNoteKey='';
+function closeNotes(){notesPanel.classList.remove('open');activeNoteKey=''}
+function openNotes(el){
+ const context=(el.innerText||el.textContent).trim().slice(0,90);
+ activeNoteKey='db-note-'+btoa(unescape(encodeURIComponent(context))).slice(0,40);
+ noteContext.textContent='For: '+context;
+ noteText.value=localStorage.getItem(activeNoteKey)||'';
+ notesPanel.classList.add('open');noteText.focus()
+}
+document.addEventListener('dblclick',e=>{const el=e.target.closest('p,li,h2,h3,td');if(el&&!notesPanel.contains(el))openNotes(el)});
+saveNoteBtn.addEventListener('click',()=>{if(activeNoteKey)localStorage.setItem(activeNoteKey,noteText.value);closeNotes()});
+closeNoteBtn.addEventListener('click',closeNotes);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNotes()});
+document.addEventListener('mousedown',e=>{if(notesPanel.classList.contains('open')&&!notesPanel.contains(e.target)&&!e.target.closest('.note-hint'))closeNotes()});
+document.getElementById('gradeBtn').addEventListener('click',()=>{
+ let score=0,answered=0; for(let i=1;i<=5;i++){const x=document.querySelector('input[name=q'+i+']:checked');if(x){answered++;score+=Number(x.value)}}
+ document.getElementById('quizResult').textContent=answered<5?'Answer all five questions.':'Score: '+score+'/5 — '+(score>=4?'Ready to proceed.':'Review the explanations and retry.')
+});
+const checks=[...document.querySelectorAll('#tracker input')],progressBar=document.getElementById('progressBar'),progressText=document.getElementById('progressText');
+function updateProgress(){const n=checks.filter(x=>x.checked).length,p=Math.round(n/checks.length*100);progressBar.style.width=p+'%';progressText.textContent=p+'% complete';localStorage.setItem('db-training-progress',JSON.stringify(checks.map(x=>x.checked)))}
+try{const saved=JSON.parse(localStorage.getItem('db-training-progress'));if(Array.isArray(saved))checks.forEach((x,i)=>x.checked=!!saved[i])}catch(e){}
+checks.forEach(x=>x.addEventListener('change',updateProgress));updateProgress();
+document.addEventListener('mouseover',e=>{const el=e.target.closest('.card,.callout,.exercise');if(el)el.classList.add('highlight')});
+document.addEventListener('mouseout',e=>{const el=e.target.closest('.card,.callout,.exercise');if(el)el.classList.remove('highlight')});
+let lastSpark=0;document.addEventListener('mousemove',e=>{if(Date.now()-lastSpark<90)return;lastSpark=Date.now();const s=document.createElement('span');s.className='spark';s.textContent='✦';s.style.left=e.clientX+'px';s.style.top=e.clientY+'px';document.body.appendChild(s);setTimeout(()=>s.remove(),650)});
+</script>
+</body></html>
