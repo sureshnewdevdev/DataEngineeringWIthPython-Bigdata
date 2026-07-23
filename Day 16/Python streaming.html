@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Python Data Streaming - Interactive Classroom Tutorial</title>
+<style>
+  :root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --accent-color: #0284c7;
+    --accent-hover: #0369a1;
+    --border-color: #cbd5e1;
+    --code-bg: #1e293b;
+    --code-text: #f8fafc;
+    --callout-bg: #e0f2fe;
+    --callout-border: #0ea5e9;
+    --success-bg: #f0fdf4;
+    --success-border: #22c55e;
+    --danger-bg: #fef2f2;
+    --danger-border: #ef4444;
+    --highlight-yellow: #fef08a;
+  }
+
+  [data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --accent-color: #38bdf8;
+    --accent-hover: #7dd3fc;
+    --border-color: #334155;
+    --code-bg: #020617;
+    --code-text: #e2e8f0;
+    --callout-bg: #0c4a6e;
+    --callout-border: #38bdf8;
+    --highlight-yellow: #ca8a04;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+  body { background: var(--bg-primary); color: var(--text-primary); line-height: 1.6; padding-bottom: 60px; overflow-x: hidden; }
+  
+  /* Layout & Header */
+  .header-bar {
+    position: sticky; top: 0; z-index: 100; background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color); padding: 12px 20px;
+    display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  .header-controls { display: flex; gap: 12px; align-items: center; }
+  
+  .progress-container { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; font-weight: 600; }
+  .progress-bar-outer { width: 120px; height: 10px; background: var(--border-color); border-radius: 5px; overflow: hidden; }
+  .progress-bar-inner { height: 100%; width: 0%; background: var(--accent-color); transition: width 0.3s; }
+  
+  .btn { background: var(--accent-color); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
+  .btn:hover { background: var(--accent-hover); }
+  .btn-secondary { background: var(--text-secondary); }
+  .btn-danger { background: var(--danger-border); }
+
+  .layout { display: flex; max-width: 1400px; margin: 20px auto; padding: 0 15px; gap: 20px; }
+  
+  /* Sidebars */
+  .sidebar { width: 260px; flex-shrink: 0; position: sticky; top: 70px; height: calc(100vh - 90px); overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; font-size: 0.85rem; }
+  .sidebar h3 { margin-bottom: 10px; font-size: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;}
+  .toc-sidebar ul { list-style: none; }
+  .toc-sidebar li { margin-bottom: 6px; }
+  .toc-sidebar a { color: var(--text-secondary); text-decoration: none; display: block; padding: 4px 8px; border-radius: 4px; }
+  .toc-sidebar a:hover { background: var(--callout-bg); color: var(--accent-color); }
+  
+  .main-content { flex: 1; min-width: 0; }
+  
+  /* Sections */
+  section { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; margin-bottom: 25px; scroll-margin-top: 80px; transition: box-shadow 0.3s; }
+  section:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  section h2 { font-size: 1.5rem; color: var(--accent-color); margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+  .prep-check { font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: normal; }
+  
+  h3 { margin: 20px 0 10px; color: var(--text-primary); }
+  p { margin-bottom: 12px; }
+  ul, ol { margin-left: 20px; margin-bottom: 15px; }
+  
+  /* Callouts */
+  .callout { border-left: 4px solid var(--callout-border); background: var(--callout-bg); padding: 12px 16px; border-radius: 0 6px 6px 0; margin: 15px 0; }
+  .callout-title { font-weight: bold; margin-bottom: 4px; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+  .callout.remember { border-color: #8b5cf6; background: #f3e8ff22; }
+  .callout.confusion { border-color: #f59e0b; background: #fef3c722; }
+  .callout.protip { border-color: #10b981; background: #d1fae522; }
+  .callout.watchout { border-color: #ef4444; background: #fee2e222; }
+  
+  /* Diagrams */
+  .diagram { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin: 15px 0; font-family: monospace; }
+  .diagram-title { text-align: center; font-weight: bold; margin-bottom: 10px; }
+  .diagram-legend { font-size: 0.8rem; background: var(--bg-card); padding: 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block; }
+  .diagram-box { border: 2px solid var(--accent-color); background: var(--bg-card); padding: 10px; border-radius: 6px; text-align: center; font-weight: bold; margin: 5px; }
+  .diagram-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 15px 0; }
+  
+  /* Code */
+  .code-block { position: relative; margin: 15px 0; }
+  pre { background: var(--code-bg); color: var(--code-text); padding: 15px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", monospace; font-size: 0.85rem; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; padding: 4px 8px; font-size: 0.75rem; background: rgba(255,255,255,0.2); border: none; color: white; cursor: pointer; border-radius: 4px; }
+  .copy-btn:hover { background: rgba(255,255,255,0.3); }
+  code { background: var(--code-bg); color: var(--code-text); padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 0.85em; }
+  
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.9rem; }
+  th, td { border: 1px solid var(--border-color); padding: 10px; text-align: left; }
+  th { background: var(--callout-bg); }
+  
+  /* Interactive */
+  .check-yourself { background: var(--bg-primary); border: 1px dashed var(--accent-color); padding: 10px; border-radius: 6px; margin: 10px 0; }
+  .check-yourself summary { font-weight: bold; cursor: pointer; color: var(--accent-color); outline: none; }
+  
+  /* Notes */
+  .noted-word { background-color: var(--highlight-yellow); border-bottom: 2px solid #ca8a04; cursor: pointer; border-radius: 2px; }
+  .note-popup { position: fixed; z-index: 1000; background: var(--bg-card); border: 2px solid var(--accent-color); padding: 12px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); width: 250px; }
+  .note-popup textarea { width: 100%; height: 60px; margin-bottom: 8px; padding: 5px; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-primary); color: var(--text-primary); font-family: inherit; }
+  .note-item { border-bottom: 1px solid var(--border-color); padding: 8px 0; }
+  .note-item-word { font-weight: bold; color: var(--accent-color); cursor: pointer; }
+  .note-item-word:hover { text-decoration: underline; }
+  .note-item-actions { display: flex; gap: 5px; margin-top: 5px; }
+  
+  /* Quiz & Exam */
+  .q-card { border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; margin-bottom: 15px; background: var(--bg-card); }
+  .opt-label { display: block; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 5px; cursor: pointer; transition: background 0.2s; }
+  .opt-label:hover { background: var(--callout-bg); }
+  .opt-label input { margin-right: 8px; }
+  .exp { margin-top: 10px; padding: 10px; background: var(--callout-bg); border-left: 3px solid var(--accent-color); display: none; font-size: 0.85rem; }
+  .res-banner { padding: 20px; border-radius: 8px; text-align: center; font-size: 1.2rem; font-weight: bold; margin-top: 20px; display: none; }
+  
+  .flash-highlight { animation: flashAnim 1.5s ease; }
+  @keyframes flashAnim { 0% { background-color: #facc15; transform: scale(1.1); box-shadow: 0 0 10px #facc15; } 100% { background-color: var(--highlight-yellow); transform: scale(1); } }
+  
+  /* Sparkles */
+  .sparkle { position: fixed; width: 6px; height: 6px; border-radius: 50%; background-color: var(--accent-color); pointer-events: none; z-index: 9999; animation: float 1s ease-out forwards; }
+  @keyframes float { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-20px) scale(0); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .sparkle { display: none; } }
+  
+  @media (max-width: 1024px) { .sidebar { display: none; } .layout { flex-direction: column; } }
+  @media print { .header-bar, .sidebar, .btn, .copy-btn, .prep-check, .check-yourself summary::marker { display: none !important; } body { background: #fff; color: #000; } section { border: none; padding: 0; margin-bottom: 30px; box-shadow: none; } .exp { display: block !important; } .check-yourself summary { display: none; } .check-yourself p { display: block; } }
+</style>
+</head>
+<body>
+
+<div class="header-bar">
+  <div style="font-weight: bold; font-size: 1.1rem; color: var(--accent-color);">Python Data Streaming</div>
+  <div class="header-controls">
+    <div class="progress-container" id="storage-hint-container">
+      <span id="prep-text">0 / 16 prepared</span>
+      <div class="progress-bar-outer"><div class="progress-bar-inner" id="prep-bar"></div></div>
+    </div>
+    <button class="btn btn-secondary" onclick="resetProgress()">Reset Progress</button>
+    <button class="btn btn-secondary" onclick="toggleTheme()">🌓</button>
+    <button class="btn btn-secondary" id="mute-btn" onclick="toggleMute()">🔊 Sound On</button>
+  </div>
+</div>
+<div id="storage-hint" style="display:none; text-align:center; font-size:0.8rem; background:var(--warning-bg); padding:4px;">Note: Private mode detected. Notes and progress work now, but won't be saved after closing.</div>
+
+<div class="layout">
+  <nav class="sidebar toc-sidebar">
+    <h3>Contents</h3>
+    <ul>
+      <li><a href="#sec-1">1. Title & Objectives</a></li>
+      <li><a href="#sec-2">2. Introduction</a></li>
+      <li><a href="#sec-3">3. Beginner Explanation</a></li>
+      <li><a href="#sec-4">4. Technical Explanation</a></li>
+      <li><a href="#sec-5">5. Simple Example</a></li>
+      <li><a href="#sec-6">6. Real-Time Scenario</a></li>
+      <li><a href="#sec-7">7. Code Examples</a></li>
+      <li><a href="#sec-8">8. Comparison Table</a></li>
+      <li><a href="#sec-9">9. Best Practices</a></li>
+      <li><a href="#sec-10">10. Edge Cases & Gotchas</a></li>
+      <li><a href="#sec-11">11. Troubleshooting</a></li>
+      <li><a href="#sec-12">12. Interview Q&A</a></li>
+      <li><a href="#sec-13">13. Practice Quiz</a></li>
+      <li><a href="#sec-14">14. Formal Exam</a></li>
+      <li><a href="#sec-15">15. Glossary</a></li>
+      <li><a href="#sec-16">16. Summary</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    
+    <!-- SECTION 1 -->
+    <section id="sec-1">
+      <h2>1. Title & Learning Objectives
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-1', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p><strong>Python Data Streaming: Processing Massive Datasets with Generators</strong></p>
+      <p><em>An industrial expert's guide to reading, processing, and outputting data in memory-efficient chunks.</em></p>
+      <div class="callout">
+        <div class="callout-title">Learning Objectives</div>
+        <ul>
+          <li>Understand the concept of chunked streaming vs. bulk loading.</li>
+          <li>Master the `yield` keyword to create custom Python generators.</li>
+          <li>Process gigabyte-sized CSV/Log files efficiently on a machine with limited RAM.</li>
+          <li>Build a pipeline of generators to transform data sequentially.</li>
+        </ul>
+      </div>
+      <p><strong>Before You Start:</strong> You should understand basic Python loops (`for`, `while`) and function definitions. Estimated time: 45 minutes. You will be able to write scripts that parse massive datasets without crashing your computer.</p>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="sec-2">
+      <h2>2. Introduction
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-2', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p>In standard data processing scripts, developers often read a whole file into a list or a variable at once. This works perfectly fine for small configuration files or short lists. However, when you deal with enterprise-level logs, database dumps, or real-time sensor feeds, files can easily exceed the size of your machine's physical memory (RAM).</p>
+      
+      <p><strong>Without streaming:</strong> If you attempt to load a 10GB log file into memory using `file.read()` or `file.readlines()` on a laptop with 8GB of RAM, Python will allocate memory until the OS intervenes. The operating system will trigger an `Out of Memory` (OOM) error, and your script will violently crash before processing a single line.</p>
+      
+      <p><strong>With streaming:</strong> Python provides a native, elegant solution called "generators." Instead of holding the entire 10GB in memory, a streaming approach holds only a single line (or a small "chunk" of lines) at a time. The script processes that line, writes the result, discards the old line, and fetches the next one. This keeps memory usage flat and minimal, regardless of how large the input file becomes.</p>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="sec-3">
+      <h2>3. Beginner Explanation (The Analogy)
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-3', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p>Imagine you are a librarian tasked with moving 10,000 heavy books from a delivery truck to the shelves inside.</p>
+      
+      <div class="callout remember">
+        <div class="callout-title">Remember it as</div>
+        <strong>Remember it as: The "Bucket Brigade" (Streaming) vs. The "Giant Backpack" (Bulk Load).</strong>
+      </div>
+
+      <p><strong>Step-by-step breakdown:</strong></p>
+      <ol>
+        <li><strong>The Inefficient Way (Bulk Loading):</strong> You try to stuff all 10,000 books into a giant backpack, carry them inside all at once, and then sort them. Your back breaks (Out of Memory error), and you fail.</li>
+        <li><strong>The Streaming Way (Generators):</strong> You stand at the truck, pick up <strong>one book</strong> (yielding a chunk).</li>
+        <li><strong>Processing:</strong> You hand that one book to an assistant who stamps it (data transformation).</li>
+        <li><strong>Output:</strong> The assistant places that one book on the shelf (writing the result).</li>
+        <li><strong>Iteration:</strong> You repeat this process, one book at a time, until the truck is empty. Your back (RAM) never hurts because you only hold one book at any given second.</li>
+      </ol>
+
+      <details class="check-yourself">
+        <summary>Check yourself: If I have a 50GB file and 16GB of RAM, what happens if I use a streaming generator?</summary>
+        <p>The program will process the 50GB file successfully! Because a generator only loads one piece (like one line) at a time, your memory footprint will remain tiny (e.g., a few megabytes), completely ignoring the 16GB limit.</p>
+      </details>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="sec-4">
+      <h2>4. Technical Explanation & Architecture
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-4', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p>At a technical level, data streaming in Python is implemented using the <strong>Iterator Protocol</strong> and <strong>Generators</strong>. A generator is a special type of function that returns an iterator object. Instead of using `return` (which terminates the function and sends all values back at once), a generator uses the `yield` keyword. `yield` pauses the function, saves its internal state, returns the value, and waits for the next iteration request.</p>
+
+      <div class="diagram" id="diag-1">
+        <div class="diagram-title">Figure 1: Generator Architecture Pipeline</div>
+        <div class="diagram-legend">Legend: [Data Source] -> [Yield/Pause] -> [Consumer] -> [Output]</div>
+        <p style="font-size: 0.8rem; font-style: italic; text-align: center; margin-bottom: 10px;">How to read this: Follow the arrows left to right. Notice the circular loop between the Iterator and Consumer.</p>
+        
+        <div class="diagram-row">
+          <div class="diagram-box">1. Large File<br>(Disk)</div>
+          <div style="color:var(--accent-color); font-weight:bold;">→</div>
+          <div class="diagram-box">2. Generator Function<br>(Yields 1 line)</div>
+          <div style="color:var(--accent-color); font-weight:bold;">↔</div>
+          <div class="diagram-box">3. For Loop<br>(Consumer)</div>
+          <div style="color:var(--accent-color); font-weight:bold;">→</div>
+          <div class="diagram-box">4. Processed Data<br>(Output)</div>
+        </div>
+        
+        <div style="font-size: 0.85rem;">
+          <p><strong>Component Explanation & Flow Narrative:</strong></p>
+          <ol>
+            <li><strong>Large File:</strong> The raw data sitting on the hard drive (not in RAM).</li>
+            <li><strong>Generator Function:</strong> Python opens a pointer to the file. It reads exactly one line, <code>yield</code>s it to the consumer, and <em>pauses execution</em> right there.</li>
+            <li><strong>For Loop:</strong> The consumer receives the single line, runs its logic (e.g., parsing a date), and then asks the generator for the next line. (This is the bidirectional arrow).</li>
+            <li><strong>Processed Data:</strong> The transformed line is written to a new file or database immediately, allowing the variable to be garbage collected.</li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>Glossary of Core Technical Terms</h3>
+      <ul>
+        <li><strong>Iterable:</strong> An object capable of returning its members one at a time (e.g., lists, strings, files).</li>
+        <li><strong>Iterator:</strong> An object representing a stream of data; it returns the next item when `next()` is called.</li>
+        <li><strong>Generator:</strong> A function containing `yield`. It automatically implements the iterator protocol.</li>
+        <li><strong>Yield:</strong> A keyword that emits a value and temporarily suspends the function's execution state.</li>
+        <li><strong>Chunking:</strong> Grouping data into fixed-size blocks (e.g., 1024 bytes or 1000 lines) to balance disk I/O and memory.</li>
+        <li><strong>Lazy Evaluation:</strong> Delaying the evaluation of an expression until its value is strictly needed. Generators are inherently lazy.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section id="sec-5">
+      <h2>5. Simple Example (Line-by-Line)
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-5', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p>Let's build a simple number streamer to demonstrate how `yield` works without files.</p>
+      
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>def infinite_counter(limit):
+    count = 1                 # Initialization step
+    while count <= limit:     # Loop condition
+        yield count           # PAUSES here, returns 'count' to caller
+        count += 1            # RESUMES here when next() is called
+
+# Consuming the generator
+stream = infinite_counter(3)
+print(next(stream))  # Output: 1
+print(next(stream))  # Output: 2
+print(next(stream))  # Output: 3
+# print(next(stream)) would raise StopIteration</code></pre>
+      </div>
+      <p><strong>Line-by-line breakdown:</strong></p>
+      <ul>
+        <li><code>def infinite_counter(limit):</code> We define a function. Because it contains `yield`, Python flags it as a generator.</li>
+        <li><code>count = 1</code> Setup variable.</li>
+        <li><code>yield count</code> The magic happens. When `next(stream)` is called, the function runs until this line, spits out the number `1`, and freezes.</li>
+        <li><code>count += 1</code> When the second `next()` is called, the function unfreezes right here, increments count to `2`, loops back, and yields `2`.</li>
+        <li><strong>Final Result:</strong> It outputs 1, 2, 3 lazily. If `limit` was 10 billion, it would still use almost zero RAM because it only computes one integer at a time.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section id="sec-6">
+      <h2>6. Real-Time Industry Example
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-6', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p><strong>Scenario:</strong> You are tasked with analyzing a 50GB CSV file containing millions of credit card transactions. You need to filter out only the fraudulent transactions (status = "FRAUD") and save them to a new file.</p>
+
+      <div class="diagram" id="diag-2">
+        <div class="diagram-title">Figure 2: Generator Pipeline Workflow</div>
+        <div class="diagram-legend">Pipelining multiple generators for clean architecture</div>
+        
+        <div class="diagram-row" style="justify-content: center; flex-direction: column;">
+          <div class="diagram-box" style="width: 80%;">1. row_reader(file) ➔ Yields raw strings</div>
+          <div style="font-size: 1.5rem; color:var(--accent-color);">↓</div>
+          <div class="diagram-box" style="width: 80%;">2. row_parser(stream) ➔ Yields Python dictionaries</div>
+          <div style="font-size: 1.5rem; color:var(--accent-color);">↓</div>
+          <div class="diagram-box" style="width: 80%;">3. fraud_filter(stream) ➔ Yields ONLY fraud dictionaries</div>
+        </div>
+        
+        <div style="font-size: 0.85rem;">
+          <p><strong>Component Explanation & Flow Narrative:</strong></p>
+          <ol>
+            <li><strong>row_reader:</strong> Reads the raw 50GB file line-by-line. Yields unformatted text lines.</li>
+            <li><strong>row_parser:</strong> Takes the text line, splits it by commas, and converts it into a dictionary (e.g., <code>{"amount": 50, "status": "FRAUD"}</code>). Yields the dict.</li>
+            <li><strong>fraud_filter:</strong> Inspects the dict. If the status is not FRAUD, it discards it and asks the parser for the next one. If it IS fraud, it yields it to the final writer.</li>
+          </ol>
+          <p>By chaining these generators, data flows like water through a pipe. At any given millisecond, only ONE transaction exists in memory.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section id="sec-7">
+      <h2>7. Code Examples
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-7', this.checked)"> Mark as prepared</label>
+      </h2>
+      
+      <h3>Example A: Chaining Generators (The pipeline from Fig 2)</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>def read_large_file(file_path):
+    # What: Opens a file and yields line by line natively
+    # Why: Python's standard file object is already a generator!
+    with open(file_path, 'r') as file:
+        for line in file:
+            yield line.strip()
+
+def filter_errors(line_stream):
+    # What: Takes a stream, yields only lines containing "ERROR"
+    # Why: Decouples filtering logic from reading logic
+    for line in line_stream:
+        if "ERROR" in line:
+            yield line
+
+# Pipeline Execution
+log_stream = read_large_file('server.log')
+error_stream = filter_errors(log_stream)
+
+# The file isn't read until this loop starts!
+for error in error_stream:
+    print(error)</code></pre>
+      </div>
+      <p><strong>What & Why:</strong> This code creates a delayed processing chain. `read_large_file` creates a generator, which is passed into `filter_errors`. Notice that nothing actually happens until the final `for error in error_stream:` loop starts pulling data. This is lazy evaluation.</p>
+
+      <h3>Example B: Reading Binary Data in Fixed Chunks</h3>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><code>def read_in_chunks(file_obj, chunk_size=4096):
+    # What: Reads fixed byte sizes instead of lines
+    # Why: Perfect for video files, images, or network sockets where \n doesn't exist
+    while True:
+        data = file_obj.read(chunk_size)
+        if not data:
+            break
+        yield data
+
+# Usage
+with open('movie.mp4', 'rb') as f:
+    for chunk in read_in_chunks(f, 1024 * 1024):  # 1MB chunks
+        # e.g., hash the chunk, send it over network, etc.
+        process_video_chunk(chunk)</code></pre>
+      </div>
+      <p><strong>What & Why:</strong> For non-text files, line-by-line streaming fails because there are no newline characters. Instead, we read raw bytes using a fixed `chunk_size`. When `f.read()` returns empty, we break the loop.</p>
+    </section>
+
+    <!-- SECTION 8 -->
+    <section id="sec-8">
+      <h2>8. Comparison Table
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-8', this.checked)"> Mark as prepared</label>
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Concept</th>
+            <th>Bulk Load (`file.read()`)</th>
+            <th>List Comprehension (`[x for x in f]`)</th>
+            <th>Generator Expression (`(x for x in f)`)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Memory Usage</strong></td>
+            <td>High (Full size of data)</td>
+            <td>High (Creates full list in memory)</td>
+            <td>Extremely Low (O(1) memory)</td>
+          </tr>
+          <tr>
+            <td><strong>Speed (Latency to start)</strong></td>
+            <td>Slow (Must read everything before processing)</td>
+            <td>Slow (Must build entire list first)</td>
+            <td>Instant (Starts processing line 1 immediately)</td>
+          </tr>
+          <tr>
+            <td><strong>Syntax / Complexity</strong></td>
+            <td>Simple, 1 line</td>
+            <td>Simple, 1 line bracketed</td>
+            <td>Simple, 1 line parenthesized</td>
+          </tr>
+        </tbody>
+      </table>
+      <p><strong>When to pick which:</strong> Use <strong>Bulk Load</strong> when the file is tiny (under 10MB) and you need to use regex across multiple lines simultaneously. Use <strong>List Comprehensions</strong> when you need to sort the data or access items randomly by index. Use <strong>Generator Expressions</strong> for parsing, filtering, and streaming large files where you only process data sequentially from start to finish.</p>
+    </section>
+
+    <!-- SECTION 9 -->
+    <section id="sec-9">
+      <h2>9. Best Practices
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-9', this.checked)"> Mark as prepared</label>
+      </h2>
+      <div class="callout protip">
+        <div class="callout-title">Do's</div>
+        <ul>
+          <li><strong>DO chain generators:</strong> Keep functions small and focused (e.g., one generator for reading, one for parsing, one for formatting). <em>Why: Makes testing individual logic steps much easier and code reusable.</em></li>
+          <li><strong>DO use `with open(...)`:</strong> Always use context managers when streaming files. <em>Why: Ensures the file is safely closed when the generator is exhausted or if an error crashes the script mid-stream.</em></li>
+          <li><strong>DO use generator expressions `()` instead of list comprehensions `[]` for sequential math:</strong> e.g., `sum(x*x for x in range(1000000))`. <em>Why: Calculates the sum without generating a 1-million-item list in memory.</em></li>
+        </ul>
+      </div>
+
+      <div class="callout watchout">
+        <div class="callout-title">Common Mistakes</div>
+        <ul>
+          <li><strong>MISTAKE: Trying to reuse a generator.</strong> <em>Why: Generators are single-use streams. Once exhausted (StopIteration), you cannot iterate over them again without recreating them.</em></li>
+          <li><strong>MISTAKE: Using `len()` on a generator.</strong> <em>Why: A generator doesn't know how many items it has until it finishes yielding all of them. `len(stream)` will throw an error.</em></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECTION 10 -->
+    <section id="sec-10">
+      <h2>10. Edge Cases & Gotchas
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-10', this.checked)"> Mark as prepared</label>
+      </h2>
+      <div class="callout confusion">
+        <div class="callout-title">Gotchas</div>
+        <ul>
+          <li><strong>Hanging network sockets:</strong> If you use a generator to yield data from an open network connection, and the connection drops without sending a termination signal, your generator might wait on `.read()` indefinitely. Always implement timeouts on the socket itself.</li>
+          <li><strong>Sorting requires bulk loading:</strong> You cannot sort a data stream natively without holding all elements. If you must sort massive data, you have to use advanced techniques like external merge sort (writing sorted chunks to disk and merging).</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECTION 11 -->
+    <section id="sec-11">
+      <h2>11. Troubleshooting / Common Errors
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-11', this.checked)"> Mark as prepared</label>
+      </h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Symptom (Error)</th>
+            <th>Cause</th>
+            <th>Fix</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>TypeError: object of type 'generator' has no len()</code></td>
+            <td>Trying to get the size of a stream before iterating.</td>
+            <td>Iterate and manually increment a counter variable, or cast to a list (if data is small enough).</td>
+          </tr>
+          <tr>
+            <td><code>StopIteration</code> error thrown unexpectedly.</td>
+            <td>Calling <code>next(generator)</code> after it has yielded all values.</td>
+            <td>Wrap <code>next()</code> in a try/except block, or use a standard <code>for</code> loop which handles StopIteration automatically.</td>
+          </tr>
+          <tr>
+            <td>Memory usage still spiking to 100%.</td>
+            <td>You appended the yielded chunks into a giant master list anyway inside the loop.</td>
+            <td>Stop saving the chunks. Process them and immediately write them to disk/database, then discard.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- SECTION 12 -->
+    <section id="sec-12">
+      <h2>12. Interview Q&A
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-12', this.checked)"> Mark as prepared</label>
+      </h2>
+      
+      <div class="callout">
+        <div class="callout-title">[Beginner]</div>
+        <p><strong>Q1: What is a generator in Python?</strong><br>A generator is a function that uses the `yield` keyword instead of `return`. It returns an iterator object that generates values one at a time, suspending its state between each call.</p>
+        <p><strong>Q2: Why use a generator instead of returning a list?</strong><br>Generators are highly memory-efficient. Returning a list creates all elements in memory at once, whereas a generator computes and yields one element at a time, allowing you to process infinite or massive datasets.</p>
+        <p><strong>Q3: What happens when a generator runs out of values?</strong><br>It raises a `StopIteration` exception. However, if you are using a standard `for` loop to consume the generator, Python handles this exception silently and exits the loop gracefully.</p>
+        <p><strong>Q4: How do you create a generator expression?</strong><br>By wrapping list comprehension syntax in parentheses instead of square brackets. For example: `(x*2 for x in data)` creates a generator expression.</p>
+        <p><strong>Q5: Can you index a generator like `stream[0]`?</strong><br>No. Generators do not hold their items in memory, so they do not support indexing or slicing directly. You must iterate through them to reach a specific item.</p>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">[Intermediate]</div>
+        <p><strong>Q6: Explain the difference between `yield` and `return`.</strong><br>`return` outputs a value and completely destroys the function's local variables and state. `yield` outputs a value but merely pauses the function; local variables are preserved so execution can resume right after the `yield` on the next call.</p>
+        <p><strong>Q7: What does "lazy evaluation" mean in this context?</strong><br>Lazy evaluation means the computation of values is delayed until the exact moment they are needed. A generator pipeline won't execute any reading or filtering logic until the consuming loop explicitly requests the next item.</p>
+        <p><strong>Q8: How would you process a file in 1KB byte chunks instead of lines?</strong><br>You open the file in binary mode (`'rb'`), and use a `while` loop calling `file.read(1024)`. You `yield` that chunk, breaking the loop when `read()` returns an empty byte string.</p>
+        <p><strong>Q9: How can you convert a generator back into a standard list?</strong><br>By passing the generator directly into the `list()` constructor, e.g., `my_list = list(my_generator)`. However, be cautious, as this negates memory benefits and risks an Out of Memory error if the data is huge.</p>
+        <p><strong>Q10: Is a standard file object `open('file.txt')` a generator?</strong><br>Technically, it is an iterator that behaves exactly like a generator. Looping over a file object yields one line at a time natively without loading the whole file into RAM.</p>
+      </div>
+
+      <div class="callout">
+        <div class="callout-title">[Advanced]</div>
+        <p><strong>Q11: Can a generator receive data back from the caller?</strong><br>Yes, using the `send()` method. By writing `val = yield`, the generator pauses and waits. The caller can use `generator.send(data)` to pass a value back in, allowing for bi-directional communication (coroutines).</p>
+        <p><strong>Q12: What is the `yield from` statement?</strong><br>`yield from` is syntactic sugar introduced in Python 3.3 that allows a generator to delegate part of its operations to another generator. It replaces a nested `for` loop that simply yields items from a sub-generator.</p>
+        <p><strong>Q13: How do you handle exceptions inside a generator?</strong><br>You can wrap the `yield` statement in a `try/except/finally` block. You can also inject exceptions from the outside using `generator.throw(ExceptionType)`. The `finally` block is great for ensuring resources (like database cursors) are closed.</p>
+        <p><strong>Q14: Why might chaining too many generators cause a performance issue?</strong><br>While memory efficient, every generator in a chain adds a layer of function-call overhead. If you chain 50 generators for a simple operation, the CPU spends more time context-switching between generator frames than doing actual data processing.</p>
+        <p><strong>Q15: How does the `itertools` module relate to generators?</strong><br>`itertools` is a standard library module filled with highly optimized, C-level functions (like `chain`, `islice`, `groupby`) that take iterators/generators and return new iterators, forming complex streaming pipelines efficiently.</p>
+      </div>
+    </section>
+
+    <!-- SECTION 13 -->
+    <section id="sec-13">
+      <h2>13. Practice MCQ Quiz
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-13', this.checked)"> Mark as prepared</label>
+      </h2>
+      <p>Test your understanding. Select one correct answer for each.</p>
+      <div id="quiz-container"></div>
+      <button class="btn" style="margin-top:15px; width:100%; font-size:1.1rem; padding:10px;" onclick="submitQuiz()">Submit Quiz</button>
+      <div id="quiz-result" class="res-banner"></div>
+    </section>
+
+    <!-- SECTION 14 -->
+    <section id="sec-14">
+      <h2>14. Formal MCQ Exam
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-14', this.checked)"> Mark as prepared</label>
+      </h2>
+      <div style="background:var(--danger-bg); padding:15px; border-radius:6px; border:1px solid var(--danger-border); margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h3 style="margin:0; color:var(--danger-border);">Timed Assessment</h3>
+          <p style="margin:0; font-size:0.85rem;">Questions are hidden. You have 15 minutes. Timer starts on click.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:15px;">
+          <span id="exam-timer" style="font-weight:bold; font-size:1.5rem; color:var(--danger-border); font-family:monospace;">15:00</span>
+          <button class="btn" id="start-exam-btn" style="background:var(--danger-border);" onclick="startExam()">Start Test</button>
+        </div>
+      </div>
+
+      <div id="exam-container" style="display:none;"></div>
+      <button class="btn" id="submit-exam-btn" style="margin-top:15px; width:100%; font-size:1.1rem; padding:10px; display:none; background:var(--danger-border);" onclick="submitExam(false)">Submit Exam</button>
+      <div id="exam-result" class="res-banner"></div>
+      <button class="btn btn-secondary" id="restart-exam-btn" style="margin-top:15px; display:none;" onclick="resetExam()">Restart Exam</button>
+    </section>
+
+    <!-- SECTION 15 -->
+    <section id="sec-15">
+      <h2>15. Glossary
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-15', this.checked)"> Mark as prepared</label>
+      </h2>
+      <ul>
+        <li><strong>Chunking:</strong> Reading data in fixed block sizes (like 4096 bytes) instead of all at once.</li>
+        <li><strong>Coroutine:</strong> A generator that can both produce data (yield) and consume data (send).</li>
+        <li><strong>Generator:</strong> A function containing the `yield` keyword.</li>
+        <li><strong>Iterable:</strong> Any Python object that can be looped over (List, Tuple, Dictionary, String, File).</li>
+        <li><strong>Iterator:</strong> An object that tracks its state and produces the next value when `next()` is called.</li>
+        <li><strong>Lazy Evaluation:</strong> Deferring computation until the exact moment the result is demanded.</li>
+        <li><strong>StopIteration:</strong> The exception raised internally when an iterator is completely exhausted.</li>
+        <li><strong>Yield:</strong> Keyword that pauses a function, returning a value and saving local state.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 16 -->
+    <section id="sec-16">
+      <h2>16. Summary
+        <label class="prep-check"><input type="checkbox" onchange="togglePrep('sec-16', this.checked)"> Mark as prepared</label>
+      </h2>
+      <div class="callout remember">
+        <div class="callout-title">Key Takeaways</div>
+        <ul>
+          <li>Generators process data streams sequentially, keeping memory footprints incredibly small.</li>
+          <li>Functions become generators simply by using the `yield` keyword instead of `return`.</li>
+          <li>Pipelines can be created by passing one generator as the input to another.</li>
+          <li>Generators are single-use iterators; you cannot rewind or index them.</li>
+        </ul>
+      </div>
+      <p><strong>One-line cheat list:</strong> <code>stream = (process(line) for line in open('data.csv'))</code></p>
+      <p><strong>What to learn next:</strong> Explore Python's <code>itertools</code> library, learn about asynchronous generators (`async def` and `yield`), and investigate data pipeline frameworks like Apache Beam.</p>
+    </section>
+  </main>
+
+  <aside class="sidebar notes-sidebar">
+    <h3>📝 Notes Panel</h3>
+    <p style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:10px;">Double-click any word in the text to add a note.</p>
+    <div style="margin-bottom:10px;">
+      <button class="btn btn-danger" style="font-size:0.7rem; padding:4px 8px; width:100%;" onclick="clearAllNotes()">Clear All Notes</button>
+    </div>
+    <div id="notes-list"></div>
+  </aside>
+</div>
+
+<!-- NOTE POPUP -->
+<div id="note-popup" class="note-popup" style="display:none;">
+  <div style="font-weight:bold; font-size:0.85rem; margin-bottom:5px; color:var(--accent-color);">Note for: "<span id="note-word-target"></span>"</div>
+  <textarea id="note-input" placeholder="Type your note here..."></textarea>
+  <div style="display:flex; justify-content:flex-end; gap:5px;">
+    <button class="btn btn-secondary" onclick="closeNotePopup()">Cancel</button>
+    <button class="btn" onclick="saveNote()">Save</button>
+  </div>
+</div>
+
+<script>
+// --- CORE FUNCTIONALITY & STORAGE FALLBACK ---
+let storageAvailable = false;
+try {
+  localStorage.setItem('__test__', '1');
+  localStorage.removeItem('__test__');
+  storageAvailable = true;
+} catch(e) {
+  document.getElementById('storage-hint').style.display = 'block';
+}
+
+function safeGet(key) {
+  if (!storageAvailable) return sessionStorage.getItem(key);
+  try { return localStorage.getItem(key); } catch(e) { return sessionStorage.getItem(key); }
+}
+function safeSet(key, val) {
+  if (!storageAvailable) { sessionStorage.setItem(key, val); return; }
+  try { localStorage.setItem(key, val); } catch(e) { sessionStorage.setItem(key, val); }
+}
+function safeRemove(key) {
+  if (!storageAvailable) { sessionStorage.removeItem(key); return; }
+  try { localStorage.removeItem(key); } catch(e) { sessionStorage.removeItem(key); }
+}
+
+// --- THEME & UTILS ---
+function toggleTheme() {
+  const isDark = document.body.hasAttribute('data-theme');
+  if (isDark) document.body.removeAttribute('data-theme');
+  else document.body.setAttribute('data-theme', 'dark');
+}
+
+function copyCode(btn) {
+  const text = btn.nextElementSibling.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerText = "Copied!";
+    setTimeout(() => btn.innerText = "Copy", 2000);
+  });
+}
+
+// --- AUDIO ---
+let isMuted = false;
+function toggleMute() {
+  isMuted = !isMuted;
+  document.getElementById('mute-btn').innerText = isMuted ? "🔇 Muted" : "🔊 Sound On";
+}
+function playSound(type) {
+  if (isMuted) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    if (type === 'pass') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime); // A4
+      osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.1); // C#5
+      osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.2); // E5
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    } else {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.5);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.5);
+    }
+  } catch(e) { console.warn("Audio API not supported"); }
+}
+
+// --- SPARKLES ---
+function createSparkles(e, count=10) {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  for(let i=0; i<count; i++) {
+    const spark = document.createElement('div');
+    spark.className = 'sparkle';
+    spark.style.left = (e.clientX + (Math.random() - 0.5) * 40) + 'px';
+    spark.style.top = (e.clientY + (Math.random() - 0.5) * 40) + 'px';
+    spark.style.backgroundColor = ['#fbbf24', '#38bdf8', '#a78bfa'][Math.floor(Math.random()*3)];
+    document.body.appendChild(spark);
+    setTimeout(() => spark.remove(), 1000);
+  }
+}
+
+// --- PROGRESS TRACKING ---
+let prepSet = new Set();
+const TOTAL_SECTIONS = 16;
+function initProgress() {
+  const saved = safeGet('py_stream_prog');
+  if (saved) prepSet = new Set(JSON.parse(saved));
+  updateProgressUI();
+}
+function togglePrep(sec, isChecked) {
+  if (isChecked) prepSet.add(sec);
+  else prepSet.delete(sec);
+  safeSet('py_stream_prog', JSON.stringify([...prepSet]));
+  updateProgressUI();
+}
+function updateProgressUI() {
+  document.getElementById('prep-text').innerText = `${prepSet.size} / ${TOTAL_SECTIONS} prepared`;
+  document.getElementById('prep-bar').style.width = `${(prepSet.size/TOTAL_SECTIONS)*100}%`;
+  document.querySelectorAll('.prep-check input').forEach(cb => {
+    const sec = cb.getAttribute('onchange').match(/'(.*?)'/)[1];
+    cb.checked = prepSet.has(sec);
+  });
+}
+function resetProgress() {
+  prepSet.clear();
+  safeRemove('py_stream_prog');
+  updateProgressUI();
+}
+
+// --- DOUBLE-CLICK NOTES ---
+let notes = [];
+let pendingRange = null;
+let pendingWord = "";
+
+function initNotes() {
+  const saved = safeGet('py_stream_notes');
+  if (saved) notes = JSON.parse(saved);
+  
+  // Re-apply highlights (simplistic text node search for resilience)
+  notes.forEach(note => {
+    reapplyHighlight(note);
+  });
+  renderNotes();
+}
+
+document.addEventListener('dblclick', function(e) {
+  // Guard clauses
+  if (e.target.closest('button, a, input, textarea, label, .sidebar, .q-card, .check-yourself, .code-block, table')) return;
+  
+  const sel = window.getSelection();
+  if (sel.isCollapsed) return;
+  const word = sel.toString().trim();
+  if (!word || word.includes(' ') || word.includes('\n')) return;
+
+  pendingRange = sel.getRangeAt(0).cloneRange();
+  pendingWord = word;
+  
+  const rect = pendingRange.getBoundingClientRect();
+  const popup = document.getElementById('note-popup');
+  document.getElementById('note-word-target').innerText = word;
+  document.getElementById('note-input').value = '';
+  
+  // Viewport clamping (no scrollY)
+  let pTop = rect.bottom + 5;
+  let pLeft = rect.left;
+  if (pTop + 150 > window.innerHeight) pTop = window.innerHeight - 160;
+  if (pLeft + 250 > window.innerWidth) pLeft = window.innerWidth - 260;
+  
+  popup.style.top = pTop + 'px';
+  popup.style.left = Math.max(10, pLeft) + 'px';
+  popup.style.display = 'block';
+  document.getElementById('note-input').focus();
+});
+
+function closeNotePopup() {
+  document.getElementById('note-popup').style.display = 'none';
+  pendingRange = null;
+  window.getSelection().removeAllRanges();
+}
+
+function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text || !pendingRange) return closeNotePopup();
+  
+  const id = 'note_' + Date.now();
+  const sectionEl = pendingRange.startContainer.parentElement.closest('section');
+  const secTitle = sectionEl ? sectionEl.querySelector('h2').innerText.split('\n')[0] : 'General';
+  
+  try {
+    const span = document.createElement('span');
+    span.className = 'noted-word';
+    span.id = id;
+    span.title = text; // Tooltip on hover
+    pendingRange.surroundContents(span);
+  } catch(e) { console.warn("Could not wrap word:", e); }
+  
+  notes.push({
+    id: id,
+    word: pendingWord,
+    text: text,
+    section: secTitle,
+    time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})
+  });
+  
+  safeSet('py_stream_notes', JSON.stringify(notes));
+  renderNotes();
+  closeNotePopup();
+}
+
+function renderNotes() {
+  const list = document.getElementById('notes-list');
+  if (notes.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-secondary);">No notes created.</p>';
+    return;
+  }
+  list.innerHTML = notes.map(n => `
+    <div class="note-item">
+      <div class="note-item-word" onclick="jumpToNote('${n.id}')">${n.word}</div>
+      <div style="font-size:0.85rem; margin:4px 0;">${n.text}</div>
+      <div style="font-size:0.7rem; color:var(--text-secondary);">${n.section} | ${n.time}</div>
+      <div class="note-item-actions">
+        <button class="btn btn-danger" style="font-size:0.7rem; padding:2px 6px;" onclick="deleteNote('${n.id}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  safeSet('py_stream_notes', JSON.stringify(notes));
+  const el = document.getElementById(id);
+  if (el) {
+    const parent = el.parentNode;
+    while(el.firstChild) parent.insertBefore(el.firstChild, el);
+    parent.removeChild(el);
+  }
+  renderNotes();
+}
+
+function clearAllNotes() {
+  if(!confirm("Clear all notes?")) return;
+  notes.forEach(n => {
+    const el = document.getElementById(n.id);
+    if(el) {
+      const parent = el.parentNode;
+      while(el.firstChild) parent.insertBefore(el.firstChild, el);
+      parent.removeChild(el);
+    }
+  });
+  notes = [];
+  safeRemove('py_stream_notes');
+  renderNotes();
+}
+
+function jumpToNote(id) {
+  const el = document.getElementById(id);
+  if (!el) return alert("Word is currently hidden or missing from view.");
+  
+  // Scroll accounting for sticky header
+  const headerOffset = 80;
+  const elementPosition = el.getBoundingClientRect().top;
+  const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+  window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+  
+  el.classList.add('flash-highlight');
+  setTimeout(() => el.classList.remove('flash-highlight'), 1500);
+}
+
+function reapplyHighlight(note) {
+  // A simplistic re-apply for reload persistence using TreeWalker
+  // It finds the first matching text node containing the word.
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+    acceptNode: function(node) {
+      if (node.parentNode.nodeName === 'SCRIPT' || node.parentNode.nodeName === 'STYLE') return NodeFilter.FILTER_REJECT;
+      if (node.nodeValue.includes(note.word)) return NodeFilter.FILTER_ACCEPT;
+      return NodeFilter.FILTER_SKIP;
+    }
+  });
+  let node = walker.nextNode();
+  while(node) {
+    // Only wrap if it's a distinct word
+    const regex = new RegExp(`\\b${note.word}\\b`);
+    const match = regex.exec(node.nodeValue);
+    if (match) {
+      const span = document.createElement('span');
+      span.className = 'noted-word';
+      span.id = note.id;
+      span.title = note.text;
+      const splitNode = node.splitText(match.index);
+      splitNode.nodeValue = splitNode.nodeValue.substring(note.word.length);
+      span.textContent = note.word;
+      node.parentNode.insertBefore(span, splitNode);
+      break; // Only first occurrence for simplicity in this fallback
+    }
+    node = walker.nextNode();
+  }
+}
+
+// --- QUIZ & EXAM DATA (15 EACH) ---
+const quizData = [
+  {q: "What keyword defines a generator function in Python?", o: ["return", "yield", "generate", "stream"], a: 1, e: "'yield' pauses execution and returns a value, turning the function into a generator."},
+  {q: "Which built-in error signals a generator has finished?", o: ["EOFError", "GeneratorExit", "StopIteration", "IndexError"], a: 2, e: "StopIteration is raised when next() is called but no items remain."},
+  {q: "What is the primary benefit of data streaming?", o: ["It uses 100% of CPU.", "It bypasses hard drive speed.", "It keeps memory usage low by loading one piece at a time.", "It automatically sorts data."], a: 2, e: "Generators hold only the current chunk, preventing Out of Memory errors."},
+  {q: "How do you fetch the next value from a generator object manually?", o: ["gen.pull()", "next(gen)", "gen.pop()", "gen.fetch()"], a: 1, e: "The built-in next() function advances the iterator to the next yield."},
+  {q: "What is the correct syntax for a generator expression?", o: ["[x for x in data]", "{x for x in data}", "<x for x in data>", "(x for x in data)"], a: 3, e: "Parentheses () create a generator expression; brackets [] create a list comprehension."},
+  {q: "Can you use len() on a generator stream?", o: ["Yes, always", "No, it throws a TypeError", "Only if it is a file generator", "Yes, but it evaluates instantly"], a: 1, e: "Generators calculate values lazily and don't know their total size in advance."},
+  {q: "In 'yield count', what happens immediately after the value is yielded?", o: ["The script exits", "The function pauses and saves its state", "The function destroys local variables", "It loops automatically without waiting"], a: 1, e: "Execution suspends until the next iteration is requested."},
+  {q: "Which object acts as a native generator in Python?", o: ["A string", "A file object opened with open()", "An integer", "A dictionary key"], a: 1, e: "File objects yield lines one by one when iterated over in a for loop."},
+  {q: "What does 'lazy evaluation' mean?", o: ["Code runs slowly.", "Values are computed only when strictly needed.", "The CPU sleeps between yields.", "Variables are untyped."], a: 1, e: "Lazy means deferring work until the consuming loop demands the next value."},
+  {q: "If a generator raises StopIteration, can you restart it by calling next() again?", o: ["Yes, it resets to 0", "No, it remains exhausted", "Yes, if you pass True", "Only if it's a file"], a: 1, e: "Generators are single-use. You must create a new generator object to iterate again."},
+  {q: "Why shouldn't you append every yielded item to a list?", o: ["It throws a syntax error", "It defeats the purpose by loading everything into RAM", "Lists cannot hold yielded items", "It crashes the CPU"], a: 1, e: "Building a full list in memory negates the low-memory benefit of streaming."},
+  {q: "What method allows sending data BACK into a generator?", o: ["inject()", "push()", "send()", "throw()"], a: 2, e: "The .send(val) method passes a value into the generator where it yielded."},
+  {q: "How do you read a binary file in chunks instead of lines?", o: ["file.readline()", "file.read(4096) in a loop", "file.chunk()", "file.stream()"], a: 1, e: "Reading a fixed byte count (e.g., 4096) handles non-text files gracefully."},
+  {q: "Which standard module is designed for complex iterator manipulation?", o: ["sys", "os", "itertools", "collections"], a: 2, e: "itertools contains C-optimized tools like chain, islice, and count."},
+  {q: "What does 'yield from' do?", o: ["Yields a string", "Delegates yielding to a sub-generator", "Imports a generator from a file", "Exits the stream early"], a: 1, e: "'yield from' unpacks another iterable natively, avoiding nested for-loops."}
+];
+
+const examData = [
+  {q: "What is the algorithmic memory complexity (Big-O) of a proper generator pipeline processing N items?", o: ["O(N)", "O(log N)", "O(N^2)", "O(1)"], a: 3, e: "Memory complexity is O(1) because it holds only one item regardless of N."},
+  {q: "What happens if an unhandled exception occurs inside a generator?", o: ["It yields the error string", "It propagates to the caller and closes the generator", "It pauses forever", "It skips the item"], a: 1, e: "The exception bubbles up, and the generator transitions to an exhausted state."},
+  {q: "Can a generator be passed into the sum() function? e.g. sum(x for x in nums)", o: ["Yes", "No", "Only if it's strings", "Only in Python 2"], a: 0, e: "Yes, built-ins like sum(), max(), and min() consume iterators natively."},
+  {q: "What is a 'coroutine' in the context of classic Python generators?", o: ["A function with multiple returns", "A generator that uses .send() to consume data", "A multi-threaded loop", "A class"], a: 1, e: "Generators acting as consumers via .send() are called coroutines."},
+  {q: "Why might a generator pipeline be slower in raw execution time than a bulk list operation?", o: ["Memory fragmentation", "Function-call overhead and context switching", "Disk RPM limit", "Python GIL lock"], a: 1, e: "Suspending and resuming frames adds CPU overhead compared to highly optimized C-level list operations."},
+  {q: "Which method is called under the hood by a for loop to initialize an iterator?", o: ["__init__()", "__iter__()", "__start__()", "__loop__()"], a: 1, e: "The __iter__() method returns the iterator object itself."},
+  {q: "What method gracefully forces a generator to exit and throw a GeneratorExit exception?", o: ["gen.kill()", "gen.close()", "gen.exit()", "gen.stop()"], a: 1, e: ".close() is used to terminate a generator explicitly, allowing finally blocks to run."},
+  {q: "If `def f(): yield 1; return 2` is run, what happens to the 2?", o: ["It is yielded second", "It is attached to the StopIteration exception", "It causes a SyntaxError", "It is ignored"], a: 1, e: "In Python 3.3+, the return value is bound to StopIteration.value."},
+  {q: "How do you slice a generator to get items 10 through 20?", o: ["gen[10:20]", "gen.slice(10, 20)", "itertools.islice(gen, 10, 20)", "You can't slice it at all"], a: 2, e: "itertools.islice consumes the iterator up to the requested indices natively."},
+  {q: "What type of file is immune to line-by-line streaming using standard iterators?", o: ["JSON", "CSV", "Plain text logs", "Compiled Video Binaries (.mp4)"], a: 3, e: "Binaries lack standard newline characters, requiring fixed-byte chunk reading."},
+  {q: "When chaining generators, in what order does data flow?", o: ["All items pass phase 1, then phase 2", "Item 1 passes phase 1, then phase 2, before Item 2 starts phase 1", "Randomly", "In reverse"], a: 1, e: "Generators pull data sequentially. One complete item finishes the whole pipeline before the next starts."},
+  {q: "If I call `my_gen = stream_data()` where `stream_data` has a `yield`, what executes immediately?", o: ["The whole function runs", "Nothing, it just returns a generator object", "The first line of the file", "It prints a memory address"], a: 1, e: "Calling the function only instantiates the generator. Execution starts on the first next()."},
+  {q: "What statement correctly yields from a list `[1,2,3]` inside a generator?", o: ["yield [1,2,3]", "yield in [1,2,3]", "yield from [1,2,3]", "return [1,2,3]"], a: 2, e: "'yield from' iterates over the list and yields each element individually."},
+  {q: "Why do we use `with open(...)` when streaming files?", o: ["It increases yield speed", "It automatically handles file closing even if the generator breaks", "It forces chunking", "It prevents StopIteration"], a: 1, e: "Context managers guarantee resource cleanup, crucial when streams might abort early."},
+  {q: "Can you pickle (serialize) a live Python generator?", o: ["Yes, easily", "No, generator state cannot be pickled natively", "Only if it uses yield from", "Only in Python 3.10+"], a: 1, e: "Live execution frames cannot be serialized. You must pickle the results or recreation parameters."}
+];
+
+// --- QUIZ LOGIC ---
+function buildQuiz() {
+  const container = document.getElementById('quiz-container');
+  container.innerHTML = quizData.map((q, i) => `
+    <div class="q-card" id="qcard-${i}">
+      <p style="font-weight:bold; margin-bottom:10px;">Q${i+1}. ${q.q}</p>
+      ${q.o.map((opt, oi) => `
+        <label class="opt-label">
+          <input type="radio" name="quiz-${i}" value="${oi}"> ${opt}
+        </label>
+      `).join('')}
+      <div class="exp" id="qexp-${i}">${q.e}</div>
+    </div>
+  `).join('');
+}
+
+function submitQuiz() {
+  let score = 0;
+  quizData.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="quiz-${i}"]:checked`);
+    const card = document.getElementById(`qcard-${i}`);
+    const exp = document.getElementById(`qexp-${i}`);
+    exp.style.display = 'block';
+    if(selected && parseInt(selected.value) === q.a) {
+      score++;
+      card.style.borderColor = 'var(--success-border)';
+      exp.innerHTML = `<strong>Correct!</strong> ${q.e}`;
+    } else {
+      card.style.borderColor = 'var(--danger-border)';
+      const userAns = selected ? q.o[selected.value] : "None";
+      exp.innerHTML = `<strong>Incorrect.</strong> You chose: <em>${userAns}</em>.<br><strong>Correct answer:</strong> ${q.o[q.a]}<br>${q.e}`;
+    }
+  });
+  
+  const pct = Math.round((score/15)*100);
+  const res = document.getElementById('quiz-result');
+  let emoji = pct===100?"🤩🎉":pct>=90?"😄":pct>=75?"🙂":pct>=60?"😌":"💪";
+  let msg = pct===100?"Perfect! Flawless run.":pct>=90?"Excellent - interview-ready!":pct>=75?"Well done - solid grasp.":pct>=60?"Good - revise the misses.":"Needs focus - review & retry.";
+  
+  res.innerHTML = `${emoji} ${score}/15 (${pct}%)<br><span style="font-size:0.9rem; font-weight:normal;">${msg}</span>`;
+  res.style.background = pct>=60 ? 'var(--success-bg)' : 'var(--danger-bg)';
+  res.style.color = pct>=60 ? 'var(--success-border)' : 'var(--danger-border)';
+  res.style.display = 'block';
+  
+  playSound(pct>=60 ? 'pass' : 'fail');
+  if(pct === 100) createSparkles({clientX: window.innerWidth/2, clientY: window.innerHeight/2}, 30);
+}
+
+// --- EXAM LOGIC ---
+let examTimer;
+let timeLeft = 15 * 60; // 15 mins
+
+function buildExam() {
+  const container = document.getElementById('exam-container');
+  container.innerHTML = examData.map((q, i) => `
+    <div class="q-card" id="ecard-${i}">
+      <p style="font-weight:bold; margin-bottom:10px;">${i+1}. ${q.q}</p>
+      ${q.o.map((opt, oi) => `
+        <label class="opt-label">
+          <input type="radio" name="exam-${i}" value="${oi}"> ${opt}
+        </label>
+      `).join('')}
+      <div class="exp" id="eexp-${i}">${q.e}</div>
+    </div>
+  `).join('');
+}
+
+function startExam() {
+  document.getElementById('start-exam-btn').style.display = 'none';
+  document.getElementById('exam-container').style.display = 'block';
+  document.getElementById('submit-exam-btn').style.display = 'block';
+  
+  examTimer = setInterval(() => {
+    timeLeft--;
+    let m = Math.floor(timeLeft/60).toString().padStart(2, '0');
+    let s = (timeLeft%60).toString().padStart(2, '0');
+    document.getElementById('exam-timer').innerText = `${m}:${s}`;
+    if(timeLeft <= 0) submitExam(true);
+  }, 1000);
+}
+
+function submitExam(isAuto = false) {
+  clearInterval(examTimer);
+  document.getElementById('submit-exam-btn').style.display = 'none';
+  document.getElementById('restart-exam-btn').style.display = 'block';
+  
+  let score = 0;
+  examData.forEach((q, i) => {
+    const selected = document.querySelector(`input[name="exam-${i}"]:checked`);
+    const card = document.getElementById(`ecard-${i}`);
+    const exp = document.getElementById(`eexp-${i}`);
+    
+    // Disable inputs
+    document.querySelectorAll(`input[name="exam-${i}"]`).forEach(inp => inp.disabled = true);
+    
+    exp.style.display = 'block';
+    if(selected && parseInt(selected.value) === q.a) {
+      score++;
+      card.style.borderColor = 'var(--success-border)';
+      exp.innerHTML = `<strong>Correct!</strong> ${q.e}`;
+    } else {
+      card.style.borderColor = 'var(--danger-border)';
+      const userAns = selected ? q.o[selected.value] : "None (Blank)";
+      exp.innerHTML = `<strong>Incorrect.</strong> You chose: <em>${userAns}</em>.<br><strong>Correct answer:</strong> ${q.o[q.a]}<br>${q.e}`;
+    }
+  });
+  
+  const pct = Math.round((score/15)*100);
+  const passed = pct >= 60;
+  const res = document.getElementById('exam-result');
+  
+  let emoji = pct===100?"🤩🎉":pct>=90?"😄":pct>=75?"🙂":pct>=60?"😌":"💪";
+  let prefix = isAuto ? "[TIME UP] " : "";
+  
+  res.innerHTML = `${prefix}${emoji} Marks: ${score}/15 | PERCENTAGE: ${pct}%<br>
+  STATUS: <span style="font-weight:bold; color:${passed?'var(--success-border)':'var(--danger-border)'};">${passed?'PASS':'FAIL'}</span> (Pass mark: 60%)`;
+  
+  res.style.background = passed ? 'var(--success-bg)' : 'var(--danger-bg)';
+  res.style.color = 'var(--text-primary)';
+  res.style.display = 'block';
+  
+  playSound(passed ? 'pass' : 'fail');
+  if(pct === 100) createSparkles({clientX: window.innerWidth/2, clientY: window.innerHeight/2}, 30);
+}
+
+function resetExam() {
+  clearInterval(examTimer);
+  timeLeft = 15*60;
+  document.getElementById('exam-timer').innerText = "15:00";
+  document.getElementById('exam-result').style.display = 'none';
+  document.getElementById('restart-exam-btn').style.display = 'none';
+  document.getElementById('start-exam-btn').style.display = 'block';
+  document.getElementById('exam-container').style.display = 'none';
+  
+  // Reset radios and styling
+  buildExam();
+}
+
+// INIT
+window.onload = () => {
+  initProgress();
+  initNotes();
+  buildQuiz();
+  buildExam();
+};
+</script>
+</body>
+</html>

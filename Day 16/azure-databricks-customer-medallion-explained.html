@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Azure Databricks Customer Medallion Pipeline — Explained</title>
+<style>
+:root{--nav:#10243e;--blue:#1373e6;--cyan:#19a7ce;--bg:#f4f7fb;--card:#fff;--text:#182435;--muted:#607089;--green:#16845b;--amber:#a75b00;--red:#b42318;--line:#d9e2ef}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.65}
+header{background:linear-gradient(125deg,#0c213c,#1459a5 60%,#0fa3b1);color:#fff;padding:44px 6vw 36px}
+header h1{max-width:1100px;margin:0 auto 8px;font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.15}header p{max-width:1100px;margin:0 auto;color:#e4f1ff;font-size:1.08rem}
+.layout{max-width:1450px;margin:auto;display:grid;grid-template-columns:260px minmax(0,1fr);gap:28px;padding:26px}
+nav{position:sticky;top:18px;align-self:start;background:var(--nav);border-radius:14px;padding:18px;max-height:calc(100vh - 36px);overflow:auto}
+nav a{display:block;color:#dbe9fb;text-decoration:none;padding:7px 9px;border-radius:7px;font-size:.91rem}nav a:hover{background:#21466e;color:#fff}
+main{min-width:0}.card,section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px;margin-bottom:22px;box-shadow:0 5px 18px rgba(18,45,77,.055)}
+section:hover{border-color:#abc5e6}h2{margin-top:0;color:#123f73;line-height:1.25}h3{color:#155a9c;margin-top:28px}h4{color:#344a63}
+.lead{font-size:1.08rem}.callout{border-left:5px solid var(--blue);padding:13px 16px;background:#edf6ff;border-radius:7px;margin:16px 0}.good{border-color:var(--green);background:#ecfbf5}.warn{border-color:#ef9900;background:#fff7e8}.danger{border-color:var(--red);background:#fff0ef}
+.pipeline{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;align-items:stretch;gap:12px;margin:22px 0}.layer{border-radius:13px;padding:18px;color:#fff}.bronze{background:#945d25}.silver{background:#64748b}.gold{background:#b47a00}.arrow{align-self:center;font-size:1.7rem;color:var(--blue)}
+table{width:100%;border-collapse:collapse;margin:15px 0;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#eaf2fb;color:#163f69}
+pre{position:relative;background:#0d1b2a;color:#e7eef8;border-radius:11px;padding:18px;overflow:auto;font-size:.88rem;line-height:1.55}code{font-family:Consolas,Monaco,monospace}.inline{background:#e9eff7;color:#103963;padding:2px 6px;border-radius:5px}
+.copy{float:right;border:0;border-radius:6px;background:#275d91;color:#fff;padding:5px 9px;cursor:pointer;font-size:.78rem}.copy:hover{background:#3577b7}
+.steps{counter-reset:s}.step{counter-increment:s;border-left:3px solid #a8c9ec;padding:2px 0 10px 18px;margin:16px 0}.step h3:before{content:counter(s) ". ";color:var(--blue)}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mini{border:1px solid var(--line);border-radius:10px;padding:16px;background:#fbfdff}
+details{border:1px solid var(--line);border-radius:9px;margin:10px 0;background:#fff}summary{cursor:pointer;padding:12px 15px;font-weight:700;color:#184b80}details>div{padding:0 15px 14px}
+.quiz label{display:block;padding:8px 10px;border-radius:7px}.quiz label:hover{background:#f0f6fd}.result{font-weight:700;margin-top:10px}.btn{border:0;border-radius:8px;padding:10px 16px;background:var(--blue);color:#fff;cursor:pointer}.btn.secondary{background:#586a80}
+.tag{display:inline-block;border-radius:999px;background:#e5f1ff;color:#0756a6;padding:3px 9px;margin:2px;font-size:.8rem}
+footer{text-align:center;color:var(--muted);padding:20px 30px 40px}.note-area{width:100%;min-height:130px;padding:12px;border:1px solid var(--line);border-radius:8px;font:inherit}
+@media(max-width:900px){.layout{grid-template-columns:1fr;padding:14px}nav{position:relative;top:0;max-height:none}.pipeline{grid-template-columns:1fr}.arrow{text-align:center;transform:rotate(90deg)}.grid2{grid-template-columns:1fr}}
+@media print{nav,.copy,.btn{display:none!important}.layout{display:block;padding:0}section{break-inside:avoid;box-shadow:none}header{padding:22px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Azure Databricks Customer Medallion Pipeline</h1>
+  <p>Trainer-ready explanation of the attached Silver and Gold notes — from raw Bronze CSV to clean Delta data and business reports.</p>
+</header>
+<div class="layout">
+<nav aria-label="Tutorial navigation">
+  <a href="#goal">1. Goal and prerequisites</a>
+  <a href="#architecture">2. Architecture</a>
+  <a href="#concepts">3. Key concepts</a>
+  <a href="#before">4. Before you run</a>
+  <a href="#silver">5. Silver notebook</a>
+  <a href="#quality">6. Data-quality rules</a>
+  <a href="#gold">7. Gold notebook</a>
+  <a href="#views">8. Temporary views</a>
+  <a href="#run">9. Run and verify</a>
+  <a href="#trouble">10. Troubleshooting</a>
+  <a href="#practice">11. Exercises</a>
+  <a href="#interview">12. Interview Q&amp;A</a>
+  <a href="#quiz">13. Knowledge check</a>
+  <a href="#notes">14. Trainer notes</a>
+</nav>
+<main>
+<section id="goal">
+  <h2>1. What the attached notes are doing</h2>
+  <p class="lead">The notes implement a small <strong>Medallion Architecture</strong> project using the file <span class="inline">customers-100.csv</span>. The objective is to preserve raw data in Bronze, improve its quality in Silver, and prepare summaries for reporting in Gold.</p>
+  <div class="pipeline">
+    <div class="layer bronze"><strong>Bronze</strong><br>Raw CSV plus ingestion metadata</div><div class="arrow">→</div>
+    <div class="layer silver"><strong>Silver</strong><br>Clean, validate, reject and deduplicate</div><div class="arrow">→</div>
+    <div class="layer gold"><strong>Gold</strong><br>Dimension and summary reports</div>
+  </div>
+  <h3>Expected source columns</h3>
+  <p><span class="tag">Index</span><span class="tag">Customer Id</span><span class="tag">First Name</span><span class="tag">Last Name</span><span class="tag">Company</span><span class="tag">City</span><span class="tag">Country</span><span class="tag">Phone 1</span><span class="tag">Phone 2</span><span class="tag">Email</span><span class="tag">Subscription Date</span><span class="tag">Website</span></p>
+  <div class="callout warn"><strong>Important:</strong> the code depends on these column names. Always run <span class="inline">df_bronze.printSchema()</span> and check the real columns before cleansing.</div>
+</section>
+
+<section id="architecture">
+  <h2>2. Storage and notebook architecture</h2>
+  <table>
+    <thead><tr><th>Location</th><th>Format</th><th>Purpose</th><th>Read by</th></tr></thead>
+    <tbody>
+      <tr><td><code>customers-100.csv</code></td><td>CSV</td><td>Landing/source file</td><td>Bronze notebook</td></tr>
+      <tr><td><code>bronze/customer</code></td><td>CSV in attached design</td><td>Raw data and ingestion metadata</td><td>Silver notebook</td></tr>
+      <tr><td><code>silver/customer</code></td><td>Delta</td><td>Valid, cleansed and deduplicated customers</td><td>Gold notebook</td></tr>
+      <tr><td><code>silver/customer_rejected</code></td><td>Delta</td><td>Bad records with rejection reasons</td><td>Data-quality team</td></tr>
+      <tr><td><code>gold/customer_dimension</code></td><td>Delta</td><td>Business-ready customer detail</td><td>BI/reporting</td></tr>
+      <tr><td><code>gold/*_summary</code></td><td>Delta</td><td>Country, month and company reports</td><td>Dashboards</td></tr>
+    </tbody>
+  </table>
+  <div class="callout"><strong>Classroom memory aid:</strong> Bronze remembers, Silver repairs, Gold reports.</div>
+</section>
+
+<section id="concepts">
+  <h2>3. Concepts you must understand first</h2>
+  <div class="grid2">
+    <div class="mini"><h3>DataFrame</h3><p>A distributed table with named columns. Transformations such as <code>withColumn</code> build a plan; actions such as <code>count</code> execute it.</p></div>
+    <div class="mini"><h3>Delta format</h3><p>A reliable table format on data-lake storage. It adds transaction logs, schema handling and dependable reads/writes over Parquet data.</p></div>
+    <div class="mini"><h3>Temporary view</h3><p>A SQL name for a DataFrame in the current Spark session. It is not permanent storage and normally disappears when the session ends.</p></div>
+    <div class="mini"><h3>Rejected records</h3><p>Records that fail business-quality rules. Keeping them separately makes problems visible and recoverable instead of silently deleting them.</p></div>
+  </div>
+  <h3>Why use <code>wasbs://</code> here?</h3>
+  <p>Your source URL is Azure Blob Storage, so the notes use a path such as:</p>
+  <pre><code>wasbs://datasource@newstoreforsession.blob.core.windows.net/bronze/customer</code></pre>
+  <p>If the account uses ADLS Gen2 hierarchical namespace, modern projects commonly use <code>abfss://container@account.dfs.core.windows.net/path</code>. Do not mix the Blob endpoint and DFS endpoint blindly.</p>
+</section>
+
+<section id="before">
+  <h2>4. Before running the notebooks</h2>
+  <ol>
+    <li>The Bronze notebook must finish successfully.</li>
+    <li>The secret scope should be <code>azure-storage</code>.</li>
+    <li>The secret key name should be a safe label such as <code>storage-account-key</code>, not the actual access key.</li>
+    <li>A Databricks compute resource must be attached and running.</li>
+    <li>The compute must support Delta Lake.</li>
+  </ol>
+  <div class="callout danger"><strong>Security:</strong> never type the storage access key directly in a notebook or share it in chat. Retrieve it through <code>dbutils.secrets.get()</code>. If a key has been exposed, regenerate it in Azure Storage.</div>
+  <pre><button class="copy">Copy</button><code>storage_account_name = "newstoreforsession"
+container_name = "datasource"
+
+storage_account_key = dbutils.secrets.get(
+    scope="azure-storage",
+    key="storage-account-key"
+)
+
+spark.conf.set(
+    f"fs.azure.account.key.{storage_account_name}.blob.core.windows.net",
+    storage_account_key
+)</code></pre>
+  <p>This cell does not download data. It only tells Spark which credential to use when it later accesses that storage account.</p>
+</section>
+
+<section id="silver">
+  <h2>5. Silver notebook — explained step by step</h2>
+  <div class="steps">
+    <div class="step"><h3>Define input and output paths</h3>
+      <pre><button class="copy">Copy</button><code>bronze_input_path = (
+    f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net/"
+    "bronze/customer"
+)
+silver_output_path = (
+    f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net/"
+    "silver/customer"
+)
+silver_rejected_path = (
+    f"wasbs://{container_name}@{storage_account_name}.blob.core.windows.net/"
+    "silver/customer_rejected"
+)</code></pre>
+      <p>Each Spark write creates a folder containing part files and metadata. The path is therefore a dataset location, not a single filename.</p>
+    </div>
+    <div class="step"><h3>Read Bronze CSV</h3>
+      <pre><button class="copy">Copy</button><code>df_bronze = (
+    spark.read.format("csv")
+    .option("header", "true")
+    .option("inferSchema", "true")
+    .load(bronze_input_path)
+)
+df_bronze.printSchema()
+display(df_bronze)</code></pre>
+      <p><code>header=true</code> uses the first row as column names. <code>inferSchema=true</code> lets Spark sample the CSV and guess types. For production, an explicit schema is safer because inference can be slow or inconsistent.</p>
+    </div>
+    <div class="step"><h3>Standardize column names</h3>
+      <pre><button class="copy">Copy</button><code>import re
+from pyspark.sql import functions as F
+
+def standardize_column_name(name):
+    name = name.strip().lower()
+    name = re.sub(r"[^a-zA-Z0-9]+", "_", name)
+    return name.strip("_")
+
+df_standardized = df_bronze
+for old_name in df_bronze.columns:
+    df_standardized = df_standardized.withColumnRenamed(
+        old_name, standardize_column_name(old_name)
+    )</code></pre>
+      <p>Example: <code>Customer Id</code> becomes <code>customer_id</code>, and <code>Phone 1</code> becomes <code>phone_1</code>. Consistent names make SQL and PySpark easier.</p>
+    </div>
+    <div class="step"><h3>Clean values and derive columns</h3>
+      <table><thead><tr><th>Operation</th><th>Example</th><th>Reason</th></tr></thead><tbody>
+        <tr><td><code>trim</code></td><td><code>"  India "</code> → <code>"India"</code></td><td>Removes unwanted spaces</td></tr>
+        <tr><td><code>initcap</code></td><td><code>"john doe"</code> → <code>"John Doe"</code></td><td>Standardizes names and locations</td></tr>
+        <tr><td><code>lower</code></td><td><code>"A@MAIL.COM"</code> → <code>"a@mail.com"</code></td><td>Normalizes email comparisons</td></tr>
+        <tr><td><code>coalesce(to_date...)</code></td><td>Tries several date patterns</td><td>Handles mixed source formats</td></tr>
+        <tr><td><code>regexp_replace</code></td><td>Removes spaces, brackets and hyphens from phones</td><td>Standardizes phone text</td></tr>
+        <tr><td><code>concat_ws</code></td><td>First + last name</td><td>Creates reporting-friendly full name</td></tr>
+        <tr><td><code>split/element_at</code></td><td><code>a@company.com</code> → <code>company.com</code></td><td>Creates email-domain analytics</td></tr>
+      </tbody></table>
+      <div class="callout warn"><strong>Date caution:</strong> if Databricks uses strict ANSI parsing, trying an incompatible date pattern may raise an error instead of returning null. Inspect the real source format first; use one correct format or a tolerant parsing function available in your runtime.</div>
+    </div>
+    <div class="step"><h3>Validate, separate and deduplicate</h3>
+      <p>The record is considered valid only when customer ID, first name, last name, valid email and subscription date are present. Invalid records receive a human-readable reason.</p>
+      <pre><button class="copy">Copy</button><code>df_valid_customers = (
+    df_validated
+    .filter(F.col("_is_valid_record"))
+    .dropDuplicates(["customer_id"])
+)
+
+df_rejected_customers = (
+    df_validated
+    .filter(~F.col("_is_valid_record"))
+)</code></pre>
+      <div class="callout warn"><strong>Deduplication caution:</strong> <code>dropDuplicates(["customer_id"])</code> keeps an arbitrary matching row. If duplicates have timestamps, use a window and deliberately keep the latest record.</div>
+    </div>
+    <div class="step"><h3>Write valid and rejected Delta datasets</h3>
+      <pre><button class="copy">Copy</button><code>(df_customer_silver.write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .save(silver_output_path))
+
+(df_rejected_customers.write
+    .format("delta")
+    .mode("overwrite")
+    .option("overwriteSchema", "true")
+    .save(silver_rejected_path))</code></pre>
+      <p><code>overwrite</code> replaces the dataset on every run. This is fine for a small training demo. Production incremental pipelines usually use append, merge/upsert, checkpoints or managed pipeline features.</p>
+    </div>
+  </div>
+</section>
+
+<section id="quality">
+  <h2>6. Understanding the data-quality rules</h2>
+  <table><thead><tr><th>Rule</th><th>Pass condition</th><th>Failure reason</th></tr></thead><tbody>
+    <tr><td>Customer identity</td><td>ID is non-null and non-empty</td><td>Missing customer ID</td></tr>
+    <tr><td>First name</td><td>Not null</td><td>Missing first name</td></tr>
+    <tr><td>Last name</td><td>Not null</td><td>Missing last name</td></tr>
+    <tr><td>Email</td><td>Matches a basic email regex</td><td>Invalid email address</td></tr>
+    <tr><td>Subscription date</td><td>Successfully converted to DateType</td><td>Invalid subscription date</td></tr>
+  </tbody></table>
+  <p>The chained <code>when(...).when(...)</code> records only the <em>first</em> failed reason. If you need all failure reasons, create an array of rule results and remove null entries.</p>
+  <h3>Data-quality reconciliation</h3>
+  <pre><button class="copy">Copy</button><code>bronze_count = df_bronze.count()
+valid_count = df_valid_customers.count()
+rejected_count = df_rejected_customers.count()
+
+print("Bronze:", bronze_count)
+print("Valid before duplicate impact:", valid_count)
+print("Rejected:", rejected_count)</code></pre>
+  <div class="callout">After deduplication, <code>valid + rejected</code> can be less than Bronze because duplicate valid customer IDs were removed. Track duplicate count separately for a perfect reconciliation report.</div>
+</section>
+
+<section id="gold">
+  <h2>7. Gold notebook — explained step by step</h2>
+  <p>Gold reads the persisted Silver Delta dataset. Its purpose is not additional raw cleansing; it creates business-friendly detail and aggregation tables.</p>
+  <h3>Read Silver Delta</h3>
+  <pre><button class="copy">Copy</button><code>df_silver = (
+    spark.read
+    .format("delta")
+    .load(silver_input_path)
+)</code></pre>
+  <h3>Gold output 1 — Customer dimension</h3>
+  <p>The dimension provides one reporting-ready row per customer, with a location, month name and year-month label. The attached code uses <code>row_number</code> to create <code>customer_key</code>.</p>
+  <div class="callout warn"><strong>Production caution:</strong> a row number is not a stable surrogate key when records change. Production dimensions normally preserve keys using a Delta table and MERGE logic.</div>
+  <h3>Gold output 2 — Country summary</h3>
+  <p>Answers: How many customers, cities and companies exist per country? What percentage of all customers belongs to each country? What are the first and latest subscription dates?</p>
+  <h3>Gold output 3 — Monthly summary</h3>
+  <p>Answers: How many distinct new customers subscribed each month? How many countries and companies were represented?</p>
+  <h3>Gold output 4 — Company summary</h3>
+  <p>Answers: How many customers belong to each company? Across how many countries and cities? What is the subscription date range?</p>
+  <table><thead><tr><th>Report</th><th>Grouping</th><th>Main metrics</th></tr></thead><tbody>
+    <tr><td>Customer dimension</td><td>One row per customer</td><td>Business attributes</td></tr>
+    <tr><td>Country summary</td><td>Country</td><td>Customers, cities, companies, percentage</td></tr>
+    <tr><td>Monthly summary</td><td>Year and month</td><td>New customers and coverage</td></tr>
+    <tr><td>Company summary</td><td>Company</td><td>Customers and geographic coverage</td></tr>
+  </tbody></table>
+  <div class="callout good"><strong>Correct business interpretation:</strong> this source contains customer information, not sales. Therefore Gold can report customer counts and subscription patterns, but not revenue, profit or product performance.</div>
+</section>
+
+<section id="views">
+  <h2>8. Where temporary views fit</h2>
+  <p>The attached notes mainly use DataFrames. You can create temporary views to teach SQL on the same data:</p>
+  <pre><button class="copy">Copy</button><code># In Silver notebook
+df_bronze.createOrReplaceTempView("customer_bronze_vw")
+
+display(spark.sql("""
+SELECT `Customer Id`, `Country`, `Email`
+FROM customer_bronze_vw
+WHERE `Customer Id` IS NOT NULL
+"""))</code></pre>
+  <pre><button class="copy">Copy</button><code># In Gold notebook, after reading persisted Silver Delta
+df_silver.createOrReplaceTempView("customer_silver_vw")
+
+df_country_report = spark.sql("""
+SELECT
+  country,
+  COUNT(DISTINCT customer_id) AS total_customers,
+  COUNT(DISTINCT city) AS total_cities
+FROM customer_silver_vw
+GROUP BY country
+ORDER BY total_customers DESC
+""")</code></pre>
+  <div class="callout"><strong>Key distinction:</strong> a temporary view is a convenient session-level SQL interface. Delta is the persisted file/table format. Gold should not depend on a temporary view created in a different notebook session; it should read Silver Delta and recreate its own view.</div>
+</section>
+
+<section id="run">
+  <h2>9. Exact run order and verification</h2>
+  <ol>
+    <li>Run all cells in <code>customer_Bronze</code>.</li>
+    <li>Confirm <code>bronze/customer</code> can be read and has the expected count.</li>
+    <li>Run all cells in <code>customer_Silver</code>.</li>
+    <li>Review valid, rejected and duplicate counts. Inspect rejected reasons.</li>
+    <li>Confirm <code>silver/customer</code> reads as Delta.</li>
+    <li>Run all cells in <code>customer_Gold</code>.</li>
+    <li>Display each Gold report and confirm totals are sensible.</li>
+  </ol>
+  <pre><button class="copy">Copy</button><code># Verify Silver
+silver_check = spark.read.format("delta").load(silver_output_path)
+print("Silver count:", silver_check.count())
+silver_check.printSchema()
+
+# Verify one Gold report
+country_check = spark.read.format("delta").load(gold_country_summary_path)
+display(country_check)</code></pre>
+  <h3>Ready-to-report checklist</h3>
+  <ul>
+    <li>Customer IDs are unique in Silver.</li>
+    <li>Email values are lowercase and valid under the selected rule.</li>
+    <li>Subscription date is a real date column, not a string.</li>
+    <li>Rejected records have understandable reasons.</li>
+    <li>Country percentages add to approximately 100%.</li>
+    <li>Monthly customer totals reconcile with valid Silver customers, based on the business definition.</li>
+  </ul>
+</section>
+
+<section id="trouble">
+  <h2>10. Common errors and fixes</h2>
+  <details><summary>Path not found</summary><div>Confirm the container is <code>datasource</code>. Do not repeat it in the file path. The source file path is <code>wasbs://datasource@newstoreforsession.blob.core.windows.net/customers-100.csv</code>, while Bronze is under <code>.../bronze/customer</code>.</div></details>
+  <details><summary>Secret does not exist</summary><div>Run the CLI command that lists secret names in the <code>azure-storage</code> scope. The notebook key must exactly match the displayed safe key name, normally <code>storage-account-key</code>.</div></details>
+  <details><summary>Invalid configuration value or authentication failure</summary><div>Check that the storage account name, Blob endpoint and regenerated access key match. Never use the connection string where Spark expects only the account key.</div></details>
+  <details><summary>Cannot resolve column</summary><div>Run <code>print(df_bronze.columns)</code>. The actual CSV headers differ from the assumed headers, or a column was removed. Update transformations and the final <code>select</code>.</div></details>
+  <details><summary>Date parsing fails</summary><div>Display distinct sample date strings. Use the one correct pattern for the source, or tolerant parsing supported by your Databricks runtime. Mixed formats require deliberate handling.</div></details>
+  <details><summary>Delta format not found or write fails</summary><div>Attach a Databricks runtime that supports Delta, verify storage permissions and ensure you are not reading a CSV path with <code>format("delta")</code> or a Delta path with <code>format("csv")</code>.</div></details>
+  <details><summary>Temporary view not found</summary><div>The view belongs to a Spark session. Rerun the cell that creates it in the current notebook session, or read the persisted Delta dataset and recreate the view.</div></details>
+</section>
+
+<section id="practice">
+  <h2>11. Hands-on exercises</h2>
+  <ol>
+    <li>Add a rule that rejects blank country values.</li>
+    <li>Create an <code>email_provider_type</code> column: <em>Public</em> for Gmail/Yahoo/Outlook, otherwise <em>Business</em>.</li>
+    <li>Track duplicate customer IDs in a separate Delta dataset instead of silently removing them.</li>
+    <li>Create a Gold report showing the top five email domains.</li>
+    <li>Create a Gold report showing customer count by country and subscription year.</li>
+    <li>Rewrite one Gold aggregation using SQL over <code>customer_silver_vw</code>.</li>
+  </ol>
+  <h3>Challenge solution idea — top email domains</h3>
+  <pre><button class="copy">Copy</button><code>df_top_domains = (
+    df_silver.groupBy("email_domain")
+    .agg(F.countDistinct("customer_id").alias("total_customers"))
+    .orderBy(F.desc("total_customers"))
+    .limit(5)
+)
+display(df_top_domains)</code></pre>
+</section>
+
+<section id="interview">
+  <h2>12. Interview questions and short answers</h2>
+  <details><summary>1. Why is Bronze kept close to the source?</summary><div>It preserves raw history for audit, replay and future transformations when business rules change.</div></details>
+  <details><summary>2. Why is Silver written in Delta?</summary><div>Delta provides reliable transactions, schema features and consistent reads/writes on the data lake.</div></details>
+  <details><summary>3. What is the difference between a transformation and an action?</summary><div>Transformations build a logical plan; actions such as <code>count</code>, <code>collect</code> or writes trigger execution.</div></details>
+  <details><summary>4. Why keep rejected records?</summary><div>To support data-quality reporting, correction and replay without losing evidence.</div></details>
+  <details><summary>5. Is a temporary view stored permanently?</summary><div>No. It is session-scoped. Persist data as Delta or register a permanent table for cross-session use.</div></details>
+  <details><summary>6. What does overwriteSchema do?</summary><div>It allows the target Delta schema to be replaced during an overwrite operation. It should be controlled carefully.</div></details>
+  <details><summary>7. Why is inferSchema not ideal for production?</summary><div>It adds a sampling pass and may infer inconsistent types when source values change.</div></details>
+  <details><summary>8. What is wrong with arbitrary dropDuplicates?</summary><div>When duplicate keys contain different values, it does not express which record is authoritative. A window with ordering is more deterministic.</div></details>
+  <details><summary>9. Why can the Gold layer not calculate revenue here?</summary><div>The customer file has no transaction amount, order, quantity or price fields.</div></details>
+  <details><summary>10. How would you productionize this pipeline?</summary><div>Use explicit schemas, identity-based storage access, incremental ingestion, deterministic deduplication, quality metrics, Delta MERGE, orchestration, monitoring and governed tables.</div></details>
+  <details><summary>11. DataFrame versus temp view?</summary><div>A DataFrame is the programmatic distributed dataset API. A temp view assigns it a SQL-queryable session name.</div></details>
+  <details><summary>12. Why add ingestion timestamps?</summary><div>They support lineage, freshness checks, troubleshooting and incremental processing.</div></details>
+  <details><summary>13. What is a surrogate key?</summary><div>A warehouse-generated key used to identify a dimension row independently of its source business key.</div></details>
+  <details><summary>14. Why use countDistinct for customer summaries?</summary><div>It prevents repeated rows for a customer from inflating the business count.</div></details>
+  <details><summary>15. What is data reconciliation?</summary><div>It proves that input records are fully explained by valid, rejected, duplicate and otherwise categorized outputs.</div></details>
+</section>
+
+<section id="quiz" class="quiz">
+  <h2>13. Knowledge check</h2>
+  <form id="quizForm">
+    <p><strong>1. Which layer performs cleansing?</strong></p>
+    <label><input type="radio" name="q1" value="0"> Bronze</label><label><input type="radio" name="q1" value="1"> Silver</label><label><input type="radio" name="q1" value="0"> Gold</label>
+    <p><strong>2. Which output should retain invalid records?</strong></p>
+    <label><input type="radio" name="q2" value="0"> customer_dimension</label><label><input type="radio" name="q2" value="1"> customer_rejected</label><label><input type="radio" name="q2" value="0"> monthly_summary</label>
+    <p><strong>3. What persists data between notebook sessions?</strong></p>
+    <label><input type="radio" name="q3" value="0"> A temporary view alone</label><label><input type="radio" name="q3" value="1"> The saved Delta dataset</label><label><input type="radio" name="q3" value="0"> display()</label>
+    <p><strong>4. Why is Gold limited to customer analytics?</strong></p>
+    <label><input type="radio" name="q4" value="1"> The source has no sales measures</label><label><input type="radio" name="q4" value="0"> Delta cannot calculate revenue</label><label><input type="radio" name="q4" value="0"> Gold cannot aggregate</label>
+    <p><strong>5. Which method may keep an arbitrary duplicate row?</strong></p>
+    <label><input type="radio" name="q5" value="1"> dropDuplicates</label><label><input type="radio" name="q5" value="0"> printSchema</label><label><input type="radio" name="q5" value="0"> createOrReplaceTempView</label>
+    <br><button type="button" class="btn" onclick="gradeQuiz()">Check score</button>
+    <button type="reset" class="btn secondary" onclick="document.getElementById('quizResult').textContent=''">Reset</button>
+    <div id="quizResult" class="result" aria-live="polite"></div>
+  </form>
+</section>
+
+<section id="notes">
+  <h2>14. My trainer notes</h2>
+  <p>Use this area for classroom questions, expected outputs or environment-specific changes. It is saved in this browser.</p>
+  <textarea id="trainerNotes" class="note-area" placeholder="Type notes here..."></textarea><br><br>
+  <button class="btn" onclick="saveNotes()">Save notes</button>
+  <button class="btn secondary" onclick="window.print()">Print / Save PDF</button>
+  <span id="noteStatus"></span>
+</section>
+</main>
+</div>
+<footer>Azure Databricks Customer Medallion Pipeline — classroom tutorial based on the attached notes.</footer>
+<script>
+document.querySelectorAll('.copy').forEach(btn=>btn.addEventListener('click',()=>{
+  const code=btn.parentElement.querySelector('code').innerText;
+  navigator.clipboard.writeText(code).then(()=>{const t=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=t,1200)});
+}));
+function gradeQuiz(){
+  let score=0,answered=0;
+  for(let i=1;i<=5;i++){const x=document.querySelector(`input[name="q${i}"]:checked`);if(x){answered++;score+=Number(x.value)}}
+  const el=document.getElementById('quizResult');
+  if(answered<5){el.textContent=`Answer all questions. Completed ${answered}/5.`;el.style.color='#a75b00';return}
+  el.textContent=`Score: ${score}/5 — ${score===5?'Excellent.':score>=3?'Good; review the missed concepts.':'Review Bronze, Silver, Gold and temporary views.'}`;
+  el.style.color=score>=3?'#16845b':'#b42318';
+}
+const note=document.getElementById('trainerNotes');note.value=localStorage.getItem('customerMedallionTrainerNotes')||'';
+function saveNotes(){localStorage.setItem('customerMedallionTrainerNotes',note.value);document.getElementById('noteStatus').textContent=' Saved.'}
+</script>
+</body>
+</html>

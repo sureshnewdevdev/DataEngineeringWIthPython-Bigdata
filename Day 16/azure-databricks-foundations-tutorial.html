@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Azure Databricks Foundations — Trainer Tutorial</title>
+<style>
+:root{--nav:#172554;--blue:#2563eb;--cyan:#0891b2;--orange:#f97316;--ink:#172033;--muted:#64748b;--bg:#f5f7fb;--card:#fff;--line:#dbe3ef;--ok:#16803c;--bad:#b42318}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.65 Inter,Segoe UI,Arial,sans-serif}
+.top{position:sticky;top:0;z-index:9;background:linear-gradient(100deg,var(--nav),#164e63);color:white;padding:12px 22px;display:flex;align-items:center;gap:18px;box-shadow:0 3px 14px #0003}.top b{font-size:18px}.top .progress{height:7px;background:#ffffff35;border-radius:9px;flex:1;overflow:hidden}.top .bar{height:100%;width:0;background:#fb923c}.layout{display:grid;grid-template-columns:260px minmax(0,1fr);max-width:1500px;margin:auto}.side{position:sticky;top:61px;height:calc(100vh - 61px);overflow:auto;padding:20px 14px;background:#fff;border-right:1px solid var(--line)}.side a{display:block;color:#334155;text-decoration:none;padding:8px 11px;border-radius:8px}.side a:hover,.side a.active{background:#e0f2fe;color:#075985;font-weight:700}.main{padding:28px clamp(18px,4vw,60px);max-width:1120px}.hero{padding:34px;border-radius:22px;background:linear-gradient(135deg,#172554,#0e7490);color:white;box-shadow:0 14px 40px #17255433}.hero h1{font-size:clamp(30px,5vw,52px);line-height:1.08;margin:0 0 12px}.hero p{max-width:760px;font-size:18px}.chips{display:flex;gap:9px;flex-wrap:wrap}.chip{background:#ffffff1e;border:1px solid #ffffff55;padding:5px 11px;border-radius:20px}section{scroll-margin-top:80px;margin:28px 0;padding:28px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 15px #0f172a0b;transition:.2s}section:hover{border-color:#93c5fd;box-shadow:0 9px 25px #2563eb14}h2{margin-top:0;color:#172554;font-size:28px}h3{color:#075985;margin-top:26px}.callout{border-left:5px solid var(--cyan);background:#ecfeff;padding:14px 17px;border-radius:8px;margin:15px 0}.warn{border-color:var(--orange);background:#fff7ed}.danger{border-color:var(--bad);background:#fff1f2}.ok{border-color:var(--ok);background:#f0fdf4}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}.card{padding:17px;border:1px solid var(--line);border-radius:12px;background:#fbfdff}.card h3{margin:0 0 6px}.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;text-align:center}.node{padding:16px;border-radius:12px;background:#eff6ff;border:1px solid #93c5fd}.arrow{font-size:24px;color:var(--blue);text-align:center}table{width:100%;border-collapse:collapse;margin:16px 0;display:block;overflow-x:auto}th,td{border:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}th{background:#eaf2ff;color:#172554}code{font-family:Consolas,monospace}.code{position:relative;background:#101827;color:#e5edf8;border-radius:12px;margin:14px 0;overflow:auto}.code pre{margin:0;padding:44px 18px 18px;white-space:pre;min-width:max-content}.copy{position:absolute;right:10px;top:9px;background:#334155;color:white;border:0;border-radius:7px;padding:6px 10px;cursor:pointer}.tag{display:inline-block;font-size:12px;background:#dbeafe;color:#1e40af;border-radius:12px;padding:2px 8px}.memory{font-size:18px;font-weight:700;color:#9a3412;background:#ffedd5;padding:13px;border-radius:9px}.steps{counter-reset:s}.step{position:relative;padding:2px 0 16px 48px}.step:before{counter-increment:s;content:counter(s);position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--blue);color:#fff;font-weight:800}.quiz .q{padding:15px;border:1px solid var(--line);border-radius:10px;margin:12px 0}.quiz label{display:block;padding:4px}.result{font-size:18px;font-weight:800;margin-top:13px}.qa details{border:1px solid var(--line);border-radius:9px;padding:10px 13px;margin:9px 0}.qa summary{cursor:pointer;font-weight:700}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.btn{border:0;border-radius:8px;background:var(--blue);color:#fff;padding:9px 14px;cursor:pointer}.btn.alt{background:#475569}.note{min-height:75px;width:100%;padding:10px;border:1px dashed #94a3b8;border-radius:8px;background:#fffef2}.small{font-size:13px;color:var(--muted)}.diagram{background:#f8fafc;border:1px dashed #94a3b8;border-radius:12px;padding:18px}.plane{padding:16px;border-radius:12px;border:2px solid}.control{border-color:#7c3aed;background:#f5f3ff}.compute{border-color:#0284c7;background:#f0f9ff}.storage{border-color:#16a34a;background:#f0fdf4}.exam{background:#fff7ed;border-color:#fdba74}.timer{font-size:28px;font-weight:900;color:#9a3412}.checklist label{display:block;padding:7px}.footer{text-align:center;color:#64748b;padding:24px}@media(max-width:850px){.layout{display:block}.side{display:none}.main{padding:16px}.flow{grid-template-columns:1fr}.top span{display:none}}@media print{.top,.side,.copy,.btn{display:none}.layout{display:block}.main{max-width:none;padding:0}section{break-inside:avoid;box-shadow:none}}
+</style>
+</head>
+<body>
+<header class="top"><b>Azure Databricks Foundations</b><span>Trainer Edition</span><div class="progress"><div class="bar" id="bar"></div></div><span id="pct">0%</span></header>
+<div class="layout">
+<nav class="side" id="nav">
+<a href="#outcomes">1. Learning outcomes</a><a href="#subscription">2. Azure subscriptions</a><a href="#ui">3. Databricks UI</a><a href="#architecture">4. Architecture</a><a href="#compute">5. Compute types</a><a href="#configuration">6. Configuration</a><a href="#notebooks">7. Notebooks</a><a href="#dbutils">8. Databricks Utilities</a><a href="#adls">9. Azure Data Lake</a><a href="#lab">10. End-to-end lab</a><a href="#cost">11. Cost & security</a><a href="#troubleshooting">12. Troubleshooting</a><a href="#interview">13. Interview Q&amp;A</a><a href="#quiz">14. Practice quiz</a><a href="#exam">15. Timed exam</a><a href="#tracker">16. Tracker & notes</a>
+</nav>
+<main class="main">
+<div class="hero"><div class="chips"><span class="chip">Azure</span><span class="chip">Databricks</span><span class="chip">Spark</span><span class="chip">ADLS Gen2</span><span class="chip">Delta Lake</span></div><h1>Azure Databricks Foundations</h1><p>From Azure subscription and workspace navigation to compute, notebooks, utilities, secure Data Lake access, and a practical Bronze → Silver → Gold pipeline.</p><p class="small" style="color:#dbeafe">Classroom duration: 5–7 hours · Lab-first · Updated for current compute terminology</p></div>
+
+<section id="outcomes"><h2>1. Learning outcomes</h2><div class="grid"><div class="card"><h3>Understand</h3><p>Subscription, resource group, workspace, control plane, compute plane, Spark driver/workers.</p></div><div class="card"><h3>Configure</h3><p>Select suitable compute, runtime, access mode, autoscaling and auto-termination.</p></div><div class="card"><h3>Build</h3><p>Create notebooks, use magic commands and utilities, read/write Azure Storage.</p></div><div class="card"><h3>Deliver</h3><p>Implement and explain a small Medallion pipeline and business report.</p></div></div><div class="callout"><b>Running example:</b> storage account <code>newstoreforsession</code>, container <code>datasource</code>, source <code>customers-100.csv</code>. Never place a real storage key in a notebook or training document.</div></section>
+
+<section id="subscription"><h2>2. Azure subscriptions</h2><p>An Azure subscription is a billing, quota, and access boundary. Azure resources are created inside a subscription and normally grouped inside resource groups.</p><div class="diagram"><div class="node">Microsoft Entra tenant<br><small>Identity boundary</small></div><div class="arrow">↓</div><div class="node">Azure subscription<br><small>Billing + quota + policy boundary</small></div><div class="arrow">↓</div><div class="flow"><div class="node">Resource group<br><b>rdbg</b></div><div class="node">Databricks workspace<br><b>trainerworkspace23</b></div><div class="node">Storage account<br><b>newstoreforsession</b></div></div></div><h3>Subscription concepts</h3><table><tr><th>Concept</th><th>Meaning</th><th>Trainer example</th></tr><tr><td>Tenant</td><td>Organization’s identity directory</td><td>Users, groups, service principals</td></tr><tr><td>Subscription</td><td>Billing, quota and governance boundary</td><td>Training or development subscription</td></tr><tr><td>Resource group</td><td>Logical lifecycle container</td><td><code>rdbg</code></td></tr><tr><td>Region</td><td>Physical Azure location</td><td>Keep workspace and storage near each other</td></tr><tr><td>RBAC</td><td>Who may manage Azure resources</td><td>Contributor, Reader, Storage Blob Data Contributor</td></tr><tr><td>Provider</td><td>Resource service namespace</td><td><code>Microsoft.Databricks</code></td></tr></table><div class="memory">Memory aid: Tenant identifies → Subscription pays → Resource group organizes → RBAC authorizes.</div><h3>Create a workspace: portal flow</h3><div class="steps"><div class="step"><b>Azure Portal → Create a resource → Azure Databricks.</b></div><div class="step">Choose subscription and create/select a resource group.</div><div class="step">Enter workspace name and choose a supported region.</div><div class="step">Choose pricing tier and review networking requirements.</div><div class="step">Select <b>Review + create</b>, then <b>Launch Workspace</b>.</div></div><div class="callout warn"><b>Quota note:</b> Classic compute uses Azure VM quota. A successful workspace deployment does not guarantee that every VM family can be provisioned.</div></section>
+
+<section id="ui"><h2>3. Azure Databricks UI</h2><table><tr><th>Area</th><th>What you do there</th></tr><tr><td>Workspace</td><td>Organize notebooks, files and folders.</td></tr><tr><td>Catalog</td><td>Explore governed catalogs, schemas, tables, volumes and permissions.</td></tr><tr><td>Compute</td><td>Create or attach notebook/job compute when permissions allow.</td></tr><tr><td>SQL</td><td>Use SQL editor, dashboards, alerts and SQL warehouses.</td></tr><tr><td>Workflows / Jobs</td><td>Schedule notebooks and pipelines with dependencies, retries and notifications.</td></tr><tr><td>Marketplace</td><td>Discover shared datasets and data products.</td></tr><tr><td>Settings</td><td>User, workspace, developer and administration settings, based on role.</td></tr></table><h3>First navigation exercise</h3><ol><li>Open <b>Workspace</b> and create a folder named <code>customer-medallion</code>.</li><li>Create a Python notebook named <code>customer_Bronze</code>.</li><li>Open <b>Compute</b> and identify the compute options visible to your account.</li><li>Open <b>Catalog</b> and identify the catalog and schema available to you.</li><li>Return to the notebook and attach compatible compute.</li></ol><div class="callout">UI options differ by workspace edition, region, entitlements, Unity Catalog configuration and permissions. Missing <b>Create compute</b> is commonly a permission/policy issue, not a browser issue.</div></section>
+
+<section id="architecture"><h2>4. Databricks architecture</h2><p>Azure Databricks separates management services from the place where data processing occurs.</p><div class="diagram"><div class="plane control"><b>Control plane — Databricks-managed</b><br>Web UI · REST APIs · workspace metadata · job orchestration · compute management</div><div class="arrow">secure control communication ↓</div><div class="plane compute"><b>Compute plane</b><br><b>Classic:</b> compute resources in your Azure subscription<br><b>Serverless:</b> Databricks-managed serverless compute plane</div><div class="arrow">reads / transforms / writes ↓</div><div class="plane storage"><b>Data layer</b><br>ADLS Gen2 · Delta tables · Unity Catalog external locations · Azure services</div></div><h3>Inside a Spark compute environment</h3><div class="flow"><div class="node"><b>Driver</b><br>Builds plan, coordinates work, collects metadata</div><div class="node"><b>Workers / executors</b><br>Run tasks on partitions and cache data</div><div class="node"><b>Storage</b><br>Source and result data remain durable outside compute</div></div><h3>Request flow</h3><ol><li>User runs a notebook cell.</li><li>The control plane sends execution instructions to attached compute.</li><li>The Spark driver creates jobs, stages and tasks.</li><li>Executors process partitions, reading from ADLS.</li><li>Results appear in the notebook; persistent output is written to Delta/ADLS.</li></ol><div class="memory">Control plane controls. Compute plane computes. Data Lake stores.</div></section>
+
+<section id="compute"><h2>5. Databricks compute types</h2><table><tr><th>Compute</th><th>Best for</th><th>Main behavior</th></tr><tr><td>Serverless notebook compute</td><td>Interactive Python/SQL notebooks</td><td>Fast startup, automatic scaling, minimal infrastructure management.</td></tr><tr><td>Classic all-purpose compute</td><td>Interactive engineering/data-science needs requiring customization</td><td>Attach several notebooks; user controls VM/runtime/autoscaling within policy.</td></tr><tr><td>Jobs compute</td><td>Scheduled production tasks</td><td>Created for job runs and terminated after; stronger isolation and cost attribution.</td></tr><tr><td>SQL warehouse</td><td>SQL editor, dashboards, BI and reporting</td><td>SQL-optimized; serverless, pro and classic warehouse types may be available.</td></tr><tr><td>Serverless pipeline compute</td><td>Lakeflow pipelines</td><td>Managed provisioning and scaling for declarative pipelines.</td></tr></table><h3>Legacy terms you may still hear</h3><table><tr><th>Older/classroom term</th><th>Current practical meaning</th></tr><tr><td>Interactive cluster</td><td>All-purpose/classic interactive compute</td></tr><tr><td>Automated cluster</td><td>Job compute</td></tr><tr><td>High-concurrency cluster</td><td>Use appropriate access mode, serverless compute, or SQL warehouse depending on workload</td></tr></table><h3>Selection guide</h3><div class="grid"><div class="card"><h3>Notebook exploration</h3><p>Prefer serverless when supported; choose classic if you need unsupported APIs, libraries or configuration.</p></div><div class="card"><h3>Scheduled ETL</h3><p>Use jobs compute or serverless jobs. Avoid keeping interactive compute running.</p></div><div class="card"><h3>Power BI / SQL report</h3><p>Use a SQL warehouse, normally serverless where available.</p></div><div class="card"><h3>RDD requirement</h3><p>Use classic all-purpose compute because RDD APIs are not supported in Spark Connect serverless mode.</p></div></div></section>
+
+<section id="configuration"><h2>6. Cluster and compute configuration</h2><table><tr><th>Setting</th><th>Purpose</th><th>Training recommendation</th></tr><tr><td>Databricks Runtime</td><td>Spark, Delta and library versions</td><td>Use a supported LTS runtime unless a feature needs newer.</td></tr><tr><td>Worker type</td><td>CPU, RAM, local disk</td><td>Small general-purpose VM for tiny lab data.</td></tr><tr><td>Driver type</td><td>Coordinates Spark application</td><td>Same as worker initially; increase only when needed.</td></tr><tr><td>Single node</td><td>Driver-only learning environment</td><td>Good for very small labs; not a distributed-performance demo.</td></tr><tr><td>Autoscaling</td><td>Changes worker count with load</td><td>Use narrow min/max range for controlled cost.</td></tr><tr><td>Auto termination</td><td>Stops idle classic compute</td><td>10–20 minutes for classroom practice.</td></tr><tr><td>Access mode</td><td>User isolation and feature compatibility</td><td>Use Standard for multi-user governed workloads where compatible; Dedicated for a single assigned user/workload when required.</td></tr><tr><td>Photon</td><td>Vectorized execution engine</td><td>Enable for supported SQL/DataFrame workloads after cost/performance evaluation.</td></tr><tr><td>Policies</td><td>Restrict sizes, runtime, tags and cost</td><td>Admin-created training policy.</td></tr><tr><td>Tags</td><td>Cost allocation</td><td><code>Environment=Training</code>, <code>Owner=Trainer</code>.</td></tr></table><h3>Simple classroom configuration</h3><div class="callout ok"><b>Classic compute example:</b> LTS runtime, small node type, single node or 1 worker, auto-termination 15 minutes, Photon only if needed, no public secrets in Spark config.</div><h3>Why compute may fail to start</h3><ul><li>Regional vCPU quota exhausted.</li><li>VM SKU unavailable or restricted by policy.</li><li>User lacks unrestricted compute creation permission.</li><li>Subnet/IP capacity is insufficient.</li><li>Azure policy denies the resource configuration.</li><li>Library/init script conflicts with runtime.</li></ul></section>
+
+<section id="notebooks"><h2>7. Databricks notebooks</h2><p>A notebook is an interactive document containing executable cells, output, visualizations and Markdown.</p><h3>Cell languages and magic commands</h3><div class="code"><button class="copy">Copy</button><pre><code># Python is the notebook default
+df = spark.range(1, 6)
+display(df)
+
+# In separate cells:
+%sql
+SELECT current_date(), current_user()
+
+%md
+## Customer Bronze Layer
+This cell creates formatted documentation.
+
+%fs
+ls /Volumes</code></pre></div><h3>Parameters with widgets</h3><div class="code"><button class="copy">Copy</button><pre><code>dbutils.widgets.text("environment", "dev", "Environment")
+dbutils.widgets.dropdown("write_mode", "overwrite",
+                         ["overwrite", "append"], "Write mode")
+
+environment = dbutils.widgets.get("environment")
+write_mode = dbutils.widgets.get("write_mode")
+print(environment, write_mode)</code></pre></div><h3>Temporary view</h3><div class="code"><button class="copy">Copy</button><pre><code>df_customer.createOrReplaceTempView("customer_bronze_vw")
+
+# Use the same Spark session
+display(spark.sql("""
+  SELECT Country, COUNT(*) AS customer_count
+  FROM customer_bronze_vw
+  GROUP BY Country
+  ORDER BY customer_count DESC
+"""))</code></pre></div><div class="callout warn"><b>Scope:</b> A temporary view belongs to the Spark session. A persisted Delta table/view is needed when separate jobs or sessions must reliably share the result.</div><h3>Databricks source format</h3><div class="code"><button class="copy">Copy</button><pre><code># Databricks notebook source
+# COMMAND ----------
+print("Cell 1")
+
+# COMMAND ----------
+# MAGIC %md
+# MAGIC ## Cell 2 heading</code></pre></div></section>
+
+<section id="dbutils"><h2>8. Databricks Utilities (`dbutils`)</h2><table><tr><th>Utility</th><th>Use</th><th>Example</th></tr><tr><td><code>dbutils.fs</code></td><td>File operations</td><td><code>dbutils.fs.ls(path)</code></td></tr><tr><td><code>dbutils.secrets</code></td><td>Read secret values</td><td><code>dbutils.secrets.get(scope, key)</code></td></tr><tr><td><code>dbutils.widgets</code></td><td>Notebook parameters</td><td><code>dbutils.widgets.get("env")</code></td></tr><tr><td><code>dbutils.notebook</code></td><td>Run/exit notebooks</td><td><code>dbutils.notebook.run(path, 300, args)</code></td></tr><tr><td><code>dbutils.jobs</code></td><td>Task values within jobs</td><td>Pass small values between job tasks</td></tr></table><div class="code"><button class="copy">Copy</button><pre><code># List files
+files = dbutils.fs.ls("abfss://datasource@newstoreforsession.dfs.core.windows.net/")
+display(files)
+
+# Create a directory
+dbutils.fs.mkdirs("dbfs:/tmp/customer-training")
+
+# Read a secret — value is redacted in notebook output
+storage_key = dbutils.secrets.get(
+    scope="azure-storage",
+    key="storage-account-key"
+)
+
+# Chain notebooks
+result = dbutils.notebook.run(
+    "/Workspace/Users/user@example.com/customer_Silver",
+    timeout_seconds=600,
+    arguments={"environment": "dev"}
+)</code></pre></div><div class="callout danger"><b>Security:</b> Do not print, return, log or concatenate secret values. If a key is exposed, rotate it; deleting a chat message is not credential rotation.</div></section>
+
+<section id="adls"><h2>9. Azure Data Lake Storage</h2><p>ADLS Gen2 is Azure Blob Storage with hierarchical namespace enabled, giving directory semantics and fine-grained access control suitable for analytics.</p><table><tr><th>Storage type</th><th>Endpoint</th><th>Spark URI</th></tr><tr><td>Azure Blob Storage</td><td><code>account.blob.core.windows.net</code></td><td><code>wasbs://container@account.blob.core.windows.net/path</code></td></tr><tr><td>ADLS Gen2</td><td><code>account.dfs.core.windows.net</code></td><td><code>abfss://container@account.dfs.core.windows.net/path</code></td></tr></table><h3>Recommended production pattern</h3><p>Use Unity Catalog with an external location and a managed identity through an Azure Databricks Access Connector. This avoids embedding or rotating storage keys in notebooks.</p><div class="diagram"><div class="flow"><div class="node">Notebook / SQL</div><div class="node">Unity Catalog<br>external location</div><div class="node">Managed identity<br>Access Connector</div></div><div class="arrow">↓ authorized access</div><div class="node">ADLS Gen2 container</div></div><h3>Training-only key pattern</h3><div class="code"><button class="copy">Copy</button><pre><code>storage_account_name = "newstoreforsession"
+container_name = "datasource"
+
+storage_key = dbutils.secrets.get(
+    scope="azure-storage",
+    key="storage-account-key"
+)
+
+spark.conf.set(
+    f"fs.azure.account.key.{storage_account_name}.blob.core.windows.net",
+    storage_key
+)
+
+source_path = (
+    "wasbs://datasource@newstoreforsession.blob.core.windows.net/"
+    "customers-100.csv"
+)
+
+df_customer = (spark.read
+    .option("header", True)
+    .option("inferSchema", True)
+    .csv(source_path))
+
+display(df_customer)</code></pre></div><div class="callout warn">Account keys grant broad access. Use them only for controlled learning when identity-based access is unavailable. Prefer managed identity/Unity Catalog for real projects.</div><h3>ADLS Gen2 path example</h3><div class="code"><button class="copy">Copy</button><pre><code>adls_path = (
+  "abfss://datasource@newstoreforsession.dfs.core.windows.net/"
+  "customers-100.csv"
+)
+
+df_customer = spark.read.option("header", True).csv(adls_path)</code></pre></div></section>
+
+<section id="lab"><h2>10. End-to-end lab: Customer Medallion pipeline</h2><div class="diagram"><div class="flow"><div class="node"><b>Bronze</b><br>Raw + ingestion metadata</div><div class="node"><b>Silver</b><br>Clean + validate + deduplicate</div><div class="node"><b>Gold</b><br>Country/monthly report</div></div></div><h3>A. Bronze</h3><div class="code"><button class="copy">Copy</button><pre><code>from pyspark.sql import functions as F
+
+bronze_path = "wasbs://datasource@newstoreforsession.blob.core.windows.net/bronze/customer"
+
+df_bronze = (spark.read.option("header", True).option("inferSchema", True)
+             .csv(source_path)
+             .withColumn("_source_file", F.input_file_name())
+             .withColumn("_ingested_at", F.current_timestamp()))
+
+df_bronze.createOrReplaceTempView("customer_bronze_vw")
+
+(df_bronze.write.format("delta").mode("overwrite")
+ .option("overwriteSchema", True).save(bronze_path))</code></pre></div><h3>B. Silver cleansing</h3><div class="code"><button class="copy">Copy</button><pre><code>silver_path = "wasbs://datasource@newstoreforsession.blob.core.windows.net/silver/customer"
+
+df_silver = spark.sql("""
+SELECT
+  trim(`Customer Id`)                    AS customer_id,
+  initcap(trim(`First Name`))            AS first_name,
+  initcap(trim(`Last Name`))             AS last_name,
+  initcap(trim(City))                    AS city,
+  initcap(trim(Country))                 AS country,
+  lower(trim(Email))                     AS email,
+  to_date(`Subscription Date`)           AS subscription_date,
+  _source_file,
+  _ingested_at
+FROM customer_bronze_vw
+WHERE `Customer Id` IS NOT NULL
+  AND Email RLIKE '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+[.][A-Za-z]{2,}$'
+""").dropDuplicates(["customer_id"])
+
+df_silver.createOrReplaceTempView("customer_silver_vw")
+(df_silver.write.format("delta").mode("overwrite")
+ .option("overwriteSchema", True).save(silver_path))</code></pre></div><h3>C. Gold analysis report</h3><div class="code"><button class="copy">Copy</button><pre><code>gold_path = "wasbs://datasource@newstoreforsession.blob.core.windows.net/gold/customer_country_report"
+
+df_gold = spark.sql("""
+SELECT
+  country,
+  COUNT(DISTINCT customer_id) AS total_customers,
+  COUNT(DISTINCT city)        AS cities_covered,
+  MIN(subscription_date)      AS first_subscription,
+  MAX(subscription_date)      AS latest_subscription
+FROM customer_silver_vw
+GROUP BY country
+ORDER BY total_customers DESC
+""")
+
+df_gold.createOrReplaceTempView("customer_country_report_vw")
+(df_gold.write.format("delta").mode("overwrite")
+ .option("overwriteSchema", True).save(gold_path))
+
+display(df_gold)</code></pre></div><h3>D. Report in SQL</h3><div class="code"><button class="copy">Copy</button><pre><code>%sql
+SELECT country, total_customers
+FROM customer_country_report_vw
+ORDER BY total_customers DESC
+LIMIT 10</code></pre></div><div class="callout"><b>Trainer discussion:</b> Bronze preserves traceability. Silver improves quality. Gold answers a business question. Delta is the storage format; a temporary view is a session-level query object.</div></section>
+
+<section id="cost"><h2>11. Cost, performance and security</h2><table><tr><th>Area</th><th>Good practice</th></tr><tr><td>Compute cost</td><td>Use serverless or job compute appropriately; auto-terminate classic compute.</td></tr><tr><td>Data layout</td><td>Use Delta; avoid unnecessary tiny files; partition only when justified by size and query filters.</td></tr><tr><td>Security</td><td>Prefer managed identity and Unity Catalog external locations.</td></tr><tr><td>Secrets</td><td>Use secret scopes; never store plaintext credentials in code or Git.</td></tr><tr><td>Governance</td><td>Use catalogs, schemas, grants, lineage and least privilege.</td></tr><tr><td>Observability</td><td>Monitor job runs, query history, Spark UI, logs and cost tags.</td></tr></table><h3>Do / Avoid</h3><div class="grid"><div class="card"><h3 style="color:var(--ok)">Do</h3><ul><li>Use LTS runtimes for stability.</li><li>Test with representative data.</li><li>Use job retries carefully.</li><li>Parameterize paths and environment.</li></ul></div><div class="card"><h3 style="color:var(--bad)">Avoid</h3><ul><li>Leaving classic compute running.</li><li>Collecting large data to the driver.</li><li>Using access keys in production.</li><li>Assuming temp views persist forever.</li></ul></div></div></section>
+
+<section id="troubleshooting"><h2>12. Troubleshooting guide</h2><table><tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr><tr><td><code>403</code> storage error</td><td>Identity lacks data-plane permission or ACL</td><td>Assign correct RBAC/ACL; verify container and identity.</td></tr><tr><td><code>Path does not exist</code></td><td>Container repeated in path or wrong endpoint</td><td>Parse account, container and relative file separately.</td></tr><tr><td><code>CONFIG_NOT_AVAILABLE</code> / secret error</td><td>Wrong scope/key name or permission</td><td>Run <code>databricks secrets list-secrets azure-storage</code>; use harmless key name.</td></tr><tr><td>Compute does not start</td><td>Quota, SKU, network or policy</td><td>Review event log; try permitted small SKU; check quota/admin policy.</td></tr><tr><td>RDD not supported</td><td>Spark Connect/serverless limitation</td><td>Use DataFrame APIs or compatible classic compute.</td></tr><tr><td>Temp view not found</td><td>New Spark session/notebook job</td><td>Read persisted Delta and recreate the temp view.</td></tr><tr><td>Many output CSV files</td><td>Spark writes one part per partition</td><td>Use Delta; for tiny export only, reduce partitions intentionally.</td></tr><tr><td>Date becomes null</td><td>Input format differs</td><td>Use explicit formats with <code>to_date</code>/<code>coalesce</code>.</td></tr></table><h3>Path decoding exercise</h3><div class="callout ok"><code>https://newstoreforsession.blob.core.windows.net/datasource/customers-100.csv</code><br>Account = <b>newstoreforsession</b> · Container = <b>datasource</b> · Relative path = <b>customers-100.csv</b></div></section>
+
+<section id="interview" class="qa"><h2>13. Interview questions and answers</h2>
+<details><summary>1. What is Azure Databricks?</summary><p>A managed analytics platform on Azure built around Apache Spark and the lakehouse model, supporting engineering, analytics, ML and governance.</p></details>
+<details><summary>2. What is the difference between control and compute planes?</summary><p>The control plane hosts management services and the UI. The compute plane runs workloads and processes data.</p></details>
+<details><summary>3. Classic vs serverless compute?</summary><p>Classic compute resources run in the customer’s Azure subscription and allow more customization. Serverless compute is managed by Databricks with automatic provisioning and scaling.</p></details>
+<details><summary>4. All-purpose vs jobs compute?</summary><p>All-purpose supports interactive development and shared exploration; jobs compute is created for automated runs and normally terminates afterward.</p></details>
+<details><summary>5. What does the Spark driver do?</summary><p>It builds execution plans, coordinates executors, schedules tasks and returns results.</p></details>
+<details><summary>6. What is autoscaling?</summary><p>It increases or decreases worker count within configured bounds according to workload demand.</p></details>
+<details><summary>7. Why use auto-termination?</summary><p>To stop idle classic compute and reduce unnecessary VM and DBU charges.</p></details>
+<details><summary>8. What is Databricks Runtime?</summary><p>A tested distribution containing Spark, Delta Lake and optimized libraries/components.</p></details>
+<details><summary>9. What is Photon?</summary><p>A Databricks vectorized execution engine that accelerates supported SQL and DataFrame workloads.</p></details>
+<details><summary>10. What is a temporary view?</summary><p>A session-scoped SQL name over a DataFrame; it does not itself persist the data.</p></details>
+<details><summary>11. Why use Delta rather than CSV for Silver?</summary><p>Delta adds a transaction log, ACID behavior, schema controls, efficient updates and reliable table operations.</p></details>
+<details><summary>12. What is ADLS Gen2?</summary><p>Azure Blob Storage with hierarchical namespace, supporting directory semantics and fine-grained access for analytics.</p></details>
+<details><summary>13. Difference between <code>wasbs</code> and <code>abfss</code>?</summary><p><code>wasbs</code> targets Blob endpoints; <code>abfss</code> targets the ADLS Gen2 DFS endpoint.</p></details>
+<details><summary>14. What is <code>dbutils.secrets</code>?</summary><p>A notebook utility for retrieving secret values from a secret scope without hardcoding them.</p></details>
+<details><summary>15. Best production approach for ADLS access?</summary><p>Unity Catalog external locations with a managed identity/Access Connector, governed by least-privilege grants.</p></details>
+<details><summary>16. What is a SQL warehouse?</summary><p>SQL-optimized compute for queries, dashboards and BI connectivity.</p></details>
+<details><summary>17. Why can compute creation be missing?</summary><p>The user may lack entitlement, unrestricted cluster creation permission, or access through a compute policy.</p></details>
+<details><summary>18. Why should secrets never be printed?</summary><p>Notebook output, driver logs and screenshots may expose them; redaction is not a substitute for safe handling.</p></details>
+</section>
+
+<section id="quiz" class="quiz"><h2>14. Practice MCQ quiz</h2><form id="quizForm">
+<div class="q" data-a="b"><b>1. Which boundary primarily controls Azure billing and quota?</b><label><input type="radio" name="q1" value="a"> Notebook</label><label><input type="radio" name="q1" value="b"> Subscription</label><label><input type="radio" name="q1" value="c"> Temp view</label></div>
+<div class="q" data-a="a"><b>2. Where is data processed?</b><label><input type="radio" name="q2" value="a"> Compute plane</label><label><input type="radio" name="q2" value="b"> Browser cache</label><label><input type="radio" name="q2" value="c"> Resource group</label></div>
+<div class="q" data-a="c"><b>3. Best compute for BI SQL dashboards?</b><label><input type="radio" name="q3" value="a"> Storage account</label><label><input type="radio" name="q3" value="b"> RDD</label><label><input type="radio" name="q3" value="c"> SQL warehouse</label></div>
+<div class="q" data-a="b"><b>4. Which URI is typical for ADLS Gen2?</b><label><input type="radio" name="q4" value="a"> jdbc://</label><label><input type="radio" name="q4" value="b"> abfss://</label><label><input type="radio" name="q4" value="c"> ftp://</label></div>
+<div class="q" data-a="a"><b>5. Which layer cleans and deduplicates?</b><label><input type="radio" name="q5" value="a"> Silver</label><label><input type="radio" name="q5" value="b"> Bronze</label><label><input type="radio" name="q5" value="c"> Control plane</label></div>
+<div class="q" data-a="c"><b>6. Which utility reads a secret?</b><label><input type="radio" name="q6" value="a"> dbutils.widgets</label><label><input type="radio" name="q6" value="b"> dbutils.notebook</label><label><input type="radio" name="q6" value="c"> dbutils.secrets</label></div>
+<div class="q" data-a="b"><b>7. A temporary view normally lasts for:</b><label><input type="radio" name="q7" value="a"> The storage account lifetime</label><label><input type="radio" name="q7" value="b"> The Spark session</label><label><input type="radio" name="q7" value="c"> Forever</label></div>
+<div class="q" data-a="a"><b>8. Recommended production credential approach:</b><label><input type="radio" name="q8" value="a"> Managed identity</label><label><input type="radio" name="q8" value="b"> Key in source code</label><label><input type="radio" name="q8" value="c"> Key in notebook title</label></div>
+<button class="btn" type="button" onclick="grade('quizForm','quizResult')">Check score</button><button class="btn alt" type="reset">Reset</button><div class="result" id="quizResult"></div></form></section>
+
+<section id="exam" class="exam quiz"><h2>15. Timed assessment</h2><p>10 minutes · 5 questions · recommended passing score: 80%</p><div class="timer" id="timer">10:00</div><div class="toolbar"><button class="btn" onclick="startTimer()">Start exam</button></div><form id="examForm">
+<div class="q" data-a="c"><b>1. Which setting automatically stops idle classic compute?</b><label><input type="radio" name="e1" value="a"> Photon</label><label><input type="radio" name="e1" value="b"> Autoscaling</label><label><input type="radio" name="e1" value="c"> Auto termination</label></div>
+<div class="q" data-a="b"><b>2. A job needs isolated scheduled ETL. Choose:</b><label><input type="radio" name="e2" value="a"> Temp view only</label><label><input type="radio" name="e2" value="b"> Jobs compute/serverless job</label><label><input type="radio" name="e2" value="c"> Azure Portal</label></div>
+<div class="q" data-a="a"><b>3. Which layer contains business-ready aggregation?</b><label><input type="radio" name="e3" value="a"> Gold</label><label><input type="radio" name="e3" value="b"> Bronze</label><label><input type="radio" name="e3" value="c"> Driver</label></div>
+<div class="q" data-a="c"><b>4. What must you do if a storage account key is exposed?</b><label><input type="radio" name="e4" value="a"> Rename the notebook</label><label><input type="radio" name="e4" value="b"> Hide the cell</label><label><input type="radio" name="e4" value="c"> Rotate the key</label></div>
+<div class="q" data-a="b"><b>5. Which is a durable Silver output?</b><label><input type="radio" name="e5" value="a"> Python variable only</label><label><input type="radio" name="e5" value="b"> Persisted Delta data/table</label><label><input type="radio" name="e5" value="c"> Browser tab</label></div>
+<button class="btn" type="button" onclick="grade('examForm','examResult')">Submit exam</button><div class="result" id="examResult"></div></form></section>
+
+<section id="tracker"><h2>16. Preparation tracker and trainer notes</h2><div class="checklist" id="checks"><label><input type="checkbox"> I can explain tenant, subscription and resource group.</label><label><input type="checkbox"> I can navigate Workspace, Catalog, Compute and SQL.</label><label><input type="checkbox"> I can explain control plane and compute plane.</label><label><input type="checkbox"> I can select compute for notebooks, jobs and BI.</label><label><input type="checkbox"> I can configure runtime, scaling and auto-termination.</label><label><input type="checkbox"> I can create notebook cells, widgets and temp views.</label><label><input type="checkbox"> I can use dbutils without exposing secrets.</label><label><input type="checkbox"> I can distinguish wasbs and abfss paths.</label><label><input type="checkbox"> I can demonstrate Bronze, Silver and Gold.</label><label><input type="checkbox"> I can troubleshoot access, path and compute failures.</label></div><h3>My classroom notes</h3><p class="small">Double-click the box to edit. Notes and tracker state are stored in this browser when available.</p><div class="note" id="notes" contenteditable="true">Add your own examples, trainee questions, and demo reminders here…</div><div class="toolbar" style="margin-top:12px"><button class="btn" onclick="saveAll()">Save progress</button><button class="btn alt" onclick="clearAll()">Clear local progress</button><button class="btn alt" onclick="window.print()">Print / PDF</button></div></section>
+
+<section><h2>Quick reference and official reading</h2><ul><li><a href="https://learn.microsoft.com/en-us/azure/databricks/compute/" target="_blank">Azure Databricks compute</a></li><li><a href="https://learn.microsoft.com/en-us/azure/databricks/getting-started/high-level-architecture" target="_blank">High-level architecture</a></li><li><a href="https://learn.microsoft.com/en-us/azure/databricks/connect/storage/azure-storage" target="_blank">Connect to Azure Storage</a></li><li><a href="https://learn.microsoft.com/en-us/azure/databricks/dev-tools/databricks-utils" target="_blank">Databricks Utilities</a></li><li><a href="https://learn.microsoft.com/en-us/azure/databricks/notebooks/" target="_blank">Databricks notebooks</a></li></ul><div class="callout">Product options change by region and account configuration. Use the official documentation and your workspace UI as the final source for features available to your environment.</div></section>
+<div class="footer">Azure Databricks Foundations · Corporate Trainer Tutorial · No credentials included</div>
+</main></div>
+<script>
+document.querySelectorAll('.copy').forEach(b=>b.onclick=async()=>{let t=b.nextElementSibling.innerText;await navigator.clipboard.writeText(t);let x=b.textContent;b.textContent='Copied';setTimeout(()=>b.textContent=x,1200)});
+function grade(formId,resultId){let f=document.getElementById(formId),qs=[...f.querySelectorAll('.q')],n=0;qs.forEach(q=>{let c=q.querySelector('input:checked');q.style.borderColor=c&&c.value===q.dataset.a?'#16a34a':'#ef4444';if(c&&c.value===q.dataset.a)n++});let p=Math.round(n/qs.length*100);document.getElementById(resultId).textContent=`Score: ${n}/${qs.length} (${p}%) — ${p>=80?'Ready to proceed':'Review the highlighted topics'}`}
+let remain=600,tick;function startTimer(){clearInterval(tick);remain=600;tick=setInterval(()=>{remain--;let m=String(Math.floor(remain/60)).padStart(2,'0'),s=String(remain%60).padStart(2,'0');document.getElementById('timer').textContent=m+':'+s;if(remain<=0){clearInterval(tick);grade('examForm','examResult')}},1000)}
+function saveAll(){let c=[...document.querySelectorAll('#checks input')].map(x=>x.checked);try{localStorage.setItem('adbTut',JSON.stringify({c,n:notes.innerHTML}));alert('Progress saved.')}catch(e){alert('Browser storage is unavailable.')}}
+function clearAll(){try{localStorage.removeItem('adbTut')}catch(e){}document.querySelectorAll('#checks input').forEach(x=>x.checked=false);notes.innerHTML='Add your own examples, trainee questions, and demo reminders here…'}
+try{let d=JSON.parse(localStorage.getItem('adbTut'));if(d){document.querySelectorAll('#checks input').forEach((x,i)=>x.checked=!!d.c[i]);notes.innerHTML=d.n||''}}catch(e){}
+addEventListener('scroll',()=>{let h=document.documentElement,pc=Math.round(h.scrollTop/(h.scrollHeight-h.clientHeight)*100);bar.style.width=pc+'%';pct.textContent=pc+'%';let secs=[...document.querySelectorAll('section[id]')],cur=secs.filter(s=>s.getBoundingClientRect().top<150).pop();document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active',cur&&a.getAttribute('href')==='#'+cur.id))});
+</script>
+</body></html>
